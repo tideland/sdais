@@ -11,6 +11,17 @@ version will advance to v1.0.0 on first stable release.
 ## [v0.8.0] — 2026-05-03
 
 ### Added
+- **`install.sh`** — shell script that installs the SDAIS scaffold into a new
+  project from the tgz release or the `scaffold/` directory. Replaces the
+  token-expensive Initialiser agent. Usage: `bash install.sh <project-name>`.
+- **`update.sh`** — shell script that upgrades an existing project's scaffold
+  to the current SDAIS version while leaving all project content (RSF, RAR,
+  RES, CDF, ADF, source files) untouched. Preserves the Custom Agents
+  Extension block in `AGENTS.md`. Usage: `bash update.sh [--from <version>]`.
+- **`scaffold/`** directory — standalone scaffold files extracted from the
+  former `SDAIS-INIT.md`: all 10 agent prompt files under
+  `scaffold/sdais/prompts/`, all 6 template files, and the `AGENTS.md`
+  template. These files are the source for the tgz release artefact.
 - **Agent Environment and Model Contract** section — new normative section
   between Reasoning and Directory Structure. Defines minimum agent capability
   requirements, a recommended model-tier table (with examples for each agent
@@ -34,7 +45,17 @@ version will advance to v1.0.0 on first stable release.
   - Escalation: mandatory halt-and-document rule when Waive → RSF-amend cycles
     repeat more than twice without convergence.
   - Approval record: minimum commit-message format `Approved: RSF v<N>, Round <R>`.
+- **Step −1 and Step −1b** in `SDAIS.md` updated: replaced agent-based
+  Initialiser/Updater instructions with `install.sh` and `update.sh` usage.
+  Directory structure and distribution-file descriptions updated accordingly.
+- **`AGENTS.md` template** updated: Initialiser and Updater rows removed
+  (no longer AI agent roles); layout section updated to remove
+  `SDAIS-INIT.md` and `SDAIS-UPDATE.md`.
 - Version bumped from v0.7.0 to v0.8.0.
+
+### Removed
+- `SDAIS-INIT.md` — superseded by `install.sh` + `scaffold/`.
+- `SDAIS-UPDATE.md` — superseded by `update.sh`.
 
 ---
 

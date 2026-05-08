@@ -6,48 +6,30 @@ The greenfield workflow applies when you are building a new system from a clean 
 
 ---
 
-## Step −1 — Place Distribution Files
+## Step −1 — Install the Scaffold
 
-Copy the three distribution files into `sdais/` at your project root:
+Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install.sh`, `update.sh`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory), then run:
 
 ```
-<project-root>/
-└── sdais/
-    ├── SDAIS.md
-    ├── SDAIS-INIT.md
-    └── SDAIS-UPDATE.md
+bash install.sh <project-name>
 ```
 
----
-
-## Step 0 — Initialise the Project
-
-Run the **Initialiser** agent using `sdais/SDAIS-INIT.md` as the prompt. Provide the project name.
-
-The Initialiser creates:
-- `AGENTS.md` at the project root
-- All prompt files in `sdais/prompts/`
-- RSF template files in `sdais/rsf/v1/`
-- RAR template file in `sdais/rar/v1/`
-
-After init, your tree looks like:
+After install, your tree looks like:
 
 ```
 <project-root>/
 ├── AGENTS.md
 └── sdais/
     ├── SDAIS.md
-    ├── SDAIS-INIT.md
-    ├── SDAIS-UPDATE.md
     ├── prompts/
-    │   ├── init.md
-    │   ├── update-sdais.md
     │   ├── semantic-auditor.md
     │   ├── grounder.md
     │   ├── designer.md
     │   ├── generator.md
     │   ├── reviewer.md
     │   ├── refiner.md
+    │   ├── analyzer.md
+    │   ├── re-engineering.md
     │   ├── security-auditor.md
     │   └── test-generator.md
     ├── rsf/
@@ -62,7 +44,7 @@ After init, your tree looks like:
             └── f-0000-template.md
 ```
 
-Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — the Updater regenerates them.
+Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
 
 ---
 
@@ -116,7 +98,7 @@ Before any code is generated, the RSF must pass a semantic audit.
 | **Split** | One item covered two distinct concerns | Append `[SPLIT→<ID-a>,<ID-b>-RAR-V<N>-F<nn>]`; create both new files |
 | **Waive** | Finding acknowledged; item intentionally unchanged | RSF unchanged; record rationale in the finding file |
 
-4. If any findings remain `Open`: create new item files in `sdais/rsf/v<N+1>/` for every amended item, then re-audit. Repeat until all findings are `Resolved` or `Waived`.
+4. The SemanticAuditor has already staged copies of affected items in `sdais/rsf/v<N+1>/`. Amend the pre-staged copies (Fix/Drop/Supersede/Split) or delete them (Waive). Re-audit if any findings remain `Open`. Repeat until all findings are `Resolved` or `Waived`.
 
 ---
 

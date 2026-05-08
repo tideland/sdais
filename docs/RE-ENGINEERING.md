@@ -18,9 +18,9 @@ If you are building from scratch, use the greenfield workflow (`docs/GREENFIELD.
 
 ---
 
-## Step −1 — Place Distribution Files and Initialise
+## Step −1 — Install the Scaffold
 
-Copy the three distribution files into `sdais/` at your project root and run the Initialiser as described in `docs/GREENFIELD.md` Steps −1 and 0.
+Copy the SDAIS distribution files into your project root and run `bash install.sh <project-name>` as described in `docs/GREENFIELD.md` Step −1.
 
 ---
 

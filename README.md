@@ -42,8 +42,9 @@ SDAIS covers two entry points:
 | File / Directory | Purpose |
 |---|---|
 | `SDAIS.md` | Full normative specification (single source of truth) |
-| `SDAIS-INIT.md` | Bootstrap init prompt — self-contained; copy to `sdais/` to initialise a new project |
-| `SDAIS-UPDATE.md` | Bootstrap update prompt — copy to `sdais/` when upgrading SDAIS |
+| `install.sh` | Scaffolds a new project from the tgz or `scaffold/` directory |
+| `update.sh` | Upgrades an existing project's scaffold to the current version |
+| `scaffold/` | Prompt files and templates installed by `install.sh` / `update.sh` |
 | `docs/INTRODUCTION.md` | Concepts, agent roles, annotation reference, upgrade procedure |
 | `docs/GREENFIELD.md` | Step-by-step greenfield workflow |
 | `docs/RE-ENGINEERING.md` | Step-by-step re-engineering workflow |
@@ -52,10 +53,10 @@ SDAIS covers two entry points:
 
 ## Quickstart — Greenfield
 
-1. Copy the three distribution files into `sdais/` at your project root:
-   `SDAIS.md`, `SDAIS-INIT.md`, `SDAIS-UPDATE.md`.
-2. Run the **Initialiser** agent using `sdais/SDAIS-INIT.md` as the prompt.
-   It creates `AGENTS.md`, all files in `sdais/prompts/`, and all template files.
+1. Copy `SDAIS.md`, `install.sh`, `update.sh`, and either `sdais-vX.Y.Z.tgz`
+   or the `scaffold/` directory into your project root.
+2. Run `bash install.sh <project-name>` to create `AGENTS.md` and the full
+   `sdais/` scaffold.
 3. Author your requirements as RSF item files in `sdais/rsf/v1/`.
 4. Run the **SemanticAuditor**, then the **Grounder** (if `E-` items exist), then optionally the **Designer**.
 5. Run the **Generator**, then iterate through **Review → Refine** cycles until the Reviewer reports zero violations.
@@ -63,11 +64,11 @@ SDAIS covers two entry points:
 
 See `docs/GREENFIELD.md` for the full walkthrough.
 
-To upgrade to a new SDAIS version: replace the three distribution files, then run the **Updater** agent using `sdais/SDAIS-UPDATE.md` as the prompt.
+To upgrade to a new SDAIS version: replace the distribution files with the new release, then run `bash update.sh --from <old-version>`.
 
 ## Quickstart — Re-Engineering
 
-1. Copy the three distribution files into `sdais/` and run the **Initialiser** as above.
+1. Copy the distribution files and run `bash install.sh <project-name>` as above.
 2. Author RES hypothesis files in `sdais/res/v1/` capturing what you believe the system does.
 3. Run the **Analyzer** against the existing codebase — it annotates the code, derives RSF items, and opens RAR findings.
 4. Resolve RAR findings through the standard Semantic Audit Loop.
@@ -81,8 +82,6 @@ See `docs/RE-ENGINEERING.md` for the full walkthrough.
 
 | Role | When to invoke |
 |---|---|
-| Initialiser | Once, at project creation |
-| Updater | When distribution files are replaced with a new version |
 | SemanticAuditor | Before each generation pass |
 | Grounder | After audit Cleared; mandatory when `E-` items are present |
 | Designer | Optional; after Grounder, before Generator; produces ADF |

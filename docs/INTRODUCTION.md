@@ -66,8 +66,6 @@ Finding indices are 1-based, local to the block, and never reused across rounds.
 
 | Role | When to invoke |
 |---|---|
-| Initialiser | Once, at project creation; uses `sdais/SDAIS-INIT.md` |
-| Updater | When distribution files are replaced with a new version |
 | SemanticAuditor | Before each generation pass |
 | Grounder | After audit Cleared; mandatory when `E-` items are present |
 | Designer | Optional; after Grounder, before Generator; produces ADF |
@@ -97,24 +95,25 @@ Finding indices are 1-based, local to the block, and never reused across rounds.
 
 ## Distribution Files
 
-A new project requires exactly three files copied into `sdais/` at the project root:
+The SDAIS distribution set consists of:
 
 | File | Purpose |
 |---|---|
 | `SDAIS.md` | Full normative specification |
-| `SDAIS-INIT.md` | Bootstrap init prompt; self-contained; run once at project creation |
-| `SDAIS-UPDATE.md` | Bootstrap update prompt; run when distribution files are replaced |
+| `install.sh` | Scaffolds a new project; run once at project creation |
+| `update.sh` | Upgrades an existing project's scaffold to the current version |
+| `sdais-vX.Y.Z.tgz` | Prompt files and templates (or `scaffold/` directory from the repo) |
 
-`SDAIS-INIT.md` contains all agent prompts and all template files embedded verbatim. No other files are needed before init runs.
+Run `bash install.sh <project-name>` from the project root to create `AGENTS.md` and the full `sdais/` scaffold in one step.
 
 ---
 
 ## Upgrading
 
-1. Replace `sdais/SDAIS.md`, `sdais/SDAIS-INIT.md`, and `sdais/SDAIS-UPDATE.md` with the new version.
-2. Run the **Updater** agent using `sdais/SDAIS-UPDATE.md` as the prompt.
+1. Replace `SDAIS.md`, `install.sh`, `update.sh`, and the tgz (or `scaffold/` directory) with the new release.
+2. Run `bash update.sh --from <old-version>` from the project root.
 
-The Updater refreshes `AGENTS.md`, all files in `sdais/prompts/`, and all `*-0000-template.md` files. It does not touch RSF items, RAR findings, RES files, CDF files, ADF files, or source code.
+`update.sh` refreshes `AGENTS.md` (preserving the Custom Agents Extension block), all files in `sdais/prompts/`, all `*-0000-template.md` files, and `sdais/SDAIS.md`. It does not touch RSF items, RAR findings, RES files, CDF files, ADF files, or source code.
 
 ---
 
