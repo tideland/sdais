@@ -254,13 +254,13 @@ The full prompt is in `sdais/SDAIS-UPDATE.md` / `sdais/prompts/update-sdais.md`.
 
 ### Step 0 — Semantic Audit Loop
 
-Before any code is generated the RSF must pass a semantic audit. The RSF is never modified by the agent — only by the human.
+Before any code is generated the RSF must pass a semantic audit. The SemanticAuditor does not modify the content of any RSF file; it only creates RAR finding files and stages version copies for human amendment.
 
 #### Step 0.1 — Run the SemanticAuditor
 
-Provide all RSF item files for the current version to the `SemanticAuditor`. Use the prompt from `sdais/prompts/semantic-auditor.md`. The agent produces one RAR finding file per finding in `sdais/rar/v<N>/`.
+Provide all RSF item files for the current version to the `SemanticAuditor`. Use the prompt from `sdais/prompts/semantic-auditor.md`. The agent produces one RAR finding file per finding in `sdais/rar/v<N>/`, then copies every RSF item that appears in at least one finding to `sdais/rsf/v<N+1>/` verbatim, creating the directory if it does not exist.
 
-The full prompt is in `sdais/prompts/semantic-auditor.md`. Summary of agent behaviour: reads all RSF items for the current version, writes one RAR finding file per problem found, categories are `AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED`, outputs a summary of all findings. Does not modify RSF files.
+The full prompt is in `sdais/prompts/semantic-auditor.md`. Summary of agent behaviour: reads all RSF items for the current version; writes one RAR finding file per problem found, categories are `AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED`; copies each affected RSF item file verbatim to `sdais/rsf/v<N+1>/` to stage it for human amendment; outputs a summary of all findings and the list of staged files. Does not modify RSF file content.
 
 #### Step 0.2 — Review each RAR finding
 
@@ -282,7 +282,12 @@ For each finding file the human chooses exactly one resolution action:
 
 #### Step 0.3 — Amend the RSF
 
-Create new item files in `sdais/rsf/v<N+1>/` for every item that is new or changed. Unchanged items remain in their current version directory. Record each resolution action's finding reference in the item's Audit History section.
+The SemanticAuditor has already staged copies of all affected items in `sdais/rsf/v<N+1>/`. For each finding:
+
+- **Fix in place / Drop / Supersede / Split** — amend the pre-staged copy: rewrite or update the `## Requirement` section and append the resolution reference to the Audit History section.
+- **Waive** — delete the pre-staged copy from `sdais/rsf/v<N+1>/`; the original file in its current version directory remains authoritative.
+
+Items not affected by any finding are not staged and remain in their current version directory unchanged. New items introduced as part of a Supersede or Split resolution are created directly in `sdais/rsf/v<N+1>/` by the human.
 
 #### Step 0.4 — Update each RAR finding file
 
