@@ -1,6 +1,6 @@
 # SDAIS — Re-Engineering Workflow
 
-**Version:** v0.8.0 | See `docs/INTRODUCTION.md` for concepts and prerequisites.
+**Version:** v0.9.0 | See `docs/INTRODUCTION.md` for concepts and prerequisites.
 
 The re-engineering workflow (SDAIS-RE) applies when an existing codebase precedes the specification. The Analyzer agent derives RSF items from observed code behaviour. The Re-engineering agent applies CDF transformations while preserving annotation identifiers. The result feeds into the standard greenfield loop from Review onwards.
 

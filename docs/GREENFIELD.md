@@ -1,6 +1,6 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.8.0 | See `docs/INTRODUCTION.md` for concepts and prerequisites.
+**Version:** v0.9.0 | See `docs/INTRODUCTION.md` for concepts and prerequisites.
 
 The greenfield workflow applies when you are building a new system from a clean slate. The specification precedes the code.
 

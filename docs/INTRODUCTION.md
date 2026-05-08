@@ -1,6 +1,6 @@
 # SDAIS — Introduction
 
-**Version:** v0.8.0 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.9.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 

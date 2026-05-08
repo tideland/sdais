@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS update script — v0.8.0
+# SDAIS update script — v0.9.0
 # Usage: bash update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.8.0"
+SDAIS_VERSION="v0.9.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FROM_VERSION=""
 

@@ -1,7 +1,7 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Date:** 2026-05-03
-**Version:** v0.8.0
+**Date:** 2026-05-08
+**Version:** v0.9.0
 **Status:** Draft
 
 ---

@@ -8,6 +8,19 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
+## [v0.9.0] — 2026-05-08
+
+### Changed
+- **SemanticAuditor** now stages version copies: after writing RAR finding
+  files the agent copies each affected RSF item verbatim to
+  `sdais/rsf/v<N+1>/` (creating the directory if absent). The human amends
+  the pre-staged copies for Fix/Drop/Supersede/Split resolutions and deletes
+  the copy for Waive resolutions. Step 0.3 updated accordingly.
+- Version bumped from v0.8.0 to v0.9.0.
+- `install.sh` and `update.sh` version strings updated to v0.9.0.
+
+---
+
 ## [v0.8.0] — 2026-05-03
 
 ### Added
@@ -30,11 +43,6 @@ version will advance to v1.0.0 on first stable release.
   `sdais/logs/` for execution transcripts).
 
 ### Changed
-- **SemanticAuditor** now stages version copies: after writing RAR finding
-  files the agent copies each affected RSF item verbatim to
-  `sdais/rsf/v<N+1>/` (creating the directory if absent). The human amends
-  the pre-staged copies for Fix/Drop/Supersede/Split resolutions and deletes
-  the copy for Waive resolutions. Step 0.3 updated accordingly.
 - **Conflict resolution rule** added to Reasoning section: RSF is always
   authoritative over ADF and generated code; ADF is authoritative over
   generated code when there is no RSF conflict. No agent may silently reconcile
