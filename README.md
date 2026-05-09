@@ -2,96 +2,96 @@
 
 **Version:** v0.9.0 | **Status:** Draft | **License:** BSD 3-Clause
 
-SDAIS is a software development paradigm in which humans author requirements exclusively, and AI agents synthesise, review, and refine all implementation code. No human writes implementation code.
+SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
 
-## Core Idea
+Read [docs/INTRODUCTION.md](docs/INTRODUCTION.md) for the full concept and motivation. For step-by-step workflows see [docs/GREENFIELD.md](docs/GREENFIELD.md) and [docs/RE-ENGINEERING.md](docs/RE-ENGINEERING.md). Terms and acronyms are defined in [docs/GLOSSARY.md](docs/GLOSSARY.md).
 
-The human role is that of architect and specifier. The AI role is that of implementer, reviewer, and annotator.
+---
 
-Three load-bearing elements give the paradigm its name:
+## Installation
 
-- **Specification-Driven** — a structured, versioned requirements document is the single upstream artefact and the authoritative source of truth.
-- **AI** — one or more AI agents execute the full development lifecycle: generation, annotation, review, refinement, and test authoring.
-- **Synthesis** — the output is not a translation of human code but a synthesis from requirements. The AI selects structure, idioms, and implementation strategy within the stated constraints.
+Copy the SDAIS distribution files into your project root:
 
-## Why SDAIS
+```
+SDAIS.md
+install.sh
+update.sh
+sdais-vX.Y.Z.tgz   ← or the scaffold/ directory from the repo
+```
 
-Traditional AI-assisted development treats AI as a tool inside a human workflow. SDAIS inverts this: the human retains specification authorship; AI owns the implementation artefact entirely.
+Then run:
 
-Key consequences of this inversion:
+```
+bash install.sh <project-name>
+```
 
-- All implicit knowledge must become explicit. Architectural intent, naming rationale, and edge-case handling must be stated in the specification or they do not exist.
-- Annotations become the cross-session memory of the AI. Because LLMs are stateless between invocations, structured annotations embedded in generated code are the inter-agent protocol.
-- Refinement is a loop, not a one-shot operation. Agents generate, review, and refine in cycles until a review agent finds no violations.
-- RSF is always authoritative. When RSF, ADF, and generated code disagree, the RSF wins. No agent may silently reconcile a conflict — disagreements must be surfaced as findings for human resolution.
+This creates `AGENTS.md` at the project root and the full `sdais/` scaffold with all prompt files and templates.
 
-## Agent Environment
+To upgrade an existing project to a new SDAIS version, replace the distribution files and run:
 
-SDAIS is environment-agnostic. Any AI agent system that can read and write files and maintain coherent session context is a valid execution environment. The normative specification (`SDAIS.md`) includes a model-tier table recommending appropriate capability levels per agent role (e.g. high-reasoning models for SemanticAuditor and SecurityAuditor; high-coding models for Generator and Refiner). Pin the model version per agent in your `AGENTS.md` — version drift between rounds can produce inconsistent findings. All agent outputs are authoritative only once written to disk and committed; the `sdais/` directory together with git history is the complete audit trail.
+```
+bash update.sh --from <old-version>
+```
 
-## Greenfield and Re-Engineering
+---
 
-SDAIS covers two entry points:
+## The Human Loop — Greenfield
 
-**Greenfield** — the specification precedes the code. The human authors RSF items, the SemanticAuditor validates them, and the Generator synthesises the implementation from scratch.
+You write specifications. AI writes code. The loop looks like this:
 
-**Re-Engineering (SDAIS-RE)** — the existing codebase precedes the specification. The Analyzer agent annotates the existing code, derives RSF items from observed behaviour, and opens RAR findings for anything unclear. The human then authors CDF files defining the desired transformations, and the Re-engineering agent applies them while preserving all annotation identifiers. The result feeds into the standard Reviewer → Refiner → Approval loop.
+**Phase 1 — Specify**
+
+1. Author requirement files (FR, NFR, C, E, AC) in `sdais/rsf/v1/` using the installed templates.
+2. Run the **SemanticAuditor** — it reads your requirements and writes findings for anything ambiguous, incomplete, or contradictory.
+3. Resolve each finding: fix the requirement in place, drop it, split it, or waive the finding with a rationale.
+4. If you have environment items (`E-`), run the **Grounder** to verify they exist in your infrastructure.
+5. Optionally run the **Designer** to produce a module decomposition and API surface document before any code is written.
+
+Repeat phases 1–5 until all findings are resolved. That cleared RSF is your contract with the AI.
+
+**Phase 2 — Synthesise**
+
+6. Run the **Generator** — it reads the cleared RSF and synthesises a complete, annotated implementation.
+7. Run the **Reviewer** — it checks every annotated code unit against the RSF and writes findings for any violations.
+8. Run the **Refiner** — it fixes every violation guided by the Reviewer's hints.
+9. Return to step 7. Repeat until the Reviewer reports zero violations.
+
+**Phase 3 — Approve**
+
+10. Review the result. Approve, amend the RSF and restart, or reject and regenerate.
+11. Optionally run the **SecurityAuditor** and **TestGenerator** at any point after generation.
+
+---
+
+## The Human Loop — Re-Engineering
+
+You have an existing codebase. You want to migrate it, modularise it, or bring it under formal specification.
+
+1. Write rough hypothesis files (RES) capturing what you believe the system does.
+2. Run the **Analyzer** — it reads the codebase, adds annotation blocks to every unit, derives formal RSF items from observed behaviour, and opens findings for anything unclear.
+3. Resolve findings and refine the derived RSF through the standard semantic audit loop.
+4. Write one or more Change Definition Files (CDF) describing the transformation you want (language migration, modularisation, new persistence layer, etc.).
+5. Run the **Re-engineering** agent — it applies the CDFs to the annotated codebase while preserving all annotation identifiers.
+6. Continue from step 7 of the greenfield loop above (Review → Refine → Approve).
+
+---
 
 ## Repository Contents
 
 | File / Directory | Purpose |
 |---|---|
-| `SDAIS.md` | Full normative specification (single source of truth) |
-| `install.sh` | Scaffolds a new project from the tgz or `scaffold/` directory |
-| `update.sh` | Upgrades an existing project's scaffold to the current version |
-| `scaffold/` | Prompt files and templates installed by `install.sh` / `update.sh` |
-| `docs/INTRODUCTION.md` | Concepts, agent roles, annotation reference, upgrade procedure |
-| `docs/GREENFIELD.md` | Step-by-step greenfield workflow |
-| `docs/RE-ENGINEERING.md` | Step-by-step re-engineering workflow |
+| `SDAIS.md` | Full normative specification — single source of truth |
+| `install.sh` | Scaffolds a new project |
+| `update.sh` | Upgrades an existing project's scaffold |
+| `scaffold/` | Prompt files and templates installed by `install.sh` |
+| `docs/INTRODUCTION.md` | Concepts, motivation, agent roles, and prompt reference |
+| `docs/GREENFIELD.md` | Detailed greenfield workflow with process diagram |
+| `docs/RE-ENGINEERING.md` | Detailed re-engineering workflow with process diagram |
+| `docs/GLOSSARY.md` | All acronyms, document types, and annotation identifiers |
 | `CHANGELOG.md` | Version history |
 | `LICENSE` | BSD 3-Clause License |
 
-## Quickstart — Greenfield
-
-1. Copy `SDAIS.md`, `install.sh`, `update.sh`, and either `sdais-vX.Y.Z.tgz`
-   or the `scaffold/` directory into your project root.
-2. Run `bash install.sh <project-name>` to create `AGENTS.md` and the full
-   `sdais/` scaffold.
-3. Author your requirements as RSF item files in `sdais/rsf/v1/`.
-4. Run the **SemanticAuditor**, then the **Grounder** (if `E-` items exist), then optionally the **Designer**.
-5. Run the **Generator**, then iterate through **Review → Refine** cycles until the Reviewer reports zero violations.
-6. Approve or amend. Record the approval in the commit message as `Approved: RSF v<N>, Round <R>`.
-
-See `docs/GREENFIELD.md` for the full walkthrough.
-
-To upgrade to a new SDAIS version: replace the distribution files with the new release, then run `bash update.sh --from <old-version>`.
-
-## Quickstart — Re-Engineering
-
-1. Copy the distribution files and run `bash install.sh <project-name>` as above.
-2. Author RES hypothesis files in `sdais/res/v1/` capturing what you believe the system does.
-3. Run the **Analyzer** against the existing codebase — it annotates the code, derives RSF items, and opens RAR findings.
-4. Resolve RAR findings through the standard Semantic Audit Loop.
-5. Author one or more CDF files in `sdais/cdf/v1/` defining the target transformations.
-6. Run the **Re-engineering** agent — it applies the CDFs and preserves all annotation identifiers.
-7. Hand off to the standard **Reviewer → Refiner → Approval** loop.
-
-See `docs/RE-ENGINEERING.md` for the full walkthrough.
-
-## Agent Roles
-
-| Role | When to invoke |
-|---|---|
-| SemanticAuditor | Before each generation pass |
-| Grounder | After audit Cleared; mandatory when `E-` items are present |
-| Designer | Optional; after Grounder, before Generator; produces ADF |
-| Generator | After RSF is cleared by audit |
-| Reviewer | After each Generate or Refine pass |
-| Refiner | After each Review pass with violations |
-| Analyzer | Re-engineering: annotate existing code and derive RSF |
-| Re-engineering | Re-engineering: apply CDF transformations |
-| SecurityAuditor | On demand or after generation |
-| TestGenerator | Standard: after all blocks Verified; TDD: before Generator |
+---
 
 ## License
 

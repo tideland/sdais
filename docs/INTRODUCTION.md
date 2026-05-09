@@ -4,129 +4,105 @@
 
 ---
 
-## What SDAIS Is
+## The Problem Every Long-Lived Project Faces
 
-Specification-Driven AI Synthesis (SDAIS) is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code.
+Picture a system that was well-designed at the start. Good architecture, reasonable test coverage, clear intent. Fast-forward two years. New developers, shifted priorities, a framework upgrade, three rounds of "just this once" shortcuts, and documentation that no one trusts anymore because it stopped matching the code six months ago. Requirements live in Confluence pages, Jira tickets, and the memories of people who have since left. The codebase has become the only reliable source of truth — but reading it requires reverse-engineering decisions that were made in contexts no one remembers.
 
-The human role is that of architect and specifier. The AI role is that of implementer, reviewer, and annotator.
+This is not an unusual situation. It is the normal trajectory of software under continuous change.
+
+What breaks down is not the code itself but the chain of reasoning from *what we need* to *what we built*. Once that chain is broken, every change carries risk. Refactoring is scary. Migrations are expensive. Technical debt compounds because nobody wants to touch the parts they do not understand.
 
 ---
 
-## Core Concepts
+## Specification as the Unbroken Chain
 
-### Requirements Specification (RSF)
+SDAIS starts from a different premise: **the specification is the only artefact that humans write and maintain**. Not code. Code is synthesised — by AI, from the specification, every time.
 
-Every requirement is one Markdown file in `sdais/rsf/v<N>/`. Five item types:
+This has one important consequence: the specification can never fall behind the code, because the code is always derived from it. When requirements change, you update the specification and regenerate. The implementation follows. The chain from intent to artefact is never broken because it is enforced structurally.
 
-| Prefix | Type | Purpose |
-|---|---|---|
-| `fr-NNNN-` | Functional Requirement | Observable behaviour the system must exhibit |
-| `nfr-NNNN-` | Non-Functional Requirement | Measurable quality attribute (always quantified) |
-| `c-NNNN-` | Constraint | Hard rule narrowing the solution space |
-| `e-NNNN-` | Environment | Runtime and deployment facts |
-| `ac-NNNN-` | Acceptance Criterion | Programmatically verifiable pass condition |
+The specification consists of five types of items:
 
-Sequence numbers start at `0001` and are never reused. Numbers are local to each type prefix.
-
-### Annotation Blocks `[ANN]`
-
-Every generated function, method, and type carries a structured `[ANN]` comment block. Annotations are the inter-agent protocol — the only mechanism by which a subsequent agent understands what a prior agent intended.
-
-**Core labels:**
-
-| Label | Required | Description |
-|---|---|---|
-| `(ANN-ID)` | yes | Stable unique identifier; format `ANN-<8-hex>`; never changes |
-| `(ORIGIN)` | yes | RSF item IDs this unit implements |
-| `(TASK)` | yes | Declarative statement of what this unit does |
-| `(CONTEXT)` | no | Where and why this unit is used |
-| `(CONSTRAINT)` | no | Hard rules, invariants, limits |
-| `(PRE)` | no | Preconditions (functions/methods) |
-| `(INPUT)` | no | Named inputs with types |
-| `(OUTPUT)` | no | Named outputs with types |
-| `(POST)` | no | Postconditions (functions/methods) |
-| `(DEPENDS-ON)` | no | `ANN-<8-hex>` IDs of units this unit directly calls |
-| `(AGENT)` | yes | Agent role that last modified this block |
-| `(VERIFIED)` | yes | `true` — reviewed and clean; `false` — pending or violation |
-| `(ROUND)` | yes | Review-round number when this block was last written or updated |
-
-**Finding labels** (written by Reviewer into blocks where `(VERIFIED) false`):
-
-| Label | Written by | Description |
-|---|---|---|
-| `(FINDING:n)` | Reviewer | Describes one specific violation |
-| `(SEVERITY:n)` | Reviewer | `Critical / High / Medium / Low` |
-| `(HINT:n)` | Reviewer | Actionable instruction for the Refiner |
-| `(FINDING:n:STATUS)` | Refiner | `Resolved — <rationale>` or `Waived — requires RSF amendment` |
-| `(FIELD-CHANGE:n)` | Refiner | Documents a descriptive field updated due to a code fix |
-
-Finding indices are 1-based, local to the block, and never reused across rounds.
-
-### Agent Roles
-
-| Role | When to invoke |
+| Type | Purpose |
 |---|---|
-| SemanticAuditor | Before each generation pass |
-| Grounder | After audit Cleared; mandatory when `E-` items are present |
-| Designer | Optional; after Grounder, before Generator; produces ADF |
-| Generator | After RSF is Cleared by audit (and Grounder + Designer if applicable) |
-| Reviewer | After each Generate or Refine pass |
-| Refiner | After each Review pass with violations |
-| SecurityAuditor | On demand or after generation |
-| TestGenerator | Standard: after all blocks Verified; TDD: before Generator |
-| Analyzer | Re-engineering: annotate existing code and derive RSF |
-| Re-engineering | Re-engineering: apply CDF transformations |
+| Functional Requirement (FR) | Observable behaviour the system must exhibit |
+| Non-Functional Requirement (NFR) | Measurable quality attribute — always includes a numeric bound |
+| Constraint (C) | Hard rule narrowing the solution space without describing a feature |
+| Environment (E) | Runtime and deployment facts the AI must know |
+| Acceptance Criterion (AC) | Programmatically verifiable condition confirming an FR is satisfied |
 
-### Two Entry Points
-
-**Greenfield** — specification precedes code. See `docs/GREENFIELD.md`.
-
-**Re-Engineering** — existing code precedes specification. See `docs/RE-ENGINEERING.md`.
+Each item is a single Markdown file. Together they form the Requirements Specification (RSF) — versioned, git-tracked, and the single upstream artefact for everything that follows.
 
 ---
 
-## Prerequisites
+## A Team of Specialists, Not One Generalist
 
-- An AI agent environment capable of reading files and writing code (Claude Code, Cursor, Aider, or a similar tool).
-- A git repository for your project.
-- Familiarity with writing requirements in plain prose.
+Traditional AI-assisted development treats a single model as a universal assistant: write some code, fix a bug, review a PR. SDAIS takes the opposite approach. Different phases of development demand different cognitive strengths, and different models have different strengths.
 
----
+The paradigm defines a set of specialist agent roles, each with a focused responsibility and a recommended model tier:
 
-## Distribution Files
+| Prompt | Role | Purpose | Recommended tier |
+|---|---|---|---|
+| `semantic-auditor.md` | SemanticAuditor | Validates RSF items before generation: detects ambiguity, incompleteness, contradictions, and untestable acceptance criteria | High-reasoning (e.g. Claude Opus) |
+| `grounder.md` | Grounder | Verifies that every Environment item describes something that actually exists in your infrastructure | High-reasoning (e.g. Claude Opus or Sonnet) |
+| `designer.md` | Designer | Produces a module decomposition, API surface, and design decisions document (ADF) traceable to RSF items | High-reasoning (e.g. Claude Opus or Sonnet) |
+| `generator.md` | Generator | Synthesises a complete, annotated implementation from cleared RSF items | High-coding (e.g. Claude Sonnet) |
+| `reviewer.md` | Reviewer | Checks every annotation block against the RSF; sets blocks verified or raises findings | High-reasoning or high-coding (e.g. Claude Opus or Sonnet) |
+| `refiner.md` | Refiner | Fixes every violation directed by the Reviewer's hints; marks resolved blocks verified | High-coding (e.g. Claude Sonnet) |
+| `security-auditor.md` | SecurityAuditor | Specialised pass for security constraints, credential handling, input validation, and authorisation | High-reasoning (e.g. Claude Opus) |
+| `test-generator.md` | TestGenerator | Derives test functions from preconditions, postconditions, and acceptance criteria; supports both standard and TDD modes | High-coding (e.g. Claude Sonnet) |
+| `analyzer.md` | Analyzer | Re-engineering: annotates an existing codebase and derives RSF items from observed behaviour | High-coding (e.g. Claude Sonnet) |
+| `re-engineering.md` | Re-engineering | Re-engineering: applies Change Definition Files to transform the annotated codebase | High-coding (e.g. Claude Sonnet) |
 
-The SDAIS distribution set consists of:
+The SemanticAuditor, for example, is primarily a language and logic task — it needs to detect subtle contradictions and vague wording. A model with strong reasoning capabilities does that well. The Generator, on the other hand, needs to produce correct, idiomatic code at scale. That is a different strength. Assigning the right model to each role is not premature optimisation; it is what makes the loop converge reliably.
 
-| File | Purpose |
-|---|---|
-| `SDAIS.md` | Full normative specification |
-| `install.sh` | Scaffolds a new project; run once at project creation |
-| `update.sh` | Upgrades an existing project's scaffold to the current version |
-| `sdais-vX.Y.Z.tgz` | Prompt files and templates (or `scaffold/` directory from the repo) |
-
-Run `bash install.sh <project-name>` from the project root to create `AGENTS.md` and the full `sdais/` scaffold in one step.
-
----
-
-## Upgrading
-
-1. Replace `SDAIS.md`, `install.sh`, `update.sh`, and the tgz (or `scaffold/` directory) with the new release.
-2. Run `bash update.sh --from <old-version>` from the project root.
-
-`update.sh` refreshes `AGENTS.md` (preserving the Custom Agents Extension block), all files in `sdais/prompts/`, all `*-0000-template.md` files, and `sdais/SDAIS.md`. It does not touch RSF items, RAR findings, RES files, CDF files, ADF files, or source code.
+Pin the model version for each role in your `AGENTS.md`. Version drift between rounds produces inconsistent finding interpretations and slows convergence.
 
 ---
 
-## RAR Finding Categories
+## Annotations: The Inter-Agent Memory
 
-| Category | Applies to | Meaning |
-|---|---|---|
-| `AMBIGUOUS` | All workflows | Requirement too vague for deterministic synthesis |
-| `INCOMPLETE` | All workflows | FR has no AC, or AC does not verify its FR |
-| `CONTRADICTORY` | All workflows | Two items are mutually exclusive |
-| `INFEASIBLE` | All workflows | A constraint makes one or more FRs impossible |
-| `UNTESTABLE` | All workflows | An AC cannot be verified programmatically |
-| `UNQUANTIFIED` | All workflows | An NFR lacks a measurable bound |
-| `ENV-UNRESOLVABLE` | All workflows | A named infrastructure element cannot be confirmed |
-| `RES-CONTRADICTS-CODE` | SDAIS-RE | A RES hypothesis is contradicted by the code |
-| `CODE-INTENT-UNCLEAR` | SDAIS-RE | Code behaviour cannot be mapped to a requirement |
+LLMs are stateless between invocations. A Reviewer running in round 3 has no memory of what the Generator intended in round 1 — unless that intent is written into the code itself.
+
+SDAIS solves this with `[ANN]` blocks: structured comment blocks embedded in every generated function, method, and type. They carry the declared task, the RSF items being implemented, preconditions, postconditions, dependencies on other units, and the current verification state. When the Reviewer writes a finding, it goes into the same block. When the Refiner fixes it, the resolution goes into the same block.
+
+The annotation block is the inter-agent protocol. It is what allows a Reviewer to understand a Generator's intent without re-reading the RSF from scratch, and what allows a Refiner to target the exact block that needs correction. It is also the audit trail: every block carries the round number and the agent role that last touched it.
+
+This is how SDAIS maintains coherence across multiple agents, multiple rounds, and multiple LLM sessions.
+
+---
+
+## The Development Lifecycle
+
+A full SDAIS project moves through a predictable lifecycle, regardless of the scale of the system:
+
+1. **Specify** — write RSF items expressing what the system must do.
+2. **Audit** — the SemanticAuditor validates the specification; you resolve findings.
+3. **Ground** — the Grounder confirms infrastructure assumptions; you resolve any unresolvable items.
+4. **Design** (optional) — the Designer produces a module decomposition before any code is written.
+5. **Generate** — the Generator synthesises the implementation with full annotation coverage.
+6. **Review** — the Reviewer checks every block; findings are precise and actionable.
+7. **Refine** — the Refiner fixes violations; verified blocks accumulate.
+8. **Approve** — you review the result. Approve, amend the RSF and restart, or reject and regenerate.
+
+Steps 6–7 repeat until the Reviewer reports zero violations. Steps 1–5 repeat whenever requirements change. The RSF version increments; the previous version is never modified.
+
+When requirements change — and they always do — you amend the specification, the SemanticAuditor validates the new version, and generation resumes with the existing annotated codebase as context. The annotations carry forward. The chain from intent to implementation remains unbroken.
+
+---
+
+## Two Entry Points
+
+Not every project starts from a blank slate. SDAIS covers both scenarios:
+
+**Greenfield** — the specification is written before any code exists. This is the canonical SDAIS workflow: specify, audit, generate, review, refine, approve. See [GREENFIELD.md](GREENFIELD.md) for the detailed walkthrough.
+
+**Re-Engineering (SDAIS-RE)** — an existing codebase precedes the specification. The Analyzer annotates the existing code, derives RSF items from observed behaviour, and surfaces anything unclear as findings. You then define the desired transformations as Change Definition Files (CDF), and the Re-engineering agent applies them while preserving all annotation identifiers. From there the standard review loop takes over. See [RE-ENGINEERING.md](RE-ENGINEERING.md) for the detailed walkthrough.
+
+---
+
+## Further Reading
+
+- [GREENFIELD.md](GREENFIELD.md) — Step-by-step greenfield workflow, prompt-by-prompt, with process diagram.
+- [RE-ENGINEERING.md](RE-ENGINEERING.md) — Step-by-step re-engineering workflow with process diagram.
+- [GLOSSARY.md](GLOSSARY.md) — All acronyms, document types, and annotation block identifiers.
+- `sdais/SDAIS.md` — The full normative specification.

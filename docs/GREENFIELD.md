@@ -1,20 +1,63 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.9.0 | See `docs/INTRODUCTION.md` for concepts and prerequisites.
+**Version:** v0.9.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
-The greenfield workflow applies when you are building a new system from a clean slate. The specification precedes the code.
+The greenfield workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
+
+---
+
+## Process Overview
+
+```mermaid
+flowchart TD
+    A([Start]) --> B[Step −1\nInstall scaffold]
+    B --> C[Step 1\nAuthor RSF items\nFR · NFR · C · E · AC]
+    C --> D[Step 2\nSemanticAuditor]
+    D --> E{Findings?}
+    E -- Yes --> F[Resolve findings\nFix · Drop · Supersede · Split · Waive]
+    F --> C
+    E -- No: Cleared --> G{E- items?}
+    G -- Yes --> H[Step 3\nGrounder]
+    H --> I{ENV-UNRESOLVABLE\nfindings?}
+    I -- Yes --> J[Resolve:\nFix · Drop · Waive]
+    J --> H
+    I -- No --> K
+    G -- No --> K[Step 4\nDesigner\noptional]
+    K --> L[Step 5\nGenerator]
+    L --> M[Step 6\nReviewer]
+    M --> N{Violations?}
+    N -- Yes --> O[Step 7\nRefiner]
+    O --> M
+    N -- No: all Verified --> P[Step 8\nHuman Approval Gate]
+    P --> Q{Decision}
+    Q -- Approve --> R([Done])
+    Q -- Amend RSF --> C
+    Q -- Reject --> L
+
+    style A fill:#2d6a4f,color:#fff
+    style R fill:#2d6a4f,color:#fff
+    style D fill:#1d3557,color:#fff
+    style H fill:#1d3557,color:#fff
+    style K fill:#457b9d,color:#fff
+    style L fill:#1d3557,color:#fff
+    style M fill:#1d3557,color:#fff
+    style O fill:#1d3557,color:#fff
+    style P fill:#e76f51,color:#fff
+```
+
+Dark blue = AI agent step. Teal = optional AI agent step. Orange = human decision gate.
 
 ---
 
 ## Step −1 — Install the Scaffold
 
-Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install.sh`, `update.sh`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory), then run:
+Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install.sh`, `update.sh`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory from the repo), then run:
 
 ```
 bash install.sh <project-name>
 ```
 
-After install, your tree looks like:
+This creates `AGENTS.md` at the project root and the `sdais/` directory with all prompt files and templates:
 
 ```
 <project-root>/
@@ -28,10 +71,10 @@ After install, your tree looks like:
     │   ├── generator.md
     │   ├── reviewer.md
     │   ├── refiner.md
-    │   ├── analyzer.md
-    │   ├── re-engineering.md
     │   ├── security-auditor.md
-    │   └── test-generator.md
+    │   ├── test-generator.md
+    │   ├── analyzer.md
+    │   └── re-engineering.md
     ├── rsf/
     │   └── v1/
     │       ├── fr-0000-template.md
@@ -50,7 +93,7 @@ Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.
 
 ## Step 1 — Author Your Requirements (RSF)
 
-Copy the relevant template, rename it with the next available sequence number and a short description, then replace every bracketed placeholder with real content.
+Copy the relevant template, rename it with the next available sequence number and a short description, then replace every bracketed placeholder with real content. This is the only step in the entire process that is purely human.
 
 ### File naming
 
@@ -62,7 +105,7 @@ Copy the relevant template, rename it with the next available sequence number an
 | `e-0000-template.md` | `e-0001-database-connection.md` |
 | `ac-0000-template.md` | `ac-0001-valid-key-accepted.md` |
 
-Sequence numbers start at `0001` and are never reused. Items retired by audit carry status tags and remain in the file as tombstones.
+Sequence numbers start at `0001` and are never reused. Items retired during an audit carry status tags and remain in the file as tombstones — the history of every decision is preserved in git.
 
 ### Writing good requirements
 
@@ -70,7 +113,7 @@ Sequence numbers start at `0001` and are never reused. Items retired by audit ca
 
 **Non-Functional Requirements (NFR):** Always include a numeric bound. "Low latency" is not a requirement. "95th-percentile latency must not exceed 200 ms under 1 000 concurrent requests" is.
 
-**Constraints (C):** Hard rules that narrow the solution space without describing a feature. "The implementation must use Go 1.22 or later." To activate TDD mode, add `C-NNNN: Generation mode: TDD`.
+**Constraints (C):** Hard rules that narrow the solution space without describing a feature. "The implementation must use Go 1.22 or later." To activate TDD mode, add a constraint item with `Generation mode: TDD`.
 
 **Environment (E):** Runtime or deployment facts the AI must know. Set `**Verified:** Pending` on every E- item at authoring; the Grounder sets it to `true` after confirming the element exists.
 
@@ -78,15 +121,17 @@ Sequence numbers start at `0001` and are never reused. Items retired by audit ca
 
 ### Cross-references
 
-Use `[FR-NNNN]`, `[NFR-NNNN]`, `[AC-NNNN]`, etc. inline in the `## Requirement` section. References resolve to the most recent active version of the item.
+Use `[FR-NNNN]`, `[NFR-NNNN]`, `[AC-NNNN]`, etc. inline in the `## Requirement` section to link related items. References resolve to the most recent active version.
 
 ---
 
 ## Step 2 — Semantic Audit
 
-Before any code is generated, the RSF must pass a semantic audit.
+**Prompt:** `sdais/prompts/semantic-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
 
-1. Run the **SemanticAuditor** agent (`sdais/prompts/semantic-auditor.md`), providing all RSF item files for the current version.
+Before any code is generated, the RSF must pass a semantic audit. This is the quality gate that catches problems in the specification itself — ambiguity, gaps, contradictions, NFRs without numeric bounds — before they propagate into code that is hard to fix.
+
+1. Run the **SemanticAuditor**, providing all RSF item files for the current version.
 2. The agent writes one finding file per problem into `sdais/rar/v<N>/`.
 3. For each finding, choose exactly one resolution action and update the finding file's `Resolution` and `Status` fields:
 
@@ -98,74 +143,108 @@ Before any code is generated, the RSF must pass a semantic audit.
 | **Split** | One item covered two distinct concerns | Append `[SPLIT→<ID-a>,<ID-b>-RAR-V<N>-F<nn>]`; create both new files |
 | **Waive** | Finding acknowledged; item intentionally unchanged | RSF unchanged; record rationale in the finding file |
 
-4. The SemanticAuditor has already staged copies of affected items in `sdais/rsf/v<N+1>/`. Amend the pre-staged copies (Fix/Drop/Supersede/Split) or delete them (Waive). Re-audit if any findings remain `Open`. Repeat until all findings are `Resolved` or `Waived`.
+4. The SemanticAuditor stages copies of affected items in `sdais/rsf/v<N+1>/`. Amend the pre-staged copies (Fix/Drop/Supersede/Split) or delete them (Waive). Re-audit if any findings remain `Open`. Repeat until all findings are `Resolved` or `Waived` — the RSF is now **Cleared**.
 
 ---
 
-## Step 3 — Ground Environment Items (mandatory if E- items exist)
+## Step 3 — Ground Environment Items
 
-Run the **Grounder** agent (`sdais/prompts/grounder.md`) after the audit is Cleared.
+**Prompt:** `sdais/prompts/grounder.md` | **Recommended model:** High-reasoning (e.g. Claude Opus or Sonnet)
 
-The Grounder verifies each `E-` item against real infrastructure — checking database connections, service endpoints, environment variables, file paths, etc. For each confirmed element it sets `**Verified:** true`. For each element it cannot confirm it opens an `ENV-UNRESOLVABLE` RAR finding.
+Mandatory when `E-` items are present. Skip this step only if the RSF has no environment items.
 
-Resolve all `ENV-UNRESOLVABLE` findings before proceeding. Resolution options:
-- **Fix in place:** update the `E-` item to match what exists; re-run Grounder.
+The Grounder verifies each `E-` item against real infrastructure — checking database connections, service endpoints, environment variables, file paths, secret mounts, etc. For each confirmed element it sets `**Verified:** true`. For each element it cannot confirm it opens an `ENV-UNRESOLVABLE` RAR finding.
+
+Resolve all `ENV-UNRESOLVABLE` findings before proceeding:
+
+- **Fix in place:** update the `E-` item to match what actually exists; re-run Grounder.
 - **Drop:** remove the `E-` item and any FR items that depend on it.
-- **Waive:** append `[WAIVED-RAR-V<N>-F<nn> — to be created by this project]` if the element will be built as part of this project.
+- **Waive:** append `[WAIVED-RAR-V<N>-F<nn> — to be created by this project]` if the infrastructure element will be built as part of this project.
 
 ---
 
 ## Step 4 — Design (optional)
 
-Run the **Designer** agent (`sdais/prompts/designer.md`) if you want a human-approved architecture checkpoint before any code is written.
+**Prompt:** `sdais/prompts/designer.md` | **Recommended model:** High-reasoning (e.g. Claude Opus or Sonnet)
+
+Run the Designer if you want a human-approved architecture checkpoint before any code is written. This is particularly valuable for systems with non-trivial module boundaries or complex data flows — it surfaces structural disagreements early, when they are cheap to fix.
 
 The Designer reads all cleared RSF items and produces `sdais/adf/v<N>/design.md` covering:
+
 - Module decomposition (name, responsibility, RSF item IDs addressed)
 - API surfaces (signatures and contracts, not implementations)
 - Data flows between modules
-- Design decisions traceable to RSF item IDs
+- Design decisions, each traceable to one or more RSF item IDs
 
-Review the ADF:
-- **Approve** — set `**Status:** Approved` in the file; Generator will read it as structural context.
-- **Reject** — provide written feedback; the Designer revises.
-
-The ADF is advisory. RSF items remain authoritative if the ADF and RSF conflict.
+Review the ADF and either approve it (set `**Status:** Approved`) or reject it with written feedback for the Designer to revise. An approved ADF is read by the Generator as structural context — it guides module and package layout without overriding RSF requirements. RSF items remain authoritative if ADF and RSF ever conflict.
 
 ---
 
 ## Step 5 — Generate
 
+**Prompt:** `sdais/prompts/generator.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
+
+The Generator reads the cleared RSF and synthesises a complete implementation. It selects data structures, idioms, and implementation strategy within the constraints you specified.
+
 ### Standard mode
 
-Run the **Generator** agent (`sdais/prompts/generator.md`).
-
 The Generator:
+
 - Reads all active RSF items.
 - Reads `sdais/adf/v<N>/design.md` as structural context if present and Approved.
 - Synthesises a complete implementation.
-- Writes one `[ANN]` block per callable unit and type, with `(ANN-ID)`, `(VERIFIED) false`, `(ROUND) 0`, and `(DEPENDS-ON)` where dependencies exist.
+- Writes one `[ANN]` block per callable unit and type. Every block starts with `(VERIFIED) false` and `(ROUND) 0`.
 
-Do not edit generated code by hand.
+Do not edit generated code by hand. Any manual change will be overwritten or will conflict with annotation state in the next round.
 
 ### TDD mode
 
-If the RSF contains a `C-` item with `Generation mode: TDD`:
+If the RSF contains a Constraint item with `Generation mode: TDD`:
 
-1. Run **TestGenerator** in TDD mode first (`sdais/prompts/test-generator.md`, specify "TDD"). It writes test stubs with failing assertions. Every test block gets `(TEST-MODE) TDD`.
+1. Run **TestGenerator** first (`sdais/prompts/test-generator.md`), specifying TDD mode. It writes test stubs with failing assertions derived from `(PRE)`, `(POST)`, and AC items. Every test block carries `(TEST-MODE) TDD`.
 2. Run the **Generator** targeting 100% pass rate on those tests.
+
+TDD mode inverts the order — tests define the target, Generator satisfies them — and gives you an objective completion signal.
+
+### What annotations the Generator writes
+
+Every `[ANN]` block produced by the Generator contains:
+
+| Label | Value at generation |
+|---|---|
+| `(ANN-ID)` | Freshly generated `ANN-<8-hex>`; stable for the lifetime of the unit |
+| `(ORIGIN)` | RSF item IDs this unit implements |
+| `(TASK)` | Declarative statement of what the unit does |
+| `(CONTEXT)` | Where and why the unit is used |
+| `(CONSTRAINT)` | Hard rules or invariants applying to this unit |
+| `(PRE)` / `(POST)` | Preconditions and postconditions for functions and methods |
+| `(INPUT)` / `(OUTPUT)` | Named parameters and return values with types |
+| `(DEPENDS-ON)` | `ANN-<8-hex>` IDs of units this unit directly calls |
+| `(AGENT)` | `Generator` |
+| `(VERIFIED)` | `false` |
+| `(ROUND)` | `0` |
+
+These labels are the shared language that all subsequent agents read. They are what makes a stateless Reviewer or Refiner effective without needing access to the original conversation.
 
 ---
 
 ## Step 6 — Review
 
-Run the **Reviewer** agent (`sdais/prompts/reviewer.md`). Pass the current round number (1 after the first Generate pass).
+**Prompt:** `sdais/prompts/reviewer.md` | **Recommended model:** High-reasoning or high-coding (e.g. Claude Opus or Sonnet)
 
-The Reviewer:
-- Checks every `[ANN]` block: `(ORIGIN)` validity, `(TASK)` accuracy, `(PRE)`/`(POST)` enforcement, `(CONSTRAINT)` respect, FR and AC coverage.
-- Runs a dependency cascade check: when a block is set `(VERIFIED) false`, all blocks whose `(DEPENDS-ON)` references that block's `(ANN-ID)` receive a Medium cascade finding.
-- Sets `(VERIFIED) true` on clean blocks.
+Run the Reviewer after every Generate or Refine pass. Pass the current round number (1 after the first Generate pass).
 
-After the pass the Reviewer outputs:
+The Reviewer checks every `[ANN]` block:
+
+- Is `(ORIGIN)` pointing to a real, active RSF item?
+- Does the code actually implement what `(TASK)` declares?
+- Are `(PRE)` and `(POST)` enforced in the implementation?
+- Are all `(CONSTRAINT)` labels respected?
+- Is every FR covered, and does at least one AC pass?
+
+It also runs a **dependency cascade check**: when a block is set `(VERIFIED) false`, every block whose `(DEPENDS-ON)` references that block's `(ANN-ID)` receives an automatic Medium cascade finding. This prevents silent propagation of errors through the call graph.
+
+After the pass the Reviewer outputs a summary:
 
 ```
 Round 1 review complete.
@@ -175,32 +254,37 @@ Clean: 12 blocks.
 Unaddressed RSF items (if any): AC-0003
 ```
 
+Clean blocks are set `(VERIFIED) true` and are not touched again unless their dependencies change.
+
 ---
 
-## Step 7 — Refine (if violations exist)
+## Step 7 — Refine
 
-Run the **Refiner** agent (`sdais/prompts/refiner.md`) with the same round number.
+**Prompt:** `sdais/prompts/refiner.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
-The Refiner:
-- Corrects each violation as directed by `(HINT:n)`.
+Run the Refiner after every Review pass that contains violations. Pass the same round number used by the Reviewer.
+
+The Refiner works block by block through every `(VERIFIED) false` block:
+
+- Corrects the code as directed by each `(HINT:n)`.
 - Appends `(FINDING:n:STATUS) Resolved — <rationale>` for each fix.
-- If a descriptive annotation field becomes incorrect after a code fix, updates the field and appends `(FIELD-CHANGE:n)` documenting the change.
-- Marks `(VERIFIED) true` when all findings in a block are resolved.
-- Marks unresolvable findings `Waived — requires RSF amendment`.
+- If a code fix makes a descriptive label inaccurate (e.g. `(TASK)` no longer matches), updates the label and appends `(FIELD-CHANGE:n)` documenting what changed and why.
+- Sets `(VERIFIED) true` when all findings in a block are resolved.
+- Marks unresolvable findings `Waived — requires RSF amendment` rather than silently papering over them.
 
 Return to Step 6 at round N+1. Repeat until the Reviewer reports zero violations.
 
-If remaining violations are all `Waived`, amend the RSF (new version), re-audit from Step 2, and restart generation.
+If remaining violations are all `Waived`, the RSF needs amendment: increment the RSF version, re-audit from Step 2, and restart generation. Waived findings are not ignored — they are evidence that the specification and implementation cannot be reconciled without changing the requirements.
 
 ---
 
 ## Step 8 — Human Approval Gate
 
-When the Reviewer reports zero violations and all ACs pass:
+When the Reviewer reports zero violations and all ACs pass, you make the final call:
 
-- **Approve** — synthesis complete. Archive RSF files and annotated codebase together.
-- **Amend RSF** — increment RSF version, restart loop from Step 2 with the existing codebase as context.
-- **Reject** — provide written rationale; restart from Step 5.
+- **Approve** — synthesis is complete. Archive RSF files and annotated codebase together in git. Record the approval: `Approved: RSF v<N>, Round <R>`.
+- **Amend RSF** — requirements have changed or the result reveals a gap. Increment the RSF version, restart from Step 2 with the existing annotated codebase as context.
+- **Reject** — the implementation is correct but you want a different approach. Provide written rationale and restart from Step 5.
 
 ---
 
@@ -208,8 +292,12 @@ When the Reviewer reports zero violations and all ACs pass:
 
 ### Security Audit
 
-Run the **SecurityAuditor** agent (`sdais/prompts/security-auditor.md`) on demand or after generation. It checks `(CONSTRAINT:SEC)` labels and scans for hard-coded credentials, unvalidated inputs passed to sensitive operations, and missing authorisation checks. It uses the same `(FINDING:n)` / `(HINT:n)` mechanism as the Reviewer; findings are prefixed `SEC:`.
+**Prompt:** `sdais/prompts/security-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
+
+Run the SecurityAuditor on demand or after generation. It checks all `(CONSTRAINT:SEC)` labels and scans for hard-coded credentials, unvalidated inputs passed to sensitive operations, missing authorisation checks, and unsafe cryptography. It uses the same `(FINDING:n)` / `(HINT:n)` mechanism as the Reviewer so findings flow directly to the Refiner. Security findings are prefixed `SEC:`.
 
 ### Test Generation (Standard Mode)
 
-After all `[ANN]` blocks are `(VERIFIED) true`, run the **TestGenerator** agent in Standard mode (`sdais/prompts/test-generator.md`, specify "Standard"). It derives test functions from `(PRE)`, `(POST)`, and AC items. It reads `[ANN]` blocks in implementation files but does not modify them.
+**Prompt:** `sdais/prompts/test-generator.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
+
+After all `[ANN]` blocks are `(VERIFIED) true`, run TestGenerator in Standard mode. It derives test functions from `(PRE)`, `(POST)`, and AC items in the verified implementation. It reads annotation blocks in implementation files but does not modify them.
