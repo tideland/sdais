@@ -8,15 +8,40 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
-## [v0.9.0] — 2026-05-08
+## [v0.9.0] — 2026-05-09
+
+### Added
+- `docs/GLOSSARY.md` — new reference document listing all paradigm acronyms,
+  document set acronyms (RSF, RAR, RES, CDF, ADF), RSF item types, RAR
+  finding categories, RES item types, CDF category prefixes, and the complete
+  `[ANN]` annotation block identifier set (core labels, specialised constraint
+  labels, structural labels, traceability labels, review finding labels, and
+  agent role values).
 
 ### Changed
-- **SemanticAuditor** now stages version copies: after writing RAR finding
-  files the agent copies each affected RSF item verbatim to
-  `sdais/rsf/v<N+1>/` (creating the directory if absent). The human amends
-  the pre-staged copies for Fix/Drop/Supersede/Split resolutions and deletes
-  the copy for Waive resolutions. Step 0.3 updated accordingly.
-- Version bumped from v0.8.0 to v0.9.0.
+- **`README.md`** rewritten: now a concise entry point covering the
+  installation procedure and the human-controlled loops for both greenfield
+  and re-engineering workflows. Detailed concepts and step-by-step
+  instructions moved to the `docs/` guides. Links added to
+  `docs/INTRODUCTION.md`, `docs/GREENFIELD.md`, `docs/RE-ENGINEERING.md`,
+  and `docs/GLOSSARY.md`.
+- **`docs/INTRODUCTION.md`** rewritten: narrative document taking the reader
+  through the long-term problem SDAIS addresses (broken intent-to-artefact
+  chain), the specification-as-truth premise, the team-of-specialists model
+  with a full prompt-and-recommended-model table, the role of `[ANN]`
+  annotation blocks as inter-agent memory, and the complete development
+  lifecycle. Links added to `docs/GREENFIELD.md`, `docs/RE-ENGINEERING.md`,
+  and `docs/GLOSSARY.md`.
+- **`docs/GREENFIELD.md`** enhanced: Mermaid process diagram added; each
+  step now carries a `Prompt` and `Recommended model` header; Generator step
+  expanded with a table of all annotation labels and their initial values;
+  explanatory context added to every step explaining *why* it matters.
+- **`docs/RE-ENGINEERING.md`** enhanced: Mermaid process diagram added; each
+  step now carries a `Prompt` and `Recommended model` header; language-reset
+  behaviour for `lang-` CDFs documented; step numbering extended through 10
+  to show alignment with the greenfield loop. Links added to
+  `docs/GREENFIELD.md` and `docs/GLOSSARY.md`.
+- Version bumped from v0.8.0 to v0.9.0 (2026-05-08).
 - `install.sh` and `update.sh` version strings updated to v0.9.0.
 
 ---
