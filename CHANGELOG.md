@@ -60,7 +60,7 @@ version will advance to v1.0.0 on first stable release.
 - **`docs/GREENFIELD.md`**: installed prompts list and Mermaid diagram updated.
 - **`README.md`**: Phase 0 (optional drafting) added to the greenfield human loop.
 - Version bumped from v0.9.0 to v0.10.0.
-- `install.sh` and `update.sh` version strings updated to v0.10.0.
+- `install`, `update`, and `sdais` version strings updated to v0.10.0.
 
 ---
 
