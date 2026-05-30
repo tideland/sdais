@@ -1,6 +1,6 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Version:** v0.9.0 | **Status:** Draft | **License:** BSD 3-Clause
+**Version:** v0.10.0 | **Status:** Draft | **License:** BSD 3-Clause
 
 SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
 
@@ -14,15 +14,15 @@ Copy the SDAIS distribution files into your project root:
 
 ```
 SDAIS.md
-install.sh
-update.sh
+install
+update
 sdais-vX.Y.Z.tgz   ← or the scaffold/ directory from the repo
 ```
 
 Then run:
 
 ```
-bash install.sh <project-name>
+bash install <project-name>
 ```
 
 This creates `AGENTS.md` at the project root and the full `sdais/` scaffold with all prompt files and templates.
@@ -30,7 +30,7 @@ This creates `AGENTS.md` at the project root and the full `sdais/` scaffold with
 To upgrade an existing project to a new SDAIS version, replace the distribution files and run:
 
 ```
-bash update.sh --from <old-version>
+bash update --from <old-version>
 ```
 
 ---
@@ -39,9 +39,13 @@ bash update.sh --from <old-version>
 
 You write specifications. AI writes code. The loop looks like this:
 
+**Phase 0 — Draft (optional)**
+
+If you find it easier to start with free-form prose, write your ideas into `sdais/spec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field on every item. Skip this phase if you prefer to author RSF items directly.
+
 **Phase 1 — Specify**
 
-1. Author requirement files (FR, NFR, C, E, AC) in `sdais/rsf/v1/` using the installed templates.
+1. Author or review requirement files (FR, NFR, C, E, AC) in `sdais/rsf/v1/` using the installed templates.
 2. Run the **SemanticAuditor** — it reads your requirements and writes findings for anything ambiguous, incomplete, or contradictory.
 3. Resolve each finding: fix the requirement in place, drop it, split it, or waive the finding with a rationale.
 4. If you have environment items (`E-`), run the **Grounder** to verify they exist in your infrastructure.
@@ -81,9 +85,9 @@ You have an existing codebase. You want to migrate it, modularise it, or bring i
 | File / Directory | Purpose |
 |---|---|
 | `SDAIS.md` | Full normative specification — single source of truth |
-| `install.sh` | Scaffolds a new project |
-| `update.sh` | Upgrades an existing project's scaffold |
-| `scaffold/` | Prompt files and templates installed by `install.sh` |
+| `install` | Scaffolds a new project |
+| `update` | Upgrades an existing project's scaffold |
+| `scaffold/` | Prompt files and templates installed by `install` |
 | `docs/INTRODUCTION.md` | Concepts, motivation, agent roles, and prompt reference |
 | `docs/GREENFIELD.md` | Detailed greenfield workflow with process diagram |
 | `docs/RE-ENGINEERING.md` | Detailed re-engineering workflow with process diagram |

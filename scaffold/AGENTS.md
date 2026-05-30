@@ -6,9 +6,10 @@ code. Read sdais/SDAIS.md for the full workflow specification.
 
 ## Agent Roles
 
-| Role            | Prompt file                        | When to invoke                          |
-|-----------------|------------------------------------|----------------------------------------|
-| SemanticAuditor | sdais/prompts/semantic-auditor.md  | Before each generation pass             |
+| Role                  | Prompt file                               | When to invoke                                    |
+|-----------------------|-------------------------------------------|--------------------------------------------------|
+| RequirementsEngineer  | sdais/prompts/requirements-engineer.md    | Before RSF authoring; refines loose prose into RSF|
+| SemanticAuditor       | sdais/prompts/semantic-auditor.md         | Before each generation pass                       |
 | Grounder        | sdais/prompts/grounder.md          | After audit Cleared; when E- items exist|
 | Designer        | sdais/prompts/designer.md          | Optional; after Grounder, before Generator|
 | Generator       | sdais/prompts/generator.md         | After RSF is Cleared by audit           |
@@ -30,6 +31,8 @@ SDAIS workflow defined in sdais/SDAIS.md.
 sdais/
 ├── SDAIS.md
 ├── prompts/          ← one file per agent role
+├── spec/             ← loose prose input; versioned by subdirectory
+│   └── v1/           ← initial human prose (any filenames, any format)
 ├── rsf/              ← requirements; one file per item; versioned by subdirectory
 │   └── v1/           ← items introduced or amended in version 1
 ├── adf/              ← architecture definition files; produced by Designer

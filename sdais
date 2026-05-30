@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# sdais — launch an SDAIS agent role with a specific tool and model
+# Usage: sdais <tool> <model> <role>
+# Examples:
+#   sdais claude claude-opus-4-5  RequirementsEngineer
+#   sdais claude claude-sonnet-4-5 semantic-auditor
+#   sdais ollama gemma4            Generator
+#
+# Run from the project root (the directory that contains sdais/prompts/).
+
+set -euo pipefail
+
+TOOL="${1:?Usage: sdais <tool> <model> <role>}"
+MODEL="${2:?Usage: sdais <tool> <model> <role>}"
+ROLE="${3:?Usage: sdais <tool> <model> <role>}"
+
+PROMPTS_DIR="sdais/prompts"
+
+if [[ ! -d "$PROMPTS_DIR" ]]; then
+    echo "error: sdais/prompts/ not found — run sdais from the project root." >&2
+    exit 1
+fi
+
+# Convert CamelCase role name to lowercase-hyphenated prompt filename.
+#   RequirementsEngineer → requirements-engineer
+#   SemanticAuditor      → semantic-auditor
+camel_to_kebab() {
+    echo "$1" | sed 's/\([A-Z]\)/-\1/g' | tr '[:upper:]' '[:lower:]' | sed 's/^-//'
+}
+
+# Accept CamelCase (RequirementsEngineer) or kebab-case (requirements-engineer)
+PROMPT_FILE="$PROMPTS_DIR/$(camel_to_kebab "$ROLE").md"
+if [[ ! -f "$PROMPT_FILE" ]]; then
+    PROMPT_FILE="$PROMPTS_DIR/$ROLE.md"
+fi
+
+if [[ ! -f "$PROMPT_FILE" ]]; then
+    echo "error: no prompt found for role '$ROLE'" >&2
+    echo "" >&2
+    echo "Available roles:" >&2
+    for f in "$PROMPTS_DIR"/*.md; do
+        printf "  %s\n" "$(basename "$f" .md)"
+    done >&2
+    exit 1
+fi
+
+SYSTEM_PROMPT="$(cat "$PROMPT_FILE")"
+
+case "$TOOL" in
+    claude)
+        exec claude --model "$MODEL" --system "$SYSTEM_PROMPT"
+        ;;
+    ollama)
+        exec ollama run "$MODEL" --system "$SYSTEM_PROMPT"
+        ;;
+    *)
+        echo "error: unsupported tool '$TOOL'" >&2
+        echo "" >&2
+        echo "Supported tools: claude, ollama" >&2
+        echo "To add a tool, edit the 'case' block in this script." >&2
+        exit 1
+        ;;
+esac

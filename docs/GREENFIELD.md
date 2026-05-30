@@ -1,6 +1,6 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.9.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.10.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The greenfield workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
 
@@ -11,8 +11,16 @@ The greenfield workflow applies when you are building a new system from a clean 
 ```mermaid
 flowchart TD
     A([Start]) --> B[Step −1\nInstall scaffold]
-    B --> C[Step 1\nAuthor RSF items\nFR · NFR · C · E · AC]
-    C --> D[Step 2\nSemanticAuditor]
+    B --> B2{Draft prose?}
+    B2 -- Yes --> B3[Step 0\nWrite loose prose\nsdais/spec/v1/]
+    B3 --> B4[RequirementsEngineer\nClarification loop]
+    B4 --> B5{Open questions?}
+    B5 -- Yes --> B6[Answer [[QN]] questions\nadd [[AN]] in spec/vN+1/]
+    B6 --> B4
+    B5 -- No --> B7[RequirementsEngineer\nRSF Generation]
+    B7 --> C
+    B2 -- No: author directly --> C
+    C[Step 1\nAuthor / review RSF items\nFR · NFR · C · E · AC] --> D[Step 2\nSemanticAuditor]
     D --> E{Findings?}
     E -- Yes --> F[Resolve findings\nFix · Drop · Supersede · Split · Waive]
     F --> C
@@ -36,6 +44,8 @@ flowchart TD
 
     style A fill:#2d6a4f,color:#fff
     style R fill:#2d6a4f,color:#fff
+    style B4 fill:#1d3557,color:#fff
+    style B7 fill:#1d3557,color:#fff
     style D fill:#1d3557,color:#fff
     style H fill:#1d3557,color:#fff
     style K fill:#457b9d,color:#fff
@@ -51,10 +61,10 @@ Dark blue = AI agent step. Teal = optional AI agent step. Orange = human decisio
 
 ## Step −1 — Install the Scaffold
 
-Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install.sh`, `update.sh`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory from the repo), then run:
+Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install`, `update`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory from the repo), then run:
 
 ```
-bash install.sh <project-name>
+bash install <project-name>
 ```
 
 This creates `AGENTS.md` at the project root and the `sdais/` directory with all prompt files and templates:
@@ -65,6 +75,7 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
 └── sdais/
     ├── SDAIS.md
     ├── prompts/
+    │   ├── requirements-engineer.md
     │   ├── semantic-auditor.md
     │   ├── grounder.md
     │   ├── designer.md
@@ -87,7 +98,30 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
             └── f-0000-template.md
 ```
 
-Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
+Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update` to refresh them when upgrading SDAIS.
+
+---
+
+## Step 0 — Draft Your Requirements (optional)
+
+**Prompt:** `sdais/prompts/requirements-engineer.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
+
+Writing formal requirements from scratch is hard. Step 0 is an optional on-ramp: you write rough prose describing the system you want, and the RequirementsEngineer turns it into formal RSF items through an iterative clarification loop.
+
+### When to use it
+
+Use Step 0 when you have a clear idea of what you want but struggle to express it in the structured FR/NFR/C/E/AC format. Skip it if you are comfortable authoring RSF items directly.
+
+### How it works
+
+1. Create `sdais/spec/v1/` and write one or more files describing what the system should do. No filename convention or format constraint applies — bullet points, paragraphs, or any mixture.
+2. Run the **RequirementsEngineer**. It reads every spec file and inserts `[[QN question?]]` markers inline wherever text is ambiguous, uses undefined terms, or is missing a measurable bound or acceptance criterion.
+3. Open the files in `sdais/spec/v2/` and answer every `[[QN question?]]` by adding `[[AN your answer]]` on the immediately following line. Do not remove or reword `[[QN]]` markers — they are the agent's domain.
+4. Re-run the RequirementsEngineer. Repeat until it reports zero open questions.
+5. With no open questions remaining, the agent switches to RSF Generation mode: it reads the clean spec files and writes one RSF item file per derived requirement into `sdais/rsf/v1/`, each carrying a `**Source:**` field pointing to the spec file it was derived from.
+6. Review `sdais/rsf/v1/`: amend wording, delete artefacts, and add anything the agent could not derive. The `**Source:**` field traces each item back to the original prose.
+
+Proceed to Step 1 (or directly to Step 2 if satisfied with the generated RSF).
 
 ---
 

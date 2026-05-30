@@ -1,7 +1,7 @@
 # SDAIS — Specification-Driven AI Synthesis
 
 **Date:** 2026-05-08
-**Version:** v0.9.0
+**Version:** v0.10.0
 **Status:** Draft
 
 ---
@@ -56,6 +56,7 @@ Pin the model version used for each agent in your project's `AGENTS.md` or equiv
 
 | Role | Minimum recommended tier | Reason |
 |---|---|---|
+| RequirementsEngineer | High reasoning (e.g. Claude Opus) | Ambiguity detection in free-form prose and requirement derivation benefit from deeper inference |
 | SemanticAuditor, SecurityAuditor | High reasoning (e.g. Claude Opus) | Ambiguity detection and security analysis benefit from deeper inference |
 | Generator, Refiner, Analyzer, Re-engineering | High coding ability (e.g. Claude Sonnet) | Code synthesis and annotation precision are primary demands |
 | Reviewer | High reasoning or high coding (e.g. Claude Opus or Sonnet) | Finding quality directly determines loop convergence speed |
@@ -77,7 +78,8 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 ├── AGENTS.md
 └── sdais/
     ├── SDAIS.md              ← paradigm specification (distribution file)
-    ├── prompts/              ← installed by install.sh; refreshed by update.sh
+    ├── prompts/              ← installed by install; refreshed by update
+    │   ├── requirements-engineer.md
     │   ├── semantic-auditor.md
     │   ├── grounder.md
     │   ├── designer.md
@@ -88,6 +90,11 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │   ├── re-engineering.md
     │   ├── security-auditor.md
     │   └── test-generator.md
+    ├── spec/
+    │   ├── v1/
+    │   │   └── <anything>.md ← initial loose prose; any filename, any format
+    │   └── v2/
+    │       └── <same names>  ← RequirementsEngineer output with [[QN]] questions
     ├── rsf/
     │   ├── v1/
     │   │   ├── fr-0000-template.md       ← template; copy to start a new FR
@@ -129,13 +136,14 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 
 **Version directory semantics:**
 
+- Each `spec/v<N>/` directory is one iteration of the RequirementsEngineer clarification loop. The human writes initial prose into `spec/v1/`; the agent creates `spec/v2/` with `[[QN]]` questions; the human answers in `spec/v2/`; the agent creates `spec/v3/` with answers incorporated, and so on. Files are not deleted between versions — each version is an immutable snapshot. The highest version that contains no open `[[QN]]` markers is the clean spec used for RSF generation.
 - Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative.
 - Each `rar/v<N>/` directory contains the findings produced by auditing `rsf/v<N>/`. A finding file is never moved; it is the permanent record for that audit.
 - Each `res/v<N>/` directory contains RES items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that re-engineering pass. CDFs are not versioned like RSF items; a new version directory is used when a new re-engineering pass is initiated.
 - Each `adf/v<N>/` directory contains the Architecture Definition File (`design.md`) produced by the Designer for version N. The directory is absent if the Designer step was skipped.
-- The distribution set is `SDAIS.md`, `install.sh`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `install.sh <project-name>` once to scaffold a new project; run `update.sh` to upgrade an existing one. All other files under `sdais/` are installed, generated, or authored in place.
-- The `prompts/` directory is installed by `install.sh` and refreshed by `update.sh`.
+- The distribution set is `SDAIS.md`, `install`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `install <project-name>` once to scaffold a new project; run `update` to upgrade an existing one. All other files under `sdais/` are installed, generated, or authored in place.
+- The `prompts/` directory is installed by `install` and refreshed by `update`.
 
 **File naming — why no date in the filename:**
 Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-myproject-v1-2026-04-21.md`) to timestamp versions without relying on version control. In the current structure each file carries its date in its header metadata, and git history is the authoritative timeline. Dates do not appear in filenames.
@@ -145,6 +153,36 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
 ## Lifecycle
 
 ```
+┌──────────────────────────────────────────────────────┐
+│  Human: loose prose in sdais/spec/v1/                │
+│  (any filenames, any format — no constraints)        │
+└────────────────────────┬─────────────────────────────┘
+                         │
+                         ▼
+          ┌──────────────────────────┐
+          │ AI: RequirementsEngineer │  inserts [[QN]] questions
+          │ (Clarification mode)     │  for every ambiguity found
+          └──────────┬───────────────┘
+                     │
+          ┌──────────┴──────────┐
+          │  open questions?    │
+          └──┬───────────────┬──┘
+             │ yes           │ no (spec clean)
+             ▼               │
+   Human adds [[AN answer]]  │
+   after each [[QN]] in      │
+   spec/v<N+1>/              │
+             │               ▼
+             └──────►  AI: RequirementsEngineer
+                       (RSF Generation mode)
+                       writes sdais/rsf/v1/
+                       with **Source:** field
+                             │
+                             ▼
+                   Human reviews rsf/v1/;
+                   amends, adds, or deletes
+                             │
+                             ▼
 ┌──────────────────────────────────────────────────────┐
 │  Human: Requirements Specification (RSF)             │
 │  FR · NFR · Constraints · Environment · Acceptance   │
@@ -215,34 +253,92 @@ For re-engineering of existing systems, the lifecycle starts at SDAIS-RE (see be
 
 ## Usage Guide
 
+### Step −2 — Requirements Engineering (optional)
+
+This step is optional. If you prefer to author RSF items directly, skip to
+Step −1. Use this step when you have rough ideas but struggle to write formal
+requirements from scratch.
+
+#### Step −2.1 — Write initial specification prose
+
+Create `sdais/spec/v1/` and write one or more files describing what the system
+should do. No filename convention or structure is required — bullet points,
+paragraphs, conversation fragments, or any other form are all accepted.
+
+#### Step −2.2 — Run the RequirementsEngineer (Clarification mode)
+
+Provide all files in `sdais/spec/v1/` to the RequirementsEngineer agent. Use
+the prompt from `sdais/prompts/requirements-engineer.md`.
+
+The agent reads every spec file and identifies passages that are ambiguous, use
+undefined terms, lack measurable bounds, or are missing acceptance criteria. For
+each such passage it inserts a `[[QN question?]]` marker inline immediately
+after the affected text, then writes the result to `sdais/spec/v2/` under the
+same filename.
+
+#### Step −2.3 — Answer the questions
+
+Open each file in `sdais/spec/v2/` that contains a `[[QN question?]]` marker.
+For each marker add `[[AN your answer]]` on the immediately following line.
+
+Do not remove, reword, or add `[[QN]]` markers — questions are written
+exclusively by the RequirementsEngineer, not by humans.
+
+Re-run the RequirementsEngineer. Repeat until the agent reports zero open
+questions.
+
+#### Step −2.4 — RSF Generation
+
+When no open `[[QN]]` questions remain the RequirementsEngineer switches to RSF
+Generation mode automatically. It reads the clean spec files and writes one RSF
+item file per derived requirement into `sdais/rsf/v1/`. Each generated item
+carries a `**Source:**` field listing the spec file(s) it was derived from.
+
+#### Step −2.5 — Human review of generated RSF
+
+Review every item in `sdais/rsf/v1/`:
+
+- Amend wording that is technically correct but does not match your intent.
+- Delete items that are artefacts or duplicates.
+- Add items the RequirementsEngineer could not derive (it can only work from
+  what is in the spec prose).
+
+The `**Source:**` field is the audit trail linking each RSF item back to human
+intent. Do not delete it.
+
+When satisfied with `sdais/rsf/v1/`, proceed to Step −1 or directly to Step 0.
+
+---
+
 ### Step −1 — Initialise the Project
 
-Before authoring any RSF items, run `install.sh` from the project root to scaffold the `sdais/` directory tree:
+Before authoring any RSF items, run `install` from the project root to scaffold the `sdais/` directory tree:
 
 ```
-bash install.sh <project-name>
+bash install <project-name>
 ```
 
 This copies `SDAIS.md` to `sdais/SDAIS.md`, installs all prompt files into `sdais/prompts/`, installs all `*-0000-template.md` files, and writes `AGENTS.md` at the project root with the project name substituted.
 
 ### Step −1b — Update Scaffolding to a New SDAIS Version
 
-When upgrading to a new SDAIS version, replace `SDAIS.md`, `install.sh`, and `update.sh` (and the tgz or `scaffold/` directory) with the new release, then run from the project root:
+When upgrading to a new SDAIS version, replace `SDAIS.md`, `install`, and `update` (and the tgz or `scaffold/` directory) with the new release, then run from the project root:
 
 ```
-bash update.sh --from <old-version>
+bash update --from <old-version>
 ```
 
-`update.sh` replaces all scaffold files while leaving all project content untouched.
+`update` replaces all scaffold files while leaving all project content untouched.
 
 **What is scaffolding vs. project content:**
 
-| Refreshed by update.sh | Left untouched |
+| Refreshed by update | Left untouched |
 |---|---|
-| `AGENTS.md` (Custom Agents Extension preserved) | `sdais/rsf/v*/fr-NNNN-*.md` (NNNN ≥ 0001) |
-| All files in `sdais/prompts/` | `sdais/rsf/v*/nfr-NNNN-*.md` (NNNN ≥ 0001) |
-| All `*-0000-template.md` files | `sdais/rsf/v*/c-NNNN-*.md` (NNNN ≥ 0001) |
-| `sdais/SDAIS.md` | `sdais/rsf/v*/e-NNNN-*.md` (NNNN ≥ 0001) |
+| `AGENTS.md` (Custom Agents Extension preserved) | `sdais/spec/v*/*.md` |
+| All files in `sdais/prompts/` | `sdais/rsf/v*/fr-NNNN-*.md` (NNNN ≥ 0001) |
+| All `*-0000-template.md` files | `sdais/rsf/v*/nfr-NNNN-*.md` (NNNN ≥ 0001) |
+| `sdais/SDAIS.md` | `sdais/rsf/v*/c-NNNN-*.md` (NNNN ≥ 0001) |
+| | `sdais/rsf/v*/e-NNNN-*.md` (NNNN ≥ 0001) |
 | | `sdais/rsf/v*/ac-NNNN-*.md` (NNNN ≥ 0001) |
 | | `sdais/rar/v*/f-NNNN-*.md` (NNNN ≥ 0001) |
 | | `sdais/res/v*/*.md` |
@@ -339,6 +435,7 @@ Each RSF item is one Markdown file in `sdais/rsf/v<N>/`. The prefix encodes the 
 **Status:** Active
 **Introduced:** v1 (2026-04-21)
 **Last modified:** v1 (2026-04-21)
+**Source:** sdais/spec/v3/auth-requirements.md
 
 ## Requirement
 
@@ -348,6 +445,11 @@ with HTTP 401.
 
 Related: [FR-0003], [NFR-0002], [AC-0001]
 ```
+
+The `**Source:**` field records which spec file(s) are the primary reason for
+this item. It is written by the RequirementsEngineer when generating RSF items
+from prose; it may be omitted when a human authors an RSF item directly without
+going through Step −2.
 
 Environment (`E-`) items carry an additional field set by the Grounder:
 
@@ -945,9 +1047,10 @@ Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any u
 
 ### Agent Role Values (for `(AGENT)`)
 
-| Value             | Description                                                                    |
-|-------------------|--------------------------------------------------------------------------------|
-| `Generator`       | Initial synthesis from RSF                                                     |
+| Value                    | Description                                                                    |
+|--------------------------|--------------------------------------------------------------------------------|
+| `RequirementsEngineer`   | Clarification and RSF derivation from free-form prose in `sdais/spec/`        |
+| `Generator`              | Initial synthesis from RSF                                                     |
 | `Reviewer`        | Validation pass; sets `(VERIFIED)` and writes finding labels                   |
 | `Refiner`         | Corrects violations directed by `(HINT:n)`; writes `(FINDING:n:STATUS)`        |
 | `SecurityAuditor` | Specialised pass for `(CONSTRAINT:SEC)` compliance; may write finding labels   |
@@ -999,6 +1102,7 @@ The SemanticAuditor assigns one of the following categories to each finding:
 **Introduced:** v<N> (<YYYY-MM-DD>)
 **Last modified:** v<N> (<YYYY-MM-DD>)
 **Verified:** Pending | true    ← Environment items only; omitted for all other types
+**Source:** sdais/spec/v<N>/filename.md  ← omit when item was authored directly without Step −2
 
 ## Requirement
 
@@ -1088,6 +1192,7 @@ The `0000` files in `sdais/rsf/v1/` and `sdais/rar/v1/` are inert scaffolds. The
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
+**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1107,6 +1212,7 @@ Related: [Cross-references to related items, e.g. [NFR-0001], [AC-0001]. Omit se
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
+**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1127,6 +1233,7 @@ Related: [Cross-references to related items. Omit section if none.]
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
+**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1147,6 +1254,7 @@ Related: [Cross-references to related items. Omit section if none.]
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
 **Verified:** Pending
+**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1168,6 +1276,7 @@ Related: [Cross-references to related items. Omit section if none.]
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
+**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 

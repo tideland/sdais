@@ -8,6 +8,62 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
+## [v0.10.0] — 2026-05-28
+
+### Added
+- **RequirementsEngineer agent** (`sdais/prompts/requirements-engineer.md`) — new
+  role that bridges free-form human prose and the formal RSF. Operates in two
+  auto-detected modes:
+  - *Clarification mode*: reads `sdais/spec/v<N>/`, incorporates answered `[[AN]]`
+    responses into prose, inserts new `[[QN question?]]` markers for every remaining
+    ambiguity (undefined terms, missing measurable bounds, absent acceptance
+    criteria), and writes the result to `sdais/spec/v<N+1>/`.
+  - *RSF Generation mode*: triggered automatically when no open `[[QN]]` markers
+    remain; derives FR, NFR, C, E, and AC items from the clean prose and writes
+    them to `sdais/rsf/v1/`, each carrying a `**Source:**` field.
+- **`sdais/spec/` directory** — new versioned directory tree for pre-RSF prose.
+  `spec/v1/` is created by the human; subsequent versions are created by the
+  RequirementsEngineer. Files are never deleted across versions; each directory is
+  an immutable snapshot.
+- **`[[QN question?]]` / `[[AN answer]]` syntax** — inline clarification markers.
+  Questions are written exclusively by the RequirementsEngineer. Humans respond
+  by placing `[[AN answer]]` on the immediately following line; they never add,
+  remove, or reword `[[QN]]` markers.
+- **`**Source:**` field** on all five RSF item templates (`fr-`, `nfr-`, `c-`, `e-`,
+  `ac-0000-template.md`). Populated by the RequirementsEngineer with the spec
+  file(s) that are the primary reason for each generated item; optional for
+  human-authored items.
+- **Step −2 — Requirements Engineering** in `SDAIS.md` — new normative section
+  (five sub-steps) documenting the prose-to-RSF workflow.
+- **Step 0** added to `docs/GREENFIELD.md` — optional on-ramp section with
+  process instructions and an updated Mermaid diagram.
+
+### Changed
+- **Lifecycle diagram** in `SDAIS.md` extended: spec clarification loop and
+  RequirementsEngineer boxes prepend the existing diagram.
+- **Directory structure** in `SDAIS.md` and `AGENTS.md` template updated with
+  `spec/` subtree and `requirements-engineer.md` in `prompts/`.
+- **Version directory semantics** in `SDAIS.md`: `spec/v<N>/` semantics documented.
+- **Update table** in `SDAIS.md`: `sdais/spec/v*/*.md` added to the "left untouched"
+  column.
+- **Agent roles table** in `SDAIS.md`, `AGENTS.md`, and `docs/INTRODUCTION.md`
+  updated to include RequirementsEngineer.
+- **Model tier table** in `SDAIS.md`: RequirementsEngineer row added (High
+  reasoning recommended).
+- **Agent Role Values table** in `SDAIS.md`: `RequirementsEngineer` entry added.
+- **RSF item file format** in `SDAIS.md`: `**Source:**` field documented in the
+  canonical example and the Individual File Format specification.
+- **Template file listings** in `SDAIS.md`: `**Source:**` added to all five
+  template examples.
+- **`docs/INTRODUCTION.md`**: RequirementsEngineer added to the agent table and
+  the lifecycle list (step 0).
+- **`docs/GREENFIELD.md`**: installed prompts list and Mermaid diagram updated.
+- **`README.md`**: Phase 0 (optional drafting) added to the greenfield human loop.
+- Version bumped from v0.9.0 to v0.10.0.
+- `install.sh` and `update.sh` version strings updated to v0.10.0.
+
+---
+
 ## [v0.9.0] — 2026-05-09
 
 ### Added

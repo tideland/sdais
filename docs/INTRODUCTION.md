@@ -1,6 +1,6 @@
 # SDAIS — Introduction
 
-**Version:** v0.9.0 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.10.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 
@@ -42,6 +42,7 @@ The paradigm defines a set of specialist agent roles, each with a focused respon
 
 | Prompt | Role | Purpose | Recommended tier |
 |---|---|---|---|
+| `requirements-engineer.md` | RequirementsEngineer | Transforms loose prose in `sdais/spec/` into formal RSF items through an iterative clarification loop; inserts `[[QN]]` questions for every ambiguity and generates RSF files once the spec is clean | High-reasoning (e.g. Claude Opus) |
 | `semantic-auditor.md` | SemanticAuditor | Validates RSF items before generation: detects ambiguity, incompleteness, contradictions, and untestable acceptance criteria | High-reasoning (e.g. Claude Opus) |
 | `grounder.md` | Grounder | Verifies that every Environment item describes something that actually exists in your infrastructure | High-reasoning (e.g. Claude Opus or Sonnet) |
 | `designer.md` | Designer | Produces a module decomposition, API surface, and design decisions document (ADF) traceable to RSF items | High-reasoning (e.g. Claude Opus or Sonnet) |
@@ -75,7 +76,8 @@ This is how SDAIS maintains coherence across multiple agents, multiple rounds, a
 
 A full SDAIS project moves through a predictable lifecycle, regardless of the scale of the system:
 
-1. **Specify** — write RSF items expressing what the system must do.
+0. **Draft** (optional) — write rough prose in `sdais/spec/v1/`; the RequirementsEngineer refines it into RSF items through an iterative Q&A loop.
+1. **Specify** — write or review RSF items in `sdais/rsf/v1/`.
 2. **Audit** — the SemanticAuditor validates the specification; you resolve findings.
 3. **Ground** — the Grounder confirms infrastructure assumptions; you resolve any unresolvable items.
 4. **Design** (optional) — the Designer produces a module decomposition before any code is written.

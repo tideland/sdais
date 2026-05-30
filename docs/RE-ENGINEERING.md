@@ -1,6 +1,6 @@
 # SDAIS — Re-Engineering Workflow
 
-**Version:** v0.9.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.10.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 Most real-world systems do not start with a clean specification. They start with code — accumulated over years, built by people who are often no longer around, with intent that lives in git history at best and in tribal knowledge at worst. SDAIS-RE is the workflow for those systems.
 
@@ -64,7 +64,7 @@ Dark blue = AI agent step. Orange = human decision gate.
 
 ## Step −1 — Install the Scaffold
 
-Copy the SDAIS distribution files into your project root and run `bash install.sh <project-name>` as described in [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold is used for both workflows.
+Copy the SDAIS distribution files into your project root and run `bash install <project-name>` as described in [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold is used for both workflows.
 
 ---
 

@@ -5,6 +5,7 @@
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
 **Verified:** Pending
+**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 

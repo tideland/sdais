@@ -1,6 +1,6 @@
 # SDAIS — Glossary
 
-**Version:** v0.9.0 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.10.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 
