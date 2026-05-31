@@ -64,7 +64,7 @@ Dark blue = AI agent step. Teal = optional AI agent step. Orange = human decisio
 Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install`, `update`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory from the repo), then run:
 
 ```
-bash install <project-name>
+./install <project-name>
 ```
 
 This creates `AGENTS.md` at the project root and the `sdais/` directory with all prompt files and templates:

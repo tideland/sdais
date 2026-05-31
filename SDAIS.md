@@ -153,7 +153,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
 - Each `adf/v<N>/` directory contains the Architecture Definition File (`design.md`) produced by the Designer for version N. The directory is absent if the Designer step was skipped.
-- The distribution set is `SDAIS.md`, `install`, `update`, `sdais`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `bash install <project-name>` once to scaffold a new project; run `bash update --from <old-version>` to upgrade; run `sdais <tool> <model> <role>` to launch any agent.
+- The distribution set is `SDAIS.md`, `install`, `update`, `sdais`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `./install <project-name>` once to scaffold a new project; run `./update --from <old-version>` to upgrade; run `sdais <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
 
 **File naming — why no date in the filename:**
@@ -326,7 +326,7 @@ When satisfied with `sdais/rsf/v1/`, proceed to Step −1 or directly to Step 0.
 Before authoring any RSF items, run `install` from the project root to scaffold the `sdais/` directory tree:
 
 ```
-bash install <project-name>
+./install <project-name>
 ```
 
 This copies `SDAIS.md` to `sdais/SDAIS.md`, installs all prompt files into `sdais/prompts/`, installs all `*-0000-template.md` files, and writes `AGENTS.md` at the project root with the project name substituted.
@@ -344,7 +344,7 @@ For example: `sdais claude claude-opus-4-5 SemanticAuditor`. The launcher accept
 When upgrading to a new SDAIS version, replace `SDAIS.md`, `install`, and `update` (and the tgz or `scaffold/` directory) with the new release, then run from the project root:
 
 ```
-bash update --from <old-version>
+./update --from <old-version>
 ```
 
 `update` replaces all scaffold files while leaving all project content untouched.

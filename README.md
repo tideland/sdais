@@ -23,7 +23,7 @@ sdais-vX.Y.Z.tgz   ← or the scaffold/ directory from the repo
 Then run:
 
 ```
-bash install <project-name>
+./install <project-name>
 ```
 
 This creates `AGENTS.md` at the project root and the full `sdais/` scaffold with all prompt files and templates.
@@ -31,7 +31,7 @@ This creates `AGENTS.md` at the project root and the full `sdais/` scaffold with
 To upgrade an existing project to a new SDAIS version, replace the distribution files and run:
 
 ```
-bash update --from <old-version>
+./update --from <old-version>
 ```
 
 ## Running Agents
