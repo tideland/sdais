@@ -16,6 +16,7 @@ Copy the SDAIS distribution files into your project root:
 SDAIS.md
 install
 update
+sdais
 sdais-vX.Y.Z.tgz   ← or the scaffold/ directory from the repo
 ```
 
@@ -32,6 +33,31 @@ To upgrade an existing project to a new SDAIS version, replace the distribution 
 ```
 bash update --from <old-version>
 ```
+
+## Running Agents
+
+The `sdais` script launches any agent role against a model of your choice:
+
+```
+sdais <tool> <model> <role>
+```
+
+| Argument | Values | Example |
+|---|---|---|
+| `tool` | `claude`, `ollama` | `claude` |
+| `model` | Any model ID supported by the tool | `claude-opus-4-5` |
+| `role` | CamelCase or kebab-case role name | `RequirementsEngineer` or `requirements-engineer` |
+
+Examples:
+
+```
+sdais claude claude-opus-4-5  RequirementsEngineer
+sdais claude claude-sonnet-4-5 Generator
+sdais claude claude-opus-4-5  SemanticAuditor
+sdais ollama gemma4            Reviewer
+```
+
+Run `sdais` from the project root (the directory that contains `sdais/prompts/`). The script reads the prompt file for the role, sets it as the system prompt, and launches the model. Pin the model per role in your `AGENTS.md` to prevent version drift between rounds.
 
 ---
 
@@ -91,6 +117,7 @@ If you find it easier to start with free-form prose, write your ideas about the 
 | `SDAIS.md` | Full normative specification — single source of truth |
 | `install` | Scaffolds a new project |
 | `update` | Upgrades an existing project's scaffold |
+| `sdais` | Launcher — runs any agent role with a chosen tool and model |
 | `scaffold/` | Prompt files and templates installed by `install` |
 | `docs/INTRODUCTION.md` | Concepts, motivation, agent roles, and prompt reference |
 | `docs/GREENFIELD.md` | Detailed greenfield workflow with process diagram |

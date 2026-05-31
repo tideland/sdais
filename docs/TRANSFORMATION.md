@@ -75,7 +75,7 @@ Dark blue = AI agent step. Orange = human decision gate.
 
 ## Step −1 — Install the Scaffold
 
-Copy the SDAIS distribution files into your project root and run `bash install <project-name>` as described in [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold is used for both workflows.
+Copy the SDAIS distribution files into your project root and run `bash install <project-name>` as described in [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold and `sdais` launcher are used for both workflows.
 
 ---
 
