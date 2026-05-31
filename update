@@ -9,7 +9,7 @@
 # Project content left untouched:
 #   sdais/rsf/v*/  — items with sequence number 0001 or higher
 #   sdais/rar/v*/  — findings with sequence number 0001 or higher
-#   sdais/res/v*/  — re-engineering hypotheses
+#   sdais/trs/v*/  — transformation hypotheses
 #   sdais/cdf/v*/  — change definition files
 #   sdais/adf/v*/  — architecture definition files
 #   All source code outside sdais/

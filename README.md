@@ -10,23 +10,24 @@ Read [docs/INTRODUCTION.md](docs/INTRODUCTION.md) for the full concept and motiv
 
 ## Installation
 
-Copy the SDAIS distribution files into your project root:
+Create a directory for your project and copy the SDAIS distribution files into it:
 
 ```
-SDAIS.md
-install
-update
-sdais
-sdais-vX.Y.Z.tgz   ← or the scaffold/ directory from the repo
+mkdir my-project && cd my-project
+cp /path/to/sdais-dist/{SDAIS.md,install,update,sdais,sdais-vX.Y.Z.tgz} .
 ```
 
-Then run:
+`install` and `update` must be run from this project root — the directory that contains `SDAIS.md`, `install`, and `update`. Do not run them from inside the SDAIS distribution repository.
+
+Run the installer:
 
 ```
 ./install <project-name>
 ```
 
-This creates `AGENTS.md` at the project root and the full `sdais/` scaffold with all prompt files and templates.
+`install` creates `AGENTS.md`, the full `sdais/` scaffold with all prompt files and templates, and installs the `sdais` launcher into `~/.local/bin/sdais` so it is available as a global command. If `~/.local/bin` is not in your `PATH`, the script will tell you.
+
+`SDAIS.md` in the project root is the distribution file. `install` copies it into `sdais/SDAIS.md` — the project-local copy that agents read. These are intentionally two separate files at different paths: when you upgrade, you replace the root-level `SDAIS.md` and run `./update`, which refreshes `sdais/SDAIS.md` without touching any project content.
 
 To upgrade an existing project to a new SDAIS version, replace the distribution files and run:
 
@@ -34,9 +35,11 @@ To upgrade an existing project to a new SDAIS version, replace the distribution 
 ./update --from <old-version>
 ```
 
+---
+
 ## Running Agents
 
-The `sdais` script launches any agent role against a model of your choice:
+The `sdais` command launches any agent role against a model of your choice. It is installed globally by `./install` and must be run from the project root (the directory that contains `sdais/prompts/`):
 
 ```
 sdais <tool> <model> <role>
@@ -57,7 +60,7 @@ sdais claude claude-opus-4-5  SemanticAuditor
 sdais ollama gemma4            Reviewer
 ```
 
-Run `sdais` from the project root (the directory that contains `sdais/prompts/`). The script reads the prompt file for the role, sets it as the system prompt, and launches the model. Pin the model per role in your `AGENTS.md` to prevent version drift between rounds.
+Pin the model per role in your `AGENTS.md` to prevent version drift between rounds.
 
 ---
 
