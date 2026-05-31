@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SDAIS install script — v0.10.0
-# Usage: bash install <project-name>
+# Usage: install <project-name>
 #
 # Run from your project root. Creates AGENTS.md and the full sdais/ scaffold.
 # Requires: SDAIS.md in the same directory as this script.

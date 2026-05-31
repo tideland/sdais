@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SDAIS update script — v0.10.0
-# Usage: bash update [--from <old-version>]
+# Usage: update [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
 # AGENTS.md, sdais/SDAIS.md) with the current SDAIS version while leaving
