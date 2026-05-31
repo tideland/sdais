@@ -4,7 +4,7 @@
 
 SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
 
-Read [docs/INTRODUCTION.md](docs/INTRODUCTION.md) for the full concept and motivation. For step-by-step workflows see [docs/GREENFIELD.md](docs/GREENFIELD.md) and [docs/RE-ENGINEERING.md](docs/RE-ENGINEERING.md). Terms and acronyms are defined in [docs/GLOSSARY.md](docs/GLOSSARY.md).
+Read [docs/INTRODUCTION.md](docs/INTRODUCTION.md) for the full concept and motivation. For step-by-step workflows see [docs/GREENFIELD.md](docs/GREENFIELD.md) and [docs/TRANSFORMATION.md](docs/TRANSFORMATION.md). Terms and acronyms are defined in [docs/GLOSSARY.md](docs/GLOSSARY.md).
 
 ---
 
@@ -35,7 +35,7 @@ bash update --from <old-version>
 
 ---
 
-## The Human Loop — Greenfield
+## The Human Loop — SDAIS-G (Greenfield)
 
 You write specifications. AI writes code. The loop looks like this:
 
@@ -67,15 +67,19 @@ Repeat phases 1–5 until all findings are resolved. That cleared RSF is your co
 
 ---
 
-## The Human Loop — Re-Engineering
+## The Human Loop — SDAIS-T (Transformation)
 
 You have an existing codebase. You want to migrate it, modularise it, or bring it under formal specification.
 
-1. Write rough hypothesis files (RES) capturing what you believe the system does.
+**Phase 0 — Draft (optional)**
+
+If you find it easier to start with free-form prose, write your ideas about the existing system and desired changes into `sdais/tspec/v1/` and run the **TransformationEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates TRS items in `sdais/trs/v1/` and draft CDF files in `sdais/cdf/v1/`. Skip this phase if you prefer to author TRS items and CDF files directly.
+
+1. Write hypothesis files (TRS) capturing what you believe the system does.
 2. Run the **Analyzer** — it reads the codebase, adds annotation blocks to every unit, derives formal RSF items from observed behaviour, and opens findings for anything unclear.
 3. Resolve findings and refine the derived RSF through the standard semantic audit loop.
-4. Write one or more Change Definition Files (CDF) describing the transformation you want (language migration, modularisation, new persistence layer, etc.).
-5. Run the **Re-engineering** agent — it applies the CDFs to the annotated codebase while preserving all annotation identifiers.
+4. Activate one or more Change Definition Files (CDF) describing the transformation you want (language migration, modularisation, new persistence layer, etc.).
+5. Run the **Transformation** agent — it applies the CDFs to the annotated codebase while preserving all annotation identifiers.
 6. Continue from step 7 of the greenfield loop above (Review → Refine → Approve).
 
 ---
@@ -90,7 +94,7 @@ You have an existing codebase. You want to migrate it, modularise it, or bring i
 | `scaffold/` | Prompt files and templates installed by `install` |
 | `docs/INTRODUCTION.md` | Concepts, motivation, agent roles, and prompt reference |
 | `docs/GREENFIELD.md` | Detailed greenfield workflow with process diagram |
-| `docs/RE-ENGINEERING.md` | Detailed re-engineering workflow with process diagram |
+| `docs/TRANSFORMATION.md` | Detailed transformation workflow with process diagram |
 | `docs/GLOSSARY.md` | All acronyms, document types, and annotation identifiers |
 | `CHANGELOG.md` | Version history |
 | `LICENSE` | BSD 3-Clause License |

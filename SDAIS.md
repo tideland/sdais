@@ -57,8 +57,9 @@ Pin the model version used for each agent in your project's `AGENTS.md` or equiv
 | Role | Minimum recommended tier | Reason |
 |---|---|---|
 | RequirementsEngineer | High reasoning (e.g. Claude Opus) | Ambiguity detection in free-form prose and requirement derivation benefit from deeper inference |
+| TransformationEngineer | High reasoning (e.g. Claude Opus) | Ambiguity and Confidence elicitation in legacy-system prose require deeper inference |
 | SemanticAuditor, SecurityAuditor | High reasoning (e.g. Claude Opus) | Ambiguity detection and security analysis benefit from deeper inference |
-| Generator, Refiner, Analyzer, Re-engineering | High coding ability (e.g. Claude Sonnet) | Code synthesis and annotation precision are primary demands |
+| Generator, Refiner, Analyzer, Transformation | High coding ability (e.g. Claude Sonnet) | Code synthesis and annotation precision are primary demands |
 | Reviewer | High reasoning or high coding (e.g. Claude Opus or Sonnet) | Finding quality directly determines loop convergence speed |
 | Designer, Grounder | High reasoning (e.g. Claude Opus or Sonnet) | Design decisions and infrastructure validation require sound judgment |
 | TestGenerator | High coding ability (e.g. Claude Sonnet) | Test correctness and coverage require deep code understanding |
@@ -80,6 +81,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     ├── SDAIS.md              ← paradigm specification (distribution file)
     ├── prompts/              ← installed by install; refreshed by update
     │   ├── requirements-engineer.md
+    │   ├── transformation-engineer.md
     │   ├── semantic-auditor.md
     │   ├── grounder.md
     │   ├── designer.md
@@ -87,7 +89,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │   ├── reviewer.md
     │   ├── refiner.md
     │   ├── analyzer.md
-    │   ├── re-engineering.md
+    │   ├── transformation.md
     │   ├── security-auditor.md
     │   └── test-generator.md
     ├── spec/
@@ -95,6 +97,11 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │   │   └── <anything>.md ← initial loose prose; any filename, any format
     │   └── v2/
     │       └── <same names>  ← RequirementsEngineer output with [[QN]] questions
+    ├── tspec/
+    │   ├── v1/
+    │   │   └── <anything>.md ← initial prose about existing system + desired changes
+    │   └── v2/
+    │       └── <same names>  ← TransformationEngineer output with [[QN]] questions
     ├── rsf/
     │   ├── v1/
     │   │   ├── fr-0000-template.md       ← template; copy to start a new FR
@@ -113,9 +120,12 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     ├── adf/
     │   └── v1/
     │       └── design.md      ← Architecture Definition File; produced by Designer
-    ├── res/
+    ├── trs/
     │   ├── v1/
-    │   │   ├── res-fr-0001-<short-description>.md
+    │   │   ├── trs-fr-0000-template.md   ← template; copy to start a new TRS-FR
+    │   │   ├── trs-nfr-0000-template.md  ← template; copy to start a new TRS-NFR
+    │   │   ├── trs-c-0000-template.md    ← template; copy to start a new TRS-C
+    │   │   ├── trs-fr-0001-<short-description>.md
     │   │   └── ...
     │   └── v2/
     │       └── ...
@@ -137,10 +147,11 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 **Version directory semantics:**
 
 - Each `spec/v<N>/` directory is one iteration of the RequirementsEngineer clarification loop. The human writes initial prose into `spec/v1/`; the agent creates `spec/v2/` with `[[QN]]` questions; the human answers in `spec/v2/`; the agent creates `spec/v3/` with answers incorporated, and so on. Files are not deleted between versions — each version is an immutable snapshot. The highest version that contains no open `[[QN]]` markers is the clean spec used for RSF generation.
+- Each `tspec/v<N>/` directory is one iteration of the TransformationEngineer clarification loop. Semantics are identical to `spec/`: immutable snapshots, `[[QN]]`/`[[AN]]` protocol, highest clean version used for TRS and CDF generation.
 - Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative.
 - Each `rar/v<N>/` directory contains the findings produced by auditing `rsf/v<N>/`. A finding file is never moved; it is the permanent record for that audit.
-- Each `res/v<N>/` directory contains RES items introduced or amended in version N. Version semantics match those of `rsf/`.
-- Each `cdf/v<N>/` directory contains CDF files for that re-engineering pass. CDFs are not versioned like RSF items; a new version directory is used when a new re-engineering pass is initiated.
+- Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
+- Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
 - Each `adf/v<N>/` directory contains the Architecture Definition File (`design.md`) produced by the Designer for version N. The directory is absent if the Designer step was skipped.
 - The distribution set is `SDAIS.md`, `install`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `install <project-name>` once to scaffold a new project; run `update` to upgrade an existing one. All other files under `sdais/` are installed, generated, or authored in place.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
@@ -247,7 +258,7 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
 
 RSF amendments increment the version and restart the loop from the semantic audit. The prior annotated codebase is not discarded — it becomes input context for the next generation pass.
 
-For re-engineering of existing systems, the lifecycle starts at SDAIS-RE (see below) and joins the standard lifecycle at the Generator stage. The annotated existing codebase and the RSF derived by the Analyzer agent are the inputs at that join point.
+For SDAIS-T (transformation of existing systems), the lifecycle starts at the SDAIS-T section (see below) and joins the standard SDAIS-G lifecycle at the Generator stage. The annotated existing codebase and the RSF derived by the Analyzer agent are the inputs at that join point.
 
 ---
 
@@ -335,13 +346,14 @@ bash update --from <old-version>
 | Refreshed by update | Left untouched |
 |---|---|
 | `AGENTS.md` (Custom Agents Extension preserved) | `sdais/spec/v*/*.md` |
-| All files in `sdais/prompts/` | `sdais/rsf/v*/fr-NNNN-*.md` (NNNN ≥ 0001) |
-| All `*-0000-template.md` files | `sdais/rsf/v*/nfr-NNNN-*.md` (NNNN ≥ 0001) |
-| `sdais/SDAIS.md` | `sdais/rsf/v*/c-NNNN-*.md` (NNNN ≥ 0001) |
+| All files in `sdais/prompts/` | `sdais/tspec/v*/*.md` |
+| All `*-0000-template.md` files | `sdais/rsf/v*/fr-NNNN-*.md` (NNNN ≥ 0001) |
+| `sdais/SDAIS.md` | `sdais/rsf/v*/nfr-NNNN-*.md` (NNNN ≥ 0001) |
+| | `sdais/rsf/v*/c-NNNN-*.md` (NNNN ≥ 0001) |
 | | `sdais/rsf/v*/e-NNNN-*.md` (NNNN ≥ 0001) |
 | | `sdais/rsf/v*/ac-NNNN-*.md` (NNNN ≥ 0001) |
 | | `sdais/rar/v*/f-NNNN-*.md` (NNNN ≥ 0001) |
-| | `sdais/res/v*/*.md` |
+| | `sdais/trs/v*/*.md` |
 | | `sdais/cdf/v*/*.md` |
 | | `sdais/adf/v*/*.md` |
 | | All source code files |
@@ -592,20 +604,24 @@ When the Reviewer reports zero violations and all acceptance criteria pass, the 
 
 ---
 
-## SDAIS-RE: Re-Engineering Extension
+## SDAIS-T: Transformation Extension
 
 ### Concept and Positioning
 
-The standard SDAIS lifecycle assumes a greenfield project: the specification precedes the code, and the Generator synthesises from scratch. Re-engineering inverts this. The existing codebase is the primary artefact; specification must be derived from it. Greenfield agents cannot operate on code that has no RSF, no `[ANN]` blocks, and no verified requirements.
+The standard SDAIS lifecycle assumes a greenfield project: the specification precedes the code, and the Generator synthesises from scratch. Transformation inverts this. The existing codebase is the primary artefact; specification must be derived from it. Greenfield agents cannot operate on code that has no RSF, no `[ANN]` blocks, and no verified requirements.
 
-The core inversion is: code + fuzzy prior knowledge → specification → transformed code. Prior knowledge — architecture diagrams, design notes, institutional memory — is captured as RES items (Re-engineering Specification). RES items are hypotheses, not assertions. The code is always authoritative when it contradicts a hypothesis.
+The core inversion is: code + fuzzy prior knowledge → specification → transformed code. Prior knowledge — architecture diagrams, design notes, institutional memory — is captured as TRS items (Transformation Specification). TRS items are hypotheses, not assertions. The code is always authoritative when it contradicts a hypothesis.
 
-SDAIS-RE produces inputs that feed into the standard SDAIS lifecycle from the Generator stage onwards. The Analyzer agent annotates the existing codebase and derives RSF items; the resulting annotated codebase and RSF replace what the Generator would otherwise produce from scratch. The Re-engineering agent applies CDF transformations and hands the result to the standard Generator → Reviewer → Refiner loop.
+SDAIS-T produces inputs that feed into the standard SDAIS lifecycle from the Generator stage onwards. The Analyzer agent annotates the existing codebase and derives RSF items; the resulting annotated codebase and RSF replace what the Generator would otherwise produce from scratch. The Transformation agent applies CDF transformations and hands the result to the standard Generator → Reviewer → Refiner loop.
+
+### SpecificationEngineer Archetype
+
+Both RequirementsEngineer and TransformationEngineer are instances of the SpecificationEngineer archetype: each accepts free-form prose, refines it through an iterative `[[QN]]/[[AN]]` clarification loop, and produces formal SDAIS artefacts. RequirementsEngineer produces RSF items from `sdais/spec/`; TransformationEngineer produces TRS items and CDF files from `sdais/tspec/`. The clarification protocol is identical; the output schema differs.
 
 ### Extended Lifecycle Diagram
 
 ```
-RES (fuzzy prior knowledge)
+TRS (fuzzy prior knowledge + transformation intent)
     │
     ▼
 Analyzer Agent ──► Annotated existing code + RSF v1 + RAR v1
@@ -617,10 +633,10 @@ Semantic Audit Loop (standard SDAIS Step 0)
 Cleaned RSF + Annotated existing code
     │
     ▼
-Human defines CDF(s)
+Human activates CDF(s)
     │
     ▼
-Re-engineering Agent ──► Transformed code with stable ANN-IDs
+Transformation Agent ──► Transformed code with stable ANN-IDs
     │
     ▼
 ═══ Transition to Standard SDAIS Lifecycle ═══
@@ -629,23 +645,63 @@ Re-engineering Agent ──► Transformed code with stable ANN-IDs
 Generator (gaps only) → Reviewer → Refiner → ...
 ```
 
-The Analyzer reads the existing codebase and any available RES items, adds `[ANN]` blocks to every callable unit and type, derives RSF items from observed behaviour, and opens RAR findings for anything unclear. The resulting artefacts pass through the standard Semantic Audit Loop: the human resolves RAR findings, amending RSF items until all findings are Resolved or Waived. The human then authors CDF files defining the desired transformations. The Re-engineering agent reads the annotated codebase, the active CDF set, and the cleaned RSF, applies each transformation, preserves all `(ANN-ID)` values, and hands the result to the Generator for any RSF items not covered by the transformation. From that point the standard Reviewer → Refiner → Approval loop runs unchanged.
+The Analyzer reads the existing codebase and any available TRS items, adds `[ANN]` blocks to every callable unit and type, derives RSF items from observed behaviour, and opens RAR findings for anything unclear. The resulting artefacts pass through the standard Semantic Audit Loop: the human resolves RAR findings, amending RSF items until all findings are Resolved or Waived. The human then activates CDF files defining the desired transformations. The Transformation agent reads the annotated codebase, the active CDF set, and the cleaned RSF, applies each transformation, preserves all `(ANN-ID)` values, and hands the result to the Generator for any RSF items not covered by the transformation. From that point the standard Reviewer → Refiner → Approval loop runs unchanged.
 
-### RES — Re-engineering Specification
+### SDAIS-T Step −2 — Transformation Engineering (optional)
 
-Each RES item is one Markdown file in `sdais/res/v<N>/`. RES items represent hypotheses about what the existing system does. They are input context for the Analyzer; they do not drive code generation directly.
+This step is optional. If you prefer to author TRS items and CDF files directly, skip to Step −1. Use this step when you have rough ideas about the existing system and desired changes but struggle to express them in formal TRS and CDF format.
 
-**File naming:** same scheme as RSF — `res-fr-NNNN-<short-description>.md`, `res-nfr-NNNN-<short-description>.md`, etc.
+#### Step −2.1 — Write initial transformation prose
 
-**RES item file format:**
+Create `sdais/tspec/v1/` and write one or more files describing the existing system and the transformations you want to apply. No filename convention or structure is required.
+
+#### Step −2.2 — Run the TransformationEngineer (Clarification mode)
+
+Provide all files in `sdais/tspec/v1/` to the TransformationEngineer agent. Use the prompt from `sdais/prompts/transformation-engineer.md`.
+
+The agent identifies passages that are ambiguous, use undefined terms, make tacit assumptions about legacy system behaviour, or state transformation goals without measurable targets. For each such passage it inserts a `[[QN question?]]` marker inline, then writes the result to `sdais/tspec/v2/`.
+
+#### Step −2.3 — Answer the questions
+
+Open each file in `sdais/tspec/v2/` that contains a `[[QN question?]]` marker. For each marker add `[[AN your answer]]` on the immediately following line.
+
+Do not remove, reword, or add `[[QN]]` markers — questions are written exclusively by the TransformationEngineer, not by humans.
+
+Re-run the TransformationEngineer. Repeat until the agent reports zero open questions.
+
+#### Step −2.4 — Output Generation
+
+When no open `[[QN]]` questions remain the TransformationEngineer switches to Output Generation mode automatically. It writes TRS item files to `sdais/trs/v1/` and CDF files to `sdais/cdf/v1/`. Each TRS item carries a `**Confidence:**` field and a `**Source:**` field. Each CDF carries `**Status:** Draft` — the human must change this to `Active` before running the Transformation agent.
+
+#### Step −2.5 — Human review of generated TRS and CDF files
+
+Review every item in `sdais/trs/v1/` and every file in `sdais/cdf/v1/`:
+
+- Amend TRS item wording that does not match your understanding of the system.
+- Delete items that are artefacts or duplicates.
+- Add TRS items the agent could not derive.
+- For each CDF you intend to apply, change `**Status:**` from `Draft` to `Active`.
+
+The `**Source:**` fields trace each TRS item and CDF back to the original prose. Do not delete them.
+
+When satisfied, proceed to the Analyzer step.
+
+### TRS — Transformation Specification
+
+Each TRS item is one Markdown file in `sdais/trs/v<N>/`. TRS items represent hypotheses about what the existing system does. They are input context for the Analyzer; they do not drive code generation directly.
+
+**File naming:** same scheme as RSF — `trs-fr-NNNN-<short-description>.md`, `trs-nfr-NNNN-<short-description>.md`, `trs-c-NNNN-<short-description>.md`.
+
+**TRS item file format:**
 
 ```markdown
-# RES-FR-0001: LDAP Authentication Subsystem
+# TRS-FR-0001: LDAP Authentication Subsystem
 
 **Type:** Functional Requirement
 **Status:** Hypothesis
 **Introduced:** v1 (2026-05-02)
 **Confidence:** Medium
+**Source:** sdais/tspec/v3/auth-system.md
 
 ## Hypothesis
 
@@ -666,26 +722,28 @@ authentication error.
 - Are group memberships retrieved and mapped to application roles?
 ```
 
+The `**Source:**` field records which tspec file(s) are the primary reason for this item. It is written by the TransformationEngineer when generating TRS items from prose; it may be omitted when a human authors a TRS item directly without going through Step −2.
+
 **Status values:**
 
 | Value | Meaning |
 |---|---|
 | `Hypothesis` | Initial state; not yet validated against code |
 | `Confirmed` | Analyzer or human verified the hypothesis against the code |
-| `Refuted` | Code contradicts the hypothesis; Analyzer opened a `RES-CONTRADICTS-CODE` RAR finding |
+| `Refuted` | Code contradicts the hypothesis; Analyzer opened a `TRS-CONTRADICTS-CODE` RAR finding |
 | `Refined` | Hypothesis was partially correct; amended after Analyzer findings |
 
 **Confidence semantics:**
 
 | Value | Meaning | Analyzer behaviour |
 |---|---|---|
-| `High` | Strong evidence in code | Analyzer performs sample-check validation |
+| `High` | Strong evidence in code or cited documentation | Analyzer performs sample-check validation |
 | `Medium` | Partial evidence; behaviour likely but not certain | Analyzer validates each claim carefully |
-| `Low` | Weak hypothesis; may be incorrect | Analyzer performs deep code analysis before accepting |
+| `Low` | Weak hypothesis; tacit assumption with little direct evidence | Analyzer performs deep code analysis before accepting |
 
 ### CDF — Change Definition File
 
-Each CDF in `sdais/cdf/v<N>/` describes exactly one dimension of change. CDFs are orthogonal and combinable — multiple active CDFs can transform the same codebase in one re-engineering pass.
+Each CDF in `sdais/cdf/v<N>/` describes exactly one dimension of change. CDFs are orthogonal and combinable — multiple active CDFs can transform the same codebase in one transformation pass.
 
 **File naming:** `<category>-NNNN-<short-description>.md`. Categories:
 
@@ -700,6 +758,8 @@ Each CDF in `sdais/cdf/v<N>/` describes exactly one dimension of change. CDFs ar
 | `api-` | API style change (REST, gRPC, sync, async) |
 | `obs-` | Observability introduction |
 
+**`**Status:**` values:** `Draft` (generated by TransformationEngineer; not yet applied) or `Active` (human-promoted; ready for the Transformation agent).
+
 **CDF file format:**
 
 ```markdown
@@ -709,6 +769,7 @@ Each CDF in `sdais/cdf/v<N>/` describes exactly one dimension of change. CDFs ar
 **Status:** Active
 **Introduced:** v1 (2026-05-02)
 **Affects:** all
+**Source:** sdais/tspec/v3/migration-goals.md
 
 ## Source
 
@@ -764,17 +825,17 @@ The `**Affects:**` field lists either specific `(ANN-ID)` references (comma-sepa
 
 The Analyzer operates in three-output mode:
 
-1. **Annotates the existing codebase additively.** Every callable unit and every type receives an `[ANN]` block with a freshly generated `(ANN-ID)`, reconstructed `(TASK)`, inferred `(PRE)` and `(POST)`, and a `(CONFIDENCE)` label. Existing logic, signatures, and comments are never modified.
+1. **Annotates the existing codebase additively.** Every callable unit and every type receives an `[ANN]` block with a freshly generated `(ANN-ID)`, reconstructed `(TASK)`, inferred `(PRE)` and `(POST)`, and a `(CONFIDENCE)` label. Existing logic, signatures, and comments are never modified. Where a TRS item ID can be confidently mapped to an annotated unit, the Analyzer sets `(ORIGIN)` to that TRS item ID, establishing a stable traceability link.
 
 2. **Derives formal RSF item files** in `sdais/rsf/v1/`. Each distinct observable behaviour, quality attribute, or constraint inferred from the code becomes one RSF item.
 
-3. **Opens RAR finding files** in `sdais/rar/v1/` for any unclear mappings, using the re-engineering finding categories `RES-CONTRADICTS-CODE` and `CODE-INTENT-UNCLEAR`.
+3. **Opens RAR finding files** in `sdais/rar/v1/` for any unclear mappings, using the transformation finding categories `TRS-CONTRADICTS-CODE` and `CODE-INTENT-UNCLEAR`.
 
 The full prompt is in `sdais/prompts/analyzer.md`.
 
-### Re-engineering Agent
+### Transformation Agent
 
-The Re-engineering agent reads the annotated existing codebase, all active CDF files, and all active RSF files. It applies each CDF's transformation rules to the units listed in `Affects:`, produces transformed code in the target language or architecture, and preserves all `(ANN-ID)` values according to the split and merge rules below.
+The Transformation agent reads the annotated existing codebase, all active CDF files, and all active RSF files. It applies each CDF's transformation rules to the units listed in `Affects:`, produces transformed code in the target language or architecture, and preserves all `(ANN-ID)` values according to the split and merge rules below.
 
 **`(ANN-ID)` preservation rules:**
 
@@ -784,7 +845,7 @@ The Re-engineering agent reads the annotated existing codebase, all active CDF f
 
 After transformation, any RSF items not covered by the transformed units are handed to the Generator agent.
 
-The full prompt is in `sdais/prompts/re-engineering.md`.
+The full prompt is in `sdais/prompts/transformation.md`.
 
 ---
 
@@ -988,11 +1049,11 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 | SecurityAuditor | Same as Reviewer for `(CONSTRAINT:SEC)` violations |
 | TestGenerator | Write entire block on test functions (TDD mode only); set `(TEST-MODE) TDD`; otherwise read-only |
 | Analyzer | Write the entire block (initial creation on existing code); generate `(ANN-ID)`; write `(CONFIDENCE)` |
-| Re-engineering | Write the entire block on transformed code; preserve `(ANN-ID)` per split/merge rules; may not modify `(ANN-ID)` beyond those rules; write `(DEPENDS-ON)` |
+| Transformation | Write the entire block on transformed code; preserve `(ANN-ID)` per split/merge rules; may not modify `(ANN-ID)` beyond those rules; write `(DEPENDS-ON)` |
 | Designer | Does not write `[ANN]` blocks; writes only `sdais/adf/v<N>/design.md` |
 | Grounder | Does not write `[ANN]` blocks; writes only `**Verified:**` fields in `E-` item files and RAR finding files |
 
-`(ANN-ID)` is written only by Generator and Analyzer at block creation time. No other agent may modify `(ANN-ID)` under any circumstance, except Re-engineering applying the split/merge rules. Finding labels are never removed or renumbered. `(FINDING:n:STATUS)` is appended directly after the `(HINT:n)` for the same index.
+`(ANN-ID)` is written only by Generator and Analyzer at block creation time. No other agent may modify `(ANN-ID)` under any circumstance, except Transformation applying the split/merge rules. Finding labels are never removed or renumbered. `(FINDING:n:STATUS)` is appended directly after the `(HINT:n)` for the same index.
 
 ---
 
@@ -1002,7 +1063,7 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 
 | Label              | Cardinality | Scope                  | Description                                                         |
 |--------------------|-------------|------------------------|---------------------------------------------------------------------|
-| `(ANN-ID)`         | exactly 1 (1–n for merged units) | all | Stable unique identifier in the form `ANN-<8-hex>`. Generated once at block creation by Generator or Analyzer. No agent may modify it except Re-engineering applying split/merge rules. Must appear as the first label in the block. |
+| `(ANN-ID)`         | exactly 1 (1–n for merged units) | all | Stable unique identifier in the form `ANN-<8-hex>`. Generated once at block creation by Generator or Analyzer. No agent may modify it except Transformation applying split/merge rules. Must appear as the first label in the block. |
 | `(TASK)`           | exactly 1   | all                    | Declarative statement of what this unit does                        |
 | `(CONTEXT)`        | 0–1         | all                    | Where and why this unit is used; inherited from outer scope if absent|
 | `(CONSTRAINT)`     | 0–n         | all                    | Hard rule, invariant, or limit that applies to this unit            |
@@ -1020,7 +1081,7 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 
 | Label           | Cardinality | Scope                     | Written by                   | Description |
 |-----------------|-------------|---------------------------|------------------------------|-------------|
-| `(DEPENDS-ON)`  | 0–n         | function / method, type   | Generator, Re-engineering    | Comma-separated `ANN-<8-hex>` IDs of units this unit directly calls or structurally requires. Omitted when there are no dependencies. Format: `ANN-4d1b82fa, ANN-c9e05a31` |
+| `(DEPENDS-ON)`  | 0–n         | function / method, type   | Generator, Transformation    | Comma-separated `ANN-<8-hex>` IDs of units this unit directly calls or structurally requires. Omitted when there are no dependencies. Format: `ANN-4d1b82fa, ANN-c9e05a31` |
 | `(TEST-MODE)`   | 0–1         | function / method         | TestGenerator                | Value: `TDD`. Set on every test function block produced in TDD mode. Absent on all standard test annotations and on all implementation annotations. |
 
 ### SDAIS Traceability Labels
@@ -1031,7 +1092,7 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 | `(AGENT)`      | exactly 1   | all   | Role of the agent that last wrote or modified this block                 |
 | `(VERIFIED)`   | exactly 1   | all   | `true` — review agent confirmed; `false` — pending or violation flagged  |
 | `(ROUND)`      | exactly 1   | all   | Integer; the review round in which this block was last written or updated|
-| `(CONFIDENCE)` | 0–1         | all   | Written by Analyzer only. `Inferred-High`, `Inferred-Medium`, or `Inferred-Low`. Marks inferred annotations whose accuracy depends on source code analysis quality. Absent on greenfield-generated annotations. |
+| `(CONFIDENCE)` | 0–1         | all   | Written by Analyzer (on `[ANN]` blocks) and TransformationEngineer (on TRS items). Values: `Inferred-High`, `Inferred-Medium`, or `Inferred-Low` on ANN blocks; `High`, `Medium`, or `Low` on TRS items. Absent on greenfield-generated annotations. |
 
 ### Review Finding Labels
 
@@ -1050,14 +1111,15 @@ Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any u
 | Value                    | Description                                                                    |
 |--------------------------|--------------------------------------------------------------------------------|
 | `RequirementsEngineer`   | Clarification and RSF derivation from free-form prose in `sdais/spec/`        |
+| `TransformationEngineer` | Clarification and TRS/CDF derivation from free-form prose in `sdais/tspec/`   |
 | `Generator`              | Initial synthesis from RSF                                                     |
 | `Reviewer`        | Validation pass; sets `(VERIFIED)` and writes finding labels                   |
 | `Refiner`         | Corrects violations directed by `(HINT:n)`; writes `(FINDING:n:STATUS)`        |
 | `SecurityAuditor` | Specialised pass for `(CONSTRAINT:SEC)` compliance; may write finding labels   |
 | `TestGenerator`   | Derives tests from `(PRE)`, `(POST)`, and acceptance criteria; in TDD mode, produces pre-implementation test stubs |
 | `SemanticAuditor` | RSF-level semantic validation before generation; produces RAR files            |
-| `Analyzer`        | Re-engineering: annotates existing codebase; derives RSF items; opens RAR findings |
-| `Re-engineering`  | Re-engineering: applies CDF transformations; preserves `(ANN-ID)` values       |
+| `Analyzer`        | Transformation: annotates existing codebase; derives RSF items; opens RAR findings |
+| `Transformation`  | Transformation: applies CDF transformations; preserves `(ANN-ID)` values       |
 | `Designer`        | Produces ADF from cleared RSF; runs between infrastructure grounding and generation |
 | `Grounder`        | Verifies infrastructure assumptions in `E-` items before generation; opens `ENV-UNRESOLVABLE` RAR findings |
 
@@ -1084,11 +1146,11 @@ The SemanticAuditor assigns one of the following categories to each finding:
 | `INFEASIBLE` | RSF items | A constraint makes one or more FRs impossible to satisfy |
 | `UNTESTABLE` | RSF items | An acceptance criterion cannot be verified programmatically |
 | `UNQUANTIFIED` | RSF items | An NFR lacks a measurable bound |
-| `RES-CONTRADICTS-CODE` | SDAIS-RE workflows | A hypothesis from the RES is contradicted by what the code actually does |
-| `CODE-INTENT-UNCLEAR` | SDAIS-RE workflows | Code behaviour cannot be unambiguously mapped to a specific requirement |
-| `ENV-UNRESOLVABLE` | greenfield and SDAIS-RE workflows | An `E-` item names an infrastructure element that cannot be confirmed to exist or match its description |
+| `TRS-CONTRADICTS-CODE` | SDAIS-T workflows | A hypothesis from the TRS is contradicted by what the code actually does |
+| `CODE-INTENT-UNCLEAR` | SDAIS-T workflows | Code behaviour cannot be unambiguously mapped to a specific requirement |
+| `ENV-UNRESOLVABLE` | greenfield and SDAIS-T workflows | An `E-` item names an infrastructure element that cannot be confirmed to exist or match its description |
 
-`RES-CONTRADICTS-CODE` and `CODE-INTENT-UNCLEAR` are written by the Analyzer agent only and appear in `sdais/rar/v1/` during a re-engineering workflow. `ENV-UNRESOLVABLE` is written by the Grounder agent in both greenfield and re-engineering workflows when an `E-` item cannot be confirmed.
+`TRS-CONTRADICTS-CODE` and `CODE-INTENT-UNCLEAR` are written by the Analyzer agent only and appear in `sdais/rar/v1/` during a transformation workflow. `ENV-UNRESOLVABLE` is written by the Grounder agent in both greenfield and transformation workflows when an `E-` item cannot be confirmed.
 
 ---
 
@@ -1139,7 +1201,7 @@ Each RAR finding is one Markdown file in `sdais/rar/v<N>/`. The filename follows
 ```markdown
 # F-NNNN: Short Title of Finding
 
-**Category:** AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | RES-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE
+**Category:** AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE
 **Severity:** Critical | High | Medium | Low
 **RAR Version:** V<N>
 **Audit Date:** <YYYY-MM-DD>
@@ -1293,7 +1355,7 @@ Related: [Cross-references to the FR(s) this criterion verifies, e.g. [FR-0001].
 ```markdown
 # F-0000: [Short title of the finding]
 
-**Category:** [AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | RES-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE]
+**Category:** [AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE]
 **Severity:** [Critical | High | Medium | Low]
 **RAR Version:** V[N]
 **Audit Date:** [YYYY-MM-DD]

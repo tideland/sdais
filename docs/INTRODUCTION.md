@@ -51,8 +51,9 @@ The paradigm defines a set of specialist agent roles, each with a focused respon
 | `refiner.md` | Refiner | Fixes every violation directed by the Reviewer's hints; marks resolved blocks verified | High-coding (e.g. Claude Sonnet) |
 | `security-auditor.md` | SecurityAuditor | Specialised pass for security constraints, credential handling, input validation, and authorisation | High-reasoning (e.g. Claude Opus) |
 | `test-generator.md` | TestGenerator | Derives test functions from preconditions, postconditions, and acceptance criteria; supports both standard and TDD modes | High-coding (e.g. Claude Sonnet) |
-| `analyzer.md` | Analyzer | Re-engineering: annotates an existing codebase and derives RSF items from observed behaviour | High-coding (e.g. Claude Sonnet) |
-| `re-engineering.md` | Re-engineering | Re-engineering: applies Change Definition Files to transform the annotated codebase | High-coding (e.g. Claude Sonnet) |
+| `transformation-engineer.md` | TransformationEngineer | Transformation: refines loose prose about the existing system and desired changes into TRS items and draft CDF files through an iterative `[[QN]]/[[AN]]` clarification loop; assigns Confidence levels during output generation | High-reasoning (e.g. Claude Opus) |
+| `analyzer.md` | Analyzer | Transformation: annotates an existing codebase and derives RSF items from observed behaviour; references confirmed TRS item IDs in `(ORIGIN)` | High-coding (e.g. Claude Sonnet) |
+| `transformation.md` | Transformation | Transformation: applies Change Definition Files to transform the annotated codebase | High-coding (e.g. Claude Sonnet) |
 
 The SemanticAuditor, for example, is primarily a language and logic task — it needs to detect subtle contradictions and vague wording. A model with strong reasoning capabilities does that well. The Generator, on the other hand, needs to produce correct, idiomatic code at scale. That is a different strength. Assigning the right model to each role is not premature optimisation; it is what makes the loop converge reliably.
 
@@ -96,15 +97,15 @@ When requirements change — and they always do — you amend the specification,
 
 Not every project starts from a blank slate. SDAIS covers both scenarios:
 
-**Greenfield** — the specification is written before any code exists. This is the canonical SDAIS workflow: specify, audit, generate, review, refine, approve. See [GREENFIELD.md](GREENFIELD.md) for the detailed walkthrough.
+**SDAIS-G (Greenfield)** — the specification is written before any code exists. Specify, audit, generate, review, refine, approve. See [GREENFIELD.md](GREENFIELD.md) for the detailed walkthrough.
 
-**Re-Engineering (SDAIS-RE)** — an existing codebase precedes the specification. The Analyzer annotates the existing code, derives RSF items from observed behaviour, and surfaces anything unclear as findings. You then define the desired transformations as Change Definition Files (CDF), and the Re-engineering agent applies them while preserving all annotation identifiers. From there the standard review loop takes over. See [RE-ENGINEERING.md](RE-ENGINEERING.md) for the detailed walkthrough.
+**SDAIS-T (Transformation)** — an existing codebase precedes the specification. The Analyzer annotates the existing code, derives RSF items from observed behaviour, and surfaces anything unclear as findings. You then activate Change Definition Files (CDF), and the Transformation agent applies them while preserving all annotation identifiers. From there the standard review loop takes over. See [TRANSFORMATION.md](TRANSFORMATION.md) for the detailed walkthrough.
 
 ---
 
 ## Further Reading
 
 - [GREENFIELD.md](GREENFIELD.md) — Step-by-step greenfield workflow, prompt-by-prompt, with process diagram.
-- [RE-ENGINEERING.md](RE-ENGINEERING.md) — Step-by-step re-engineering workflow with process diagram.
+- [TRANSFORMATION.md](TRANSFORMATION.md) — Step-by-step transformation workflow with process diagram.
 - [GLOSSARY.md](GLOSSARY.md) — All acronyms, document types, and annotation block identifiers.
 - `sdais/SDAIS.md` — The full normative specification.

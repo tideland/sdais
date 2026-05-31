@@ -2,7 +2,7 @@
 
 **Version:** v0.10.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
-The greenfield workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
+The SDAIS-G (Greenfield) workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
 
 ---
 
@@ -85,7 +85,8 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
     │   ├── security-auditor.md
     │   ├── test-generator.md
     │   ├── analyzer.md
-    │   └── re-engineering.md
+    │   ├── transformation.md
+    │   └── transformation-engineer.md
     ├── rsf/
     │   └── v1/
     │       ├── fr-0000-template.md
