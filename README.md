@@ -41,7 +41,7 @@ You write specifications. AI writes code. The loop looks like this:
 
 **Phase 0 — Draft (optional)**
 
-If you find it easier to start with free-form prose, write your ideas into `sdais/spec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field on every item. Skip this phase if you prefer to author RSF items directly.
+If you find it easier to start with free-form prose, write your ideas into `sdais/gspec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field on every item. Skip this phase if you prefer to author RSF items directly.
 
 **Phase 1 — Specify**
 

@@ -12,10 +12,10 @@ The SDAIS-G (Greenfield) workflow applies when you are building a new system fro
 flowchart TD
     A([Start]) --> B[Step −1\nInstall scaffold]
     B --> B2{Draft prose?}
-    B2 -- Yes --> B3[Step 0\nWrite loose prose\nsdais/spec/v1/]
+    B2 -- Yes --> B3[Step 0\nWrite loose prose\nsdais/gspec/v1/]
     B3 --> B4[RequirementsEngineer\nClarification loop]
     B4 --> B5{Open questions?}
-    B5 -- Yes --> B6[Answer [[QN]] questions\nadd [[AN]] in spec/vN+1/]
+    B5 -- Yes --> B6[Answer [[QN]] questions\nadd [[AN]] in gspec/vN+1/]
     B6 --> B4
     B5 -- No --> B7[RequirementsEngineer\nRSF Generation]
     B7 --> C
@@ -115,9 +115,9 @@ Use Step 0 when you have a clear idea of what you want but struggle to express i
 
 ### How it works
 
-1. Create `sdais/spec/v1/` and write one or more files describing what the system should do. No filename convention or format constraint applies — bullet points, paragraphs, or any mixture.
+1. Create `sdais/gspec/v1/` and write one or more files describing what the system should do. No filename convention or format constraint applies — bullet points, paragraphs, or any mixture.
 2. Run the **RequirementsEngineer**. It reads every spec file and inserts `[[QN question?]]` markers inline wherever text is ambiguous, uses undefined terms, or is missing a measurable bound or acceptance criterion.
-3. Open the files in `sdais/spec/v2/` and answer every `[[QN question?]]` by adding `[[AN your answer]]` on the immediately following line. Do not remove or reword `[[QN]]` markers — they are the agent's domain.
+3. Open the files in `sdais/gspec/v2/` and answer every `[[QN question?]]` by adding `[[AN your answer]]` on the immediately following line. Do not remove or reword `[[QN]]` markers — they are the agent's domain.
 4. Re-run the RequirementsEngineer. Repeat until it reports zero open questions.
 5. With no open questions remaining, the agent switches to RSF Generation mode: it reads the clean spec files and writes one RSF item file per derived requirement into `sdais/rsf/v1/`, each carrying a `**Source:**` field pointing to the spec file it was derived from.
 6. Review `sdais/rsf/v1/`: amend wording, delete artefacts, and add anything the agent could not derive. The `**Source:**` field traces each item back to the original prose.

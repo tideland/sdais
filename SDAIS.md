@@ -92,7 +92,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │   ├── transformation.md
     │   ├── security-auditor.md
     │   └── test-generator.md
-    ├── spec/
+    ├── gspec/
     │   ├── v1/
     │   │   └── <anything>.md ← initial loose prose; any filename, any format
     │   └── v2/
@@ -146,8 +146,8 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 
 **Version directory semantics:**
 
-- Each `spec/v<N>/` directory is one iteration of the RequirementsEngineer clarification loop. The human writes initial prose into `spec/v1/`; the agent creates `spec/v2/` with `[[QN]]` questions; the human answers in `spec/v2/`; the agent creates `spec/v3/` with answers incorporated, and so on. Files are not deleted between versions — each version is an immutable snapshot. The highest version that contains no open `[[QN]]` markers is the clean spec used for RSF generation.
-- Each `tspec/v<N>/` directory is one iteration of the TransformationEngineer clarification loop. Semantics are identical to `spec/`: immutable snapshots, `[[QN]]`/`[[AN]]` protocol, highest clean version used for TRS and CDF generation.
+- Each `gspec/v<N>/` directory is one iteration of the RequirementsEngineer clarification loop. The human writes initial prose into `gspec/v1/`; the agent creates `gspec/v2/` with `[[QN]]` questions; the human answers in `gspec/v2/`; the agent creates `gspec/v3/` with answers incorporated, and so on. Files are not deleted between versions — each version is an immutable snapshot. The highest version that contains no open `[[QN]]` markers is the clean spec used for RSF generation.
+- Each `tspec/v<N>/` directory is one iteration of the TransformationEngineer clarification loop. Semantics are identical to `gspec/`: immutable snapshots, `[[QN]]`/`[[AN]]` protocol, highest clean version used for TRS and CDF generation.
 - Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative.
 - Each `rar/v<N>/` directory contains the findings produced by auditing `rsf/v<N>/`. A finding file is never moved; it is the permanent record for that audit.
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
@@ -165,7 +165,7 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│  Human: loose prose in sdais/spec/v1/                │
+│  Human: loose prose in sdais/gspec/v1/                │
 │  (any filenames, any format — no constraints)        │
 └────────────────────────┬─────────────────────────────┘
                          │
@@ -182,7 +182,7 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
              ▼               │
    Human adds [[AN answer]]  │
    after each [[QN]] in      │
-   spec/v<N+1>/              │
+   gspec/v<N+1>/              │
              │               ▼
              └──────►  AI: RequirementsEngineer
                        (RSF Generation mode)
@@ -272,24 +272,24 @@ requirements from scratch.
 
 #### Step −2.1 — Write initial specification prose
 
-Create `sdais/spec/v1/` and write one or more files describing what the system
+Create `sdais/gspec/v1/` and write one or more files describing what the system
 should do. No filename convention or structure is required — bullet points,
 paragraphs, conversation fragments, or any other form are all accepted.
 
 #### Step −2.2 — Run the RequirementsEngineer (Clarification mode)
 
-Provide all files in `sdais/spec/v1/` to the RequirementsEngineer agent. Use
+Provide all files in `sdais/gspec/v1/` to the RequirementsEngineer agent. Use
 the prompt from `sdais/prompts/requirements-engineer.md`.
 
 The agent reads every spec file and identifies passages that are ambiguous, use
 undefined terms, lack measurable bounds, or are missing acceptance criteria. For
 each such passage it inserts a `[[QN question?]]` marker inline immediately
-after the affected text, then writes the result to `sdais/spec/v2/` under the
+after the affected text, then writes the result to `sdais/gspec/v2/` under the
 same filename.
 
 #### Step −2.3 — Answer the questions
 
-Open each file in `sdais/spec/v2/` that contains a `[[QN question?]]` marker.
+Open each file in `sdais/gspec/v2/` that contains a `[[QN question?]]` marker.
 For each marker add `[[AN your answer]]` on the immediately following line.
 
 Do not remove, reword, or add `[[QN]]` markers — questions are written
@@ -345,7 +345,7 @@ bash update --from <old-version>
 
 | Refreshed by update | Left untouched |
 |---|---|
-| `AGENTS.md` (Custom Agents Extension preserved) | `sdais/spec/v*/*.md` |
+| `AGENTS.md` (Custom Agents Extension preserved) | `sdais/gspec/v*/*.md` |
 | All files in `sdais/prompts/` | `sdais/tspec/v*/*.md` |
 | All `*-0000-template.md` files | `sdais/rsf/v*/fr-NNNN-*.md` (NNNN ≥ 0001) |
 | `sdais/SDAIS.md` | `sdais/rsf/v*/nfr-NNNN-*.md` (NNNN ≥ 0001) |
@@ -447,7 +447,7 @@ Each RSF item is one Markdown file in `sdais/rsf/v<N>/`. The prefix encodes the 
 **Status:** Active
 **Introduced:** v1 (2026-04-21)
 **Last modified:** v1 (2026-04-21)
-**Source:** sdais/spec/v3/auth-requirements.md
+**Source:** sdais/gspec/v3/auth-requirements.md
 
 ## Requirement
 
@@ -616,7 +616,7 @@ SDAIS-T produces inputs that feed into the standard SDAIS lifecycle from the Gen
 
 ### SpecificationEngineer Archetype
 
-Both RequirementsEngineer and TransformationEngineer are instances of the SpecificationEngineer archetype: each accepts free-form prose, refines it through an iterative `[[QN]]/[[AN]]` clarification loop, and produces formal SDAIS artefacts. RequirementsEngineer produces RSF items from `sdais/spec/`; TransformationEngineer produces TRS items and CDF files from `sdais/tspec/`. The clarification protocol is identical; the output schema differs.
+Both RequirementsEngineer and TransformationEngineer are instances of the SpecificationEngineer archetype: each accepts free-form prose, refines it through an iterative `[[QN]]/[[AN]]` clarification loop, and produces formal SDAIS artefacts. RequirementsEngineer produces RSF items from `sdais/gspec/`; TransformationEngineer produces TRS items and CDF files from `sdais/tspec/`. The clarification protocol is identical; the output schema differs.
 
 ### Extended Lifecycle Diagram
 
@@ -1110,7 +1110,7 @@ Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any u
 
 | Value                    | Description                                                                    |
 |--------------------------|--------------------------------------------------------------------------------|
-| `RequirementsEngineer`   | Clarification and RSF derivation from free-form prose in `sdais/spec/`        |
+| `RequirementsEngineer`   | Clarification and RSF derivation from free-form prose in `sdais/gspec/`        |
 | `TransformationEngineer` | Clarification and TRS/CDF derivation from free-form prose in `sdais/tspec/`   |
 | `Generator`              | Initial synthesis from RSF                                                     |
 | `Reviewer`        | Validation pass; sets `(VERIFIED)` and writes finding labels                   |
@@ -1164,7 +1164,7 @@ The SemanticAuditor assigns one of the following categories to each finding:
 **Introduced:** v<N> (<YYYY-MM-DD>)
 **Last modified:** v<N> (<YYYY-MM-DD>)
 **Verified:** Pending | true    ← Environment items only; omitted for all other types
-**Source:** sdais/spec/v<N>/filename.md  ← omit when item was authored directly without Step −2
+**Source:** sdais/gspec/v<N>/filename.md  ← omit when item was authored directly without Step −2
 
 ## Requirement
 
@@ -1254,7 +1254,7 @@ The `0000` files in `sdais/rsf/v1/` and `sdais/rar/v1/` are inert scaffolds. The
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
+**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1274,7 +1274,7 @@ Related: [Cross-references to related items, e.g. [NFR-0001], [AC-0001]. Omit se
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
+**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1295,7 +1295,7 @@ Related: [Cross-references to related items. Omit section if none.]
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
+**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1316,7 +1316,7 @@ Related: [Cross-references to related items. Omit section if none.]
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
 **Verified:** Pending
-**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
+**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1338,7 +1338,7 @@ Related: [Cross-references to related items. Omit section if none.]
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/spec/v<N>/filename.md — omit if item was authored directly]
+**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 

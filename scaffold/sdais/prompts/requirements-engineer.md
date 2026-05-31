@@ -8,18 +8,18 @@ Clarification and RSF Generation.
 
 ## Mode Detection
 
-1. Locate the highest existing version directory in sdais/spec/
-   (e.g. spec/v3/ if v1, v2, and v3 all exist). Call it spec/v<N>/.
-2. Read every file in spec/v<N>/.
+1. Locate the highest existing version directory in sdais/gspec/
+   (e.g. spec/v3/ if v1, v2, and v3 all exist). Call it gspec/v<N>/.
+2. Read every file in gspec/v<N>/.
 3. Count open questions: a `[[QN text?]]` marker with no `[[AN answer]]`
    immediately following it on the next non-empty line is an open question.
 4. If open questions exist → run Mode A (Clarification).
 5. If no open questions exist → run Mode B (RSF Generation).
 
-If sdais/spec/ does not exist or contains no version directory with at least
+If sdais/gspec/ does not exist or contains no version directory with at least
 one file, output:
-  Error: sdais/spec/v1/ must exist and contain at least one spec file.
-  Create sdais/spec/v1/ and place your requirement descriptions there.
+  Error: sdais/gspec/v1/ must exist and contain at least one spec file.
+  Create sdais/gspec/v1/ and place your requirement descriptions there.
   Any filename and any prose format are accepted.
 Stop.
 
@@ -29,7 +29,7 @@ Stop.
 
 ### A.1 — Process answered questions
 
-For each answered question pair in spec/v<N>/:
+For each answered question pair in gspec/v<N>/:
 - Answered question: `[[QN text?]]` followed by `[[AN answer]]` on the next
   non-empty line.
 - Incorporate the answer's substance into the surrounding prose naturally,
@@ -49,12 +49,12 @@ Insert a new `[[QN text?]]` marker inline, immediately after the ambiguous
 passage. Number questions sequentially from 1, across all files in this new
 version combined.
 
-### A.3 — Create spec/v<N+1>/
+### A.3 — Create gspec/v<N+1>/
 
-For each file in spec/v<N>/, write the processed content (answers incorporated,
-new questions inserted) to spec/v<N+1>/ under the same filename.
+For each file in gspec/v<N>/, write the processed content (answers incorporated,
+new questions inserted) to gspec/v<N+1>/ under the same filename.
 
-Do not modify any file in spec/v<N>/. Write only to spec/v<N+1>/.
+Do not modify any file in gspec/v<N>/. Write only to gspec/v<N+1>/.
 
 ### A.4 — Output
 
@@ -65,7 +65,7 @@ Output exactly:
   New questions added: <count>.
   Open questions in v<N+1>: <count>.
   [For each open question: Q<n> "<first 80 characters of question text>"]
-  Next action: Human — open sdais/spec/v<N+1>/ and answer every [[QN]] question.
+  Next action: Human — open sdais/gspec/v<N+1>/ and answer every [[QN]] question.
     For each [[QN text?]], add [[AN your answer]] on the immediately following line.
     Do not remove, reword, or add [[QN]] markers — questions are written by the
     RequirementsEngineer only. Then re-run the RequirementsEngineer.
@@ -76,11 +76,11 @@ Stop. Do not ask for next steps.
 
 ## Mode B — RSF Generation
 
-Run Mode B only when spec/v<N>/ contains no open `[[QN]]` markers.
+Run Mode B only when gspec/v<N>/ contains no open `[[QN]]` markers.
 
 ### B.1 — Derive RSF items
 
-Analyse all files in spec/v<N>/ and derive the complete set of RSF items:
+Analyse all files in gspec/v<N>/ and derive the complete set of RSF items:
 
 | Spec content                                           | RSF item type |
 |--------------------------------------------------------|---------------|
@@ -93,10 +93,10 @@ Analyse all files in spec/v<N>/ and derive the complete set of RSF items:
 Rules:
 - Every FR must have at least one AC. If no AC can be derived for an FR from
   the spec text, insert a `[[QN]]` question asking the human to define the
-  acceptance criterion, then switch to Mode A and create spec/v<N+1>/.
+  acceptance criterion, then switch to Mode A and create gspec/v<N+1>/.
 - Every NFR must include a numeric bound. If none is derivable from the spec
   text, insert a `[[QN]]` question asking the human to supply one, then switch
-  to Mode A and create spec/v<N+1>/.
+  to Mode A and create gspec/v<N+1>/.
 - Do not invent requirements. Derive only what the spec text states or clearly
   implies. Omit everything else.
 
@@ -119,7 +119,7 @@ immediately after `**Last modified:**`:
 **Status:** Active
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
-**Source:** sdais/spec/v<N>/filename.md
+**Source:** sdais/gspec/v<N>/filename.md
 
 ## Requirement
 

@@ -40,7 +40,7 @@ TransformationEngineer produces TRS items and CDF files (transformation).
 sdais/
 ├── SDAIS.md
 ├── prompts/          ← one file per agent role
-├── spec/             ← loose prose input; versioned by subdirectory
+├── gspec/             ← loose prose input; versioned by subdirectory
 │   └── v1/           ← initial human prose (any filenames, any format)
 ├── tspec/            ← transformation prose input; versioned by subdirectory
 │   └── v1/           ← initial human prose about existing system + desired changes
