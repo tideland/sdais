@@ -47,17 +47,19 @@ sdais <tool> <model> <role>
 
 | Argument | Values | Example |
 |---|---|---|
-| `tool` | `claude`, `ollama` | `claude` |
+| `tool` | `claude`, `ollama`, `codex`, `gemini` | `claude` |
 | `model` | Any model ID supported by the tool | `claude-opus-4-5` |
 | `role` | CamelCase or kebab-case role name | `RequirementsEngineer` or `requirements-engineer` |
 
 Examples:
 
 ```
-sdais claude claude-opus-4-5  RequirementsEngineer
-sdais claude claude-sonnet-4-5 Generator
-sdais claude claude-opus-4-5  SemanticAuditor
-sdais ollama gemma4            Reviewer
+sdais claude  claude-opus-4-5    RequirementsEngineer
+sdais claude  claude-sonnet-4-5  Generator
+sdais claude  claude-opus-4-5    SemanticAuditor
+sdais ollama  gemma4             Reviewer
+sdais codex   codex-mini         Generator
+sdais gemini  gemini-2.0-flash   Generator
 ```
 
 Pin the model per role in your `AGENTS.md` to prevent version drift between rounds.
