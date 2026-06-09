@@ -31,9 +31,15 @@ SDAIS workflow defined in sdais/SDAIS.md.
 
 RequirementsEngineer and TransformationEngineer are both instances of the
 SpecificationEngineer archetype: each accepts free-form prose, refines it
-through an iterative `[[QN]]/[[AN]]` clarification loop, and produces formal
-SDAIS artefacts. RequirementsEngineer produces RSF items (greenfield);
-TransformationEngineer produces TRS items and CDF files (transformation).
+through an iterative clarification loop, and produces formal SDAIS artefacts.
+RequirementsEngineer produces RSF items (greenfield); TransformationEngineer
+produces TRS items and CDF files (transformation).
+
+The clarification loop uses lightweight inline markers (`[[Q1]]`, `[[Q2]]`, …)
+at each ambiguous point in the prose, with the full question text and human
+answers collected in a `## Questions` section at the end of the same file
+(below a `—` separator). Questions accumulate across versions; answered entries
+are never deleted.
 
 ## Directory Layout
 
@@ -50,10 +56,8 @@ sdais/
 │   └── v1/
 ├── trs/              ← transformation hypotheses; one file per item
 │   └── v1/
-├── cdf/              ← change definition files; one file per transformation dimension
-│   └── v1/
-└── rar/              ← audit findings; one file per finding; versioned by subdirectory
-    └── v1/           ← findings from the audit of RSF v1
+└── cdf/              ← change definition files; one file per transformation dimension
+    └── v1/
 
 <!-- BEGIN: Custom Agents Extension -->
 <!-- END: Custom Agents Extension -->

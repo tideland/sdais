@@ -19,7 +19,7 @@
 | Acronym | Full Name | Location | Purpose |
 |---|---|---|---|
 | **RSF** | Requirements Specification File | `sdais/rsf/v<N>/` | Normative requirements defining what the system must do or be. |
-| **RAR** | Requirements Audit Report | `sdais/rar/v<N>/` | Findings produced by the SemanticAuditor and Grounder; records issues in the RSF. |
+| **RAR** | *(deprecated)* Requirements Audit Report | — | Previously used for separate finding files; findings are now appended as `## Findings` sections within RSF item files. |
 | **TRS** | Transformation Specification | `sdais/trs/v<N>/` | Hypotheses about the behaviour and structure of an existing codebase (SDAIS-T only). |
 | **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-T only). |
 | **ADF** | Architecture Definition File | `sdais/adf/v<N>/design.md` | Module decomposition, API surfaces, data flows, and design decisions produced by the Designer. |

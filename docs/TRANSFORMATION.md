@@ -28,14 +28,14 @@ flowchart TD
     B2 -- Yes --> B3[Step 0\nWrite loose prose\nsdais/tspec/v1/]
     B3 --> B4[TransformationEngineer\nClarification loop]
     B4 --> B5{Open questions?}
-    B5 -- Yes --> B6[Answer [[QN]] questions\nadd [[AN]] in tspec/vN+1/]
+    B5 -- Yes --> B6[Answer questions in\n## Questions section\nof tspec/vN+1/]
     B6 --> B4
     B5 -- No --> B7[TransformationEngineer\nOutput Generation]
     B7 --> B8[Review TRS items\nPromote CDFs to Active]
     B8 --> C
     B2 -- No: author directly --> C
     C[Step 1\nAuthor / review TRS items\nTRS-FR · TRS-NFR · TRS-C] --> D[Step 2\nAnalyzer\nannotate + derive RSF]
-    D --> E[Step 3\nSemantic Audit Loop\nResolve RAR findings]
+    D --> E[Step 3\nSemantic Audit Loop\nResolve findings in RSF]
     E --> F{Findings\nresolved?}
     F -- No --> G[Resolve:\nFix · Drop · Supersede · Waive]
     G --> E
@@ -75,7 +75,7 @@ Dark blue = AI agent step. Orange = human decision gate.
 
 ## Step −1 — Install the Scaffold
 
-Copy the SDAIS distribution files into your project root and run `./install <project-name>` as described in [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold and `sdais` launcher are used for both workflows.
+Copy the SDAIS distribution files into your project root and run `./install.sh <project-name>` as described in [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold and `sdais` launcher are used for both workflows.
 
 ---
 
@@ -92,9 +92,9 @@ Use Step 0 when the existing system is complex, poorly documented, or when the d
 ### How it works
 
 1. Create `sdais/tspec/v1/` and write one or more files describing: (a) what you believe the existing system does, and (b) what transformations you want applied. No filename convention or format constraint applies.
-2. Run the **TransformationEngineer**. It reads every tspec file and inserts `[[QN question?]]` markers inline wherever text is ambiguous, makes tacit assumptions about the legacy system, states a transformation without a measurable target, or lacks evidence for a claim about existing behaviour.
-3. Open the files in `sdais/tspec/v2/` and answer every `[[QN question?]]` by adding `[[AN your answer]]` on the immediately following line. Do not remove or reword `[[QN]]` markers — they are the agent's domain.
-4. Re-run the TransformationEngineer. Repeat until it reports zero open questions.
+2. Run the **TransformationEngineer**. It reads every tspec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`.
+3. Open the files in `sdais/tspec/v2/` and answer each open question by writing your answer as free prose immediately below the corresponding `### QN:` heading in the `## Questions` section. Do not remove, reword, or add `### QN:` headings — questions are the agent's domain.
+4. Re-run the TransformationEngineer. It incorporates answers into the prose, removes answered `[[QN]]` inline markers, and appends any newly discovered questions. Repeat until it reports zero open questions.
 5. With no open questions remaining, the agent switches to Output Generation mode: it writes TRS item files to `sdais/trs/v1/` (each carrying `**Confidence:**` and `**Source:**` fields) and CDF files to `sdais/cdf/v1/` (each carrying `**Status:** Draft`).
 6. Review `sdais/trs/v1/`: amend wording, delete artefacts, and add anything the agent could not derive.
 7. Review `sdais/cdf/v1/`: for each CDF you intend to apply, change `**Status:**` from `Draft` to `Active`.
@@ -156,7 +156,7 @@ The Analyzer works additively — it never modifies existing logic, signatures, 
 
 1. `[ANN]` blocks to every callable unit and type. Each block gets a freshly generated `(ANN-ID)`, a reconstructed `(TASK)`, inferred `(PRE)` and `(POST)`, and a `(CONFIDENCE)` label (`Inferred-High`, `Inferred-Medium`, or `Inferred-Low`). Where a TRS item ID can be confidently mapped to a unit, `(ORIGIN)` is set to that TRS item ID for traceability.
 2. Formal RSF item files in `sdais/rsf/v1/` derived from observed behaviour.
-3. RAR finding files in `sdais/rar/v1/` for anything unclear — using categories `TRS-CONTRADICTS-CODE` (hypothesis contradicted by code) and `CODE-INTENT-UNCLEAR` (behaviour cannot be mapped to any requirement).
+3. Findings appended to RSF item files in `sdais/rsf/v<N+1>/` for anything unclear — using categories `TRS-CONTRADICTS-CODE` (hypothesis contradicted by code) and `CODE-INTENT-UNCLEAR` (behaviour cannot be mapped to any requirement).
 
 After the pass the Analyzer outputs a summary:
 
@@ -179,7 +179,7 @@ The `(ANN-ID)` values assigned here are permanent. They will be preserved throug
 
 **Prompt:** `sdais/prompts/semantic-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
 
-Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`) before continuing.
+Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly — findings are appended as `## Findings` sections within the affected RSF files staged in `rsf/v<N+1>/`. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`) before continuing.
 
 Additionally resolve any transformation-specific findings:
 

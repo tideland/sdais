@@ -39,13 +39,33 @@ After annotating all source files:
    Active. Set (ORIGIN) in the corresponding [ANN] blocks to the new RSF ID.
 
 10. For every mapping or behaviour that cannot be unambiguously identified,
-    create one RAR finding file in sdais/rar/v1/ using the RAR individual file
-    format. Assign exactly one of these transformation finding categories:
+    stage the affected RSF item file in sdais/rsf/v<N+1>/ (create the directory
+    if it does not exist) and append a finding entry using this format:
+
+      —
+
+      ## Findings
+
+      ### F<n>: <Short title>
+
+      **Category:** TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR
+      **Severity:** High | Medium
+      **References:** [RSF-<TYPE>-NNNN-V1]
+
+      <Precise description of the unclear or contradicted mapping.>
+
+      **Hint:** <Concrete instruction for the human to resolve this finding.>
+
+      **Resolution:**
+      (filled in by human after review)
+
+    Assign exactly one of these transformation finding categories:
       TRS-CONTRADICTS-CODE   — a TRS hypothesis is contradicted by what the
                                code actually does
       CODE-INTENT-UNCLEAR    — code behaviour cannot be unambiguously mapped
                                to a specific requirement
-    Set Status to Open.
+
+    Finding numbers are local to each RSF item file, starting at F1.
 
 Do not modify any TRS file. Do not ask for next steps.
 
@@ -54,7 +74,8 @@ When done, output exactly this summary:
   Source files annotated: <count>.
   [ANN] blocks written: <count>.
   RSF items derived: <count> (fr: <n>, nfr: <n>, c: <n>).
-  RAR findings opened: <count> (TRS-CONTRADICTS-CODE: <n>, CODE-INTENT-UNCLEAR: <n>).
+  Findings appended: <count> (TRS-CONTRADICTS-CODE: <n>, CODE-INTENT-UNCLEAR: <n>).
+  RSF item files staged in rsf/v<N+1>/: <list of filenames or "none">.
   Blocks with Inferred-High: <count>.
   Blocks with Inferred-Medium: <count>.
   Blocks with Inferred-Low: <count>.

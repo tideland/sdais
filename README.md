@@ -14,32 +14,34 @@ Create a directory for your project and copy the SDAIS distribution files into i
 
 ```
 mkdir my-project && cd my-project
-cp /path/to/sdais-dist/{SDAIS.md,install,update,sdais,sdais-vX.Y.Z.tgz} .
+cp /path/to/sdais-dist/{SDAIS.md,install.sh,update.sh,sdais.sh,sdais-vX.Y.Z.tgz} .
 ```
 
-`install` and `update` must be run from this project root — the directory that contains `SDAIS.md`, `install`, and `update`. Do not run them from inside the SDAIS distribution repository.
+`install.sh` and `update.sh` must be run from this project root — the directory that contains `SDAIS.md`, `install.sh`, and `update.sh`. Do not run them from inside the SDAIS distribution repository.
 
 Run the installer:
 
 ```
-./install <project-name>
+./install.sh <project-name>
 ```
 
-`install` creates `AGENTS.md`, the full `sdais/` scaffold with all prompt files and templates, and installs the `sdais` launcher into `~/.local/bin/sdais` so it is available as a global command. If `~/.local/bin` is not in your `PATH`, the script will tell you.
+`<project-name>` is a human-readable label substituted into `AGENTS.md` — it does not have to match your directory name.
 
-`SDAIS.md` in the project root is the distribution file. `install` copies it into `sdais/SDAIS.md` — the project-local copy that agents read. These are intentionally two separate files at different paths: when you upgrade, you replace the root-level `SDAIS.md` and run `./update`, which refreshes `sdais/SDAIS.md` without touching any project content.
+`install.sh` creates `AGENTS.md`, the full `sdais/` scaffold with all prompt files and templates, and installs the `sdais` launcher into `~/.local/bin/sdais` so it is available as a global command. If `~/.local/bin` is not in your `PATH`, the script will tell you.
+
+`SDAIS.md` in the project root is the distribution file. `install.sh` copies it into `sdais/SDAIS.md` — the project-local copy that agents read. These are intentionally two separate files at different paths: when you upgrade, you replace the root-level `SDAIS.md` and run `./update.sh`, which refreshes `sdais/SDAIS.md` without touching any project content.
 
 To upgrade an existing project to a new SDAIS version, replace the distribution files and run:
 
 ```
-./update --from <old-version>
+./update.sh --from <old-version>
 ```
 
 ---
 
 ## Running Agents
 
-The `sdais` command launches any agent role against a model of your choice. It is installed globally by `./install` and must be run from the project root (the directory that contains `sdais/prompts/`):
+The `sdais` command launches any agent role against a model of your choice. It is installed globally by `./install.sh` and must be run from the project root (the directory that contains `sdais/prompts/`):
 
 ```
 sdais <tool> <model> <role>
@@ -120,9 +122,9 @@ If you find it easier to start with free-form prose, write your ideas about the 
 | File / Directory | Purpose |
 |---|---|
 | `SDAIS.md` | Full normative specification — single source of truth |
-| `install` | Scaffolds a new project |
-| `update` | Upgrades an existing project's scaffold |
-| `sdais` | Launcher — runs any agent role with a chosen tool and model |
+| `install.sh` | Scaffolds a new project |
+| `update.sh` | Upgrades an existing project's scaffold |
+| `sdais.sh` | Launcher — runs any agent role with a chosen tool and model |
 | `scaffold/` | Prompt files and templates installed by `install` |
 | `docs/INTRODUCTION.md` | Concepts, motivation, agent roles, and prompt reference |
 | `docs/GREENFIELD.md` | Detailed greenfield workflow with process diagram |

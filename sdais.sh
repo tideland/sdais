@@ -1,20 +1,44 @@
 #!/usr/bin/env bash
 # sdais — launch an SDAIS agent role with a specific tool and model
-# Usage: sdais <tool> <model> <role>
-# Examples:
-#   sdais claude  claude-opus-4-5   RequirementsEngineer
-#   sdais claude  claude-sonnet-4-5 semantic-auditor
-#   sdais ollama  gemma4            Generator
-#   sdais codex   codex-mini        Generator
-#   sdais gemini  gemini-2.0-flash  Generator
-#
 # Run from the project root (the directory that contains sdais/prompts/).
 
 set -euo pipefail
 
-TOOL="${1:?Usage: sdais <tool> <model> <role>}"
-MODEL="${2:?Usage: sdais <tool> <model> <role>}"
-ROLE="${3:?Usage: sdais <tool> <model> <role>}"
+usage() {
+    cat <<'EOF'
+Usage: sdais.sh <tool> <model> <role>
+
+Examples per role (use high-reasoning models for spec/audit, high-coding for synthesis):
+  sdais.sh claude  claude-opus-4-5    RequirementsEngineer
+  sdais.sh claude  claude-opus-4-5    TransformationEngineer
+  sdais.sh claude  claude-opus-4-5    SemanticAuditor
+  sdais.sh claude  claude-opus-4-5    Designer
+  sdais.sh claude  claude-sonnet-4-5  Grounder
+  sdais.sh claude  claude-sonnet-4-5  Analyzer
+  sdais.sh claude  claude-sonnet-4-5  Generator
+  sdais.sh claude  claude-opus-4-5    Reviewer
+  sdais.sh claude  claude-sonnet-4-5  Refiner
+  sdais.sh claude  claude-sonnet-4-5  Transformation
+  sdais.sh claude  claude-opus-4-5    SecurityAuditor
+  sdais.sh claude  claude-sonnet-4-5  TestGenerator
+
+Alternative tools:
+  sdais.sh ollama  gemma4             Generator
+  sdais.sh codex   codex-mini         Generator
+  sdais.sh gemini  gemini-2.0-flash   Generator
+
+Role names are accepted in CamelCase or kebab-case (e.g. SemanticAuditor or semantic-auditor).
+EOF
+}
+
+if [[ $# -ne 3 ]]; then
+    usage >&2
+    exit 1
+fi
+
+TOOL="$1"
+MODEL="$2"
+ROLE="$3"
 
 PROMPTS_DIR="sdais/prompts"
 
@@ -50,7 +74,7 @@ SYSTEM_PROMPT="$(cat "$PROMPT_FILE")"
 
 case "$TOOL" in
     claude)
-        exec claude --model "$MODEL" --system "$SYSTEM_PROMPT"
+        exec claude --model "$MODEL" --append-system-prompt "$SYSTEM_PROMPT" "Please begin."
         ;;
     ollama)
         exec ollama run "$MODEL" --system "$SYSTEM_PROMPT"

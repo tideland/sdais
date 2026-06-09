@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SDAIS update script — v0.10.0
-# Usage: update [--from <old-version>]
+# Usage: update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
 # AGENTS.md, sdais/SDAIS.md) with the current SDAIS version while leaving
@@ -77,7 +77,7 @@ cp "$SCRIPT_DIR/SDAIS.md" sdais/SDAIS.md
 # Refresh the sdais launcher in ~/.local/bin/
 LOCAL_BIN="$HOME/.local/bin"
 if [ -f "$LOCAL_BIN/sdais" ]; then
-    cp "$SCRIPT_DIR/sdais" "$LOCAL_BIN/sdais"
+    cp "$SCRIPT_DIR/sdais.sh" "$LOCAL_BIN/sdais"
     chmod +x "$LOCAL_BIN/sdais"
 fi
 

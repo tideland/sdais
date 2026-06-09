@@ -15,7 +15,7 @@ flowchart TD
     B2 -- Yes --> B3[Step 0\nWrite loose prose\nsdais/gspec/v1/]
     B3 --> B4[RequirementsEngineer\nClarification loop]
     B4 --> B5{Open questions?}
-    B5 -- Yes --> B6[Answer [[QN]] questions\nadd [[AN]] in gspec/vN+1/]
+    B5 -- Yes --> B6[Answer questions in\n## Questions section\nof gspec/vN+1/]
     B6 --> B4
     B5 -- No --> B7[RequirementsEngineer\nRSF Generation]
     B7 --> C
@@ -61,10 +61,10 @@ Dark blue = AI agent step. Teal = optional AI agent step. Orange = human decisio
 
 ## Step −1 — Install the Scaffold
 
-Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install`, `update`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory from the repo), then run:
+Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install.sh`, `update.sh`, `sdais.sh`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory from the repo), then run:
 
 ```
-./install <project-name>
+./install.sh <project-name>
 ```
 
 This creates `AGENTS.md` at the project root and the `sdais/` directory with all prompt files and templates:
@@ -94,12 +94,9 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
     │       ├── c-0000-template.md
     │       ├── e-0000-template.md
     │       └── ac-0000-template.md
-    └── rar/
-        └── v1/
-            └── f-0000-template.md
 ```
 
-Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update` to refresh them when upgrading SDAIS.
+Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
 
 To launch any agent, use the `sdais` launcher from the project root:
 
@@ -124,9 +121,9 @@ Use Step 0 when you have a clear idea of what you want but struggle to express i
 ### How it works
 
 1. Create `sdais/gspec/v1/` and write one or more files describing what the system should do. No filename convention or format constraint applies — bullet points, paragraphs, or any mixture.
-2. Run the **RequirementsEngineer**. It reads every spec file and inserts `[[QN question?]]` markers inline wherever text is ambiguous, uses undefined terms, or is missing a measurable bound or acceptance criterion.
-3. Open the files in `sdais/gspec/v2/` and answer every `[[QN question?]]` by adding `[[AN your answer]]` on the immediately following line. Do not remove or reword `[[QN]]` markers — they are the agent's domain.
-4. Re-run the RequirementsEngineer. Repeat until it reports zero open questions.
+2. Run the **RequirementsEngineer**. It reads every spec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`.
+3. Open the files in `sdais/gspec/v2/` and answer each open question by writing your answer as free prose immediately below the corresponding `### QN:` heading in the `## Questions` section. Do not remove, reword, or add `### QN:` headings — questions are the agent's domain.
+4. Re-run the RequirementsEngineer. It incorporates answers into the prose, removes answered `[[QN]]` inline markers, and appends any newly discovered questions. Repeat until it reports zero open questions.
 5. With no open questions remaining, the agent switches to RSF Generation mode: it reads the clean spec files and writes one RSF item file per derived requirement into `sdais/rsf/v1/`, each carrying a `**Source:**` field pointing to the spec file it was derived from.
 6. Review `sdais/rsf/v1/`: amend wording, delete artefacts, and add anything the agent could not derive. The `**Source:**` field traces each item back to the original prose.
 
@@ -175,18 +172,18 @@ Use `[FR-NNNN]`, `[NFR-NNNN]`, `[AC-NNNN]`, etc. inline in the `## Requirement` 
 Before any code is generated, the RSF must pass a semantic audit. This is the quality gate that catches problems in the specification itself — ambiguity, gaps, contradictions, NFRs without numeric bounds — before they propagate into code that is hard to fix.
 
 1. Run the **SemanticAuditor**, providing all RSF item files for the current version.
-2. The agent writes one finding file per problem into `sdais/rar/v<N>/`.
-3. For each finding, choose exactly one resolution action and update the finding file's `Resolution` and `Status` fields:
+2. The agent copies each affected RSF item to `sdais/rsf/v<N+1>/` and appends a `## Findings` section (below a `—` separator) with one `### F<n>:` entry per finding. Each entry contains the category, severity, references, a precise description, and a **Hint** with a concrete resolution instruction. RSF files with no findings are not copied.
+3. For each finding in `sdais/rsf/v<N+1>/`, choose exactly one resolution action and fill in the `**Resolution:**` field below the finding:
 
-| Action | When to use | RSF item change |
+| Action | When to use | What to do |
 |---|---|---|
-| **Fix in place** | Item kept; wording corrected or quantified | Rewrite item text; append `[FIXED-RAR-V<N>-F<nn>]` to Audit History |
-| **Drop** | Item irrecoverably ambiguous or no longer needed | Append `[DROPPED-RAR-V<N>-F<nn> — <reason>]` to Audit History |
-| **Supersede** | Replace with a cleaner formulation under a new ID | Append `[SUPERSEDED→<new-ID>-RAR-V<N>-F<nn>]`; create new item file |
-| **Split** | One item covered two distinct concerns | Append `[SPLIT→<ID-a>,<ID-b>-RAR-V<N>-F<nn>]`; create both new files |
-| **Waive** | Finding acknowledged; item intentionally unchanged | RSF unchanged; record rationale in the finding file |
+| **Fix** | Item kept; wording corrected or quantified | Rewrite the requirement text above the `—` separator |
+| **Drop** | Item irrecoverably ambiguous or no longer needed | Delete the file from `rsf/v<N+1>/` |
+| **Supersede** | Replace with a cleaner formulation under a new ID | Create a new item file; note the supersession in `**Resolution:**` |
+| **Split** | One item covered two distinct concerns | Create two new item files; note the split in `**Resolution:**` |
+| **Waive** | Finding acknowledged; item intentionally unchanged | Note the rationale in `**Resolution:**`; leave requirement text unchanged |
 
-4. The SemanticAuditor stages copies of affected items in `sdais/rsf/v<N+1>/`. Amend the pre-staged copies (Fix/Drop/Supersede/Split) or delete them (Waive). Re-audit if any findings remain `Open`. Repeat until all findings are `Resolved` or `Waived` — the RSF is now **Cleared**.
+4. Re-run the SemanticAuditor on the amended `rsf/v<N+1>/`. Repeat until no new findings are produced — the RSF is now **Cleared**.
 
 ---
 
@@ -196,13 +193,13 @@ Before any code is generated, the RSF must pass a semantic audit. This is the qu
 
 Mandatory when `E-` items are present. Skip this step only if the RSF has no environment items.
 
-The Grounder verifies each `E-` item against real infrastructure — checking database connections, service endpoints, environment variables, file paths, secret mounts, etc. For each confirmed element it sets `**Verified:** true`. For each element it cannot confirm it opens an `ENV-UNRESOLVABLE` RAR finding.
+The Grounder verifies each `E-` item against real infrastructure — checking database connections, service endpoints, environment variables, file paths, secret mounts, etc. For each confirmed element it sets `**Verified:** true`. For each element it cannot confirm it appends an `ENV-UNRESOLVABLE` finding to the affected `E-` item file in `sdais/rsf/v<N+1>/`.
 
 Resolve all `ENV-UNRESOLVABLE` findings before proceeding:
 
-- **Fix in place:** update the `E-` item to match what actually exists; re-run Grounder.
+- **Fix:** update the `E-` item to match what actually exists; re-run Grounder.
 - **Drop:** remove the `E-` item and any FR items that depend on it.
-- **Waive:** append `[WAIVED-RAR-V<N>-F<nn> — to be created by this project]` if the infrastructure element will be built as part of this project.
+- **Waive:** note in `**Resolution:**` that the infrastructure element will be built as part of this project.
 
 ---
 

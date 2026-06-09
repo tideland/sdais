@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SDAIS install script — v0.10.0
-# Usage: install <project-name>
+# Usage: install.sh <project-name>
 #
 # Run from your project root. Creates AGENTS.md and the full sdais/ scaffold.
 # Requires: SDAIS.md in the same directory as this script.
@@ -8,18 +8,15 @@
 set -euo pipefail
 
 SDAIS_VERSION="v0.10.0"
-PROJECT="${1:?Usage: install <project-name>}"
+if [[ $# -lt 1 ]]; then
+    echo "Usage: install.sh <project-name>" >&2
+    exit 1
+fi
+PROJECT="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TODAY="$(date +%Y-%m-%d)"
 
 echo "SDAIS $SDAIS_VERSION — installing scaffold for: $PROJECT"
-
-# The sdais launcher file and the sdais/ scaffold directory share the same name.
-# Save the launcher to a temp file and remove the local copy so the scaffold
-# extraction can create the sdais/ directory without a name collision.
-LAUNCHER_TMP=$(mktemp)
-cp "$SCRIPT_DIR/sdais" "$LAUNCHER_TMP"
-rm -f "$SCRIPT_DIR/sdais"
 
 # Locate scaffold: tgz takes precedence over scaffold/ directory
 TGZ="$SCRIPT_DIR/sdais-$SDAIS_VERSION.tgz"
@@ -30,7 +27,6 @@ elif [ -d "$SCRIPT_DIR/scaffold" ]; then
     cp -rp "$SCRIPT_DIR/scaffold/." .
 else
     echo "error: neither $TGZ nor $SCRIPT_DIR/scaffold/ found" >&2
-    rm -f "$LAUNCHER_TMP"
     exit 1
 fi
 
@@ -40,8 +36,7 @@ cp "$SCRIPT_DIR/SDAIS.md" sdais/SDAIS.md
 # Install the sdais launcher into ~/.local/bin/
 LOCAL_BIN="$HOME/.local/bin"
 mkdir -p "$LOCAL_BIN"
-cp "$LAUNCHER_TMP" "$LOCAL_BIN/sdais"
-rm -f "$LAUNCHER_TMP"
+cp "$SCRIPT_DIR/sdais.sh" "$LOCAL_BIN/sdais"
 chmod +x "$LOCAL_BIN/sdais"
 
 # Create empty version directories not included in the scaffold
