@@ -47,7 +47,7 @@ tmp=$(mktemp)
 sed "s/<Project Name>/$PROJECT/g" AGENTS.md > "$tmp" && mv "$tmp" AGENTS.md
 
 # Substitute today's date in template files
-find sdais/rsf sdais/rar -name "*-template.md" | while read -r f; do
+find sdais/rsf -name "*-template.md" | while read -r f; do
     tmp=$(mktemp)
     sed "s/YYYY-MM-DD/$TODAY/g" "$f" > "$tmp" && mv "$tmp" "$f"
 done
@@ -55,9 +55,8 @@ done
 echo "Done."
 echo "  AGENTS.md"
 echo "  sdais/SDAIS.md"
-printf "  sdais/prompts/ (%d prompt files)\n" "$(ls sdais/prompts/ | wc -l | tr -d ' ')"
-printf "  sdais/rsf/v1/  (%d template files)\n" "$(ls sdais/rsf/v1/ | wc -l | tr -d ' ')"
-printf "  sdais/rar/v1/  (%d template files)\n" "$(ls sdais/rar/v1/ | wc -l | tr -d ' ')"
+printf "  sdais/prompts/ (%d prompt files)\n" "$(find sdais/prompts/ -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')"
+printf "  sdais/rsf/v1/  (%d template files)\n" "$(find sdais/rsf/v1/ -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')"
 printf "  %s/sdais\n" "$LOCAL_BIN"
 echo ""
 if ! command -v sdais >/dev/null 2>&1; then
