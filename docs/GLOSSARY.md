@@ -1,6 +1,6 @@
 # SDAIS — Glossary
 
-**Version:** v0.9.0 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.10.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 
@@ -9,7 +9,8 @@
 | Acronym | Full Name | Meaning |
 |---|---|---|
 | **SDAIS** | Specification-Driven AI Synthesis | The core paradigm: humans author specifications; AI agents synthesise all implementation code. |
-| **SDAIS-RE** | SDAIS Re-Engineering Extension | The re-engineering variant of SDAIS, applied to existing codebases rather than greenfield projects. |
+| **SDAIS-G** | SDAIS Greenfield | The greenfield workflow variant: specification is written before any code exists. |
+| **SDAIS-T** | SDAIS Transformation | The transformation workflow variant: applied to existing codebases. |
 
 ---
 
@@ -18,9 +19,9 @@
 | Acronym | Full Name | Location | Purpose |
 |---|---|---|---|
 | **RSF** | Requirements Specification File | `sdais/rsf/v<N>/` | Normative requirements defining what the system must do or be. |
-| **RAR** | Requirements Audit Report | `sdais/rar/v<N>/` | Findings produced by the SemanticAuditor and Grounder; records issues in the RSF. |
-| **RES** | Re-engineering Specification | `sdais/res/v<N>/` | Hypotheses about the behaviour and structure of an existing codebase (SDAIS-RE only). |
-| **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-RE only). |
+| **RAR** | *(deprecated)* Requirements Audit Report | — | Previously used for separate finding files; findings are now appended as `## Findings` sections within RSF item files. |
+| **TRS** | Transformation Specification | `sdais/trs/v<N>/` | Hypotheses about the behaviour and structure of an existing codebase (SDAIS-T only). |
+| **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-T only). |
 | **ADF** | Architecture Definition File | `sdais/adf/v<N>/design.md` | Module decomposition, API surfaces, data flows, and design decisions produced by the Designer. |
 
 ---
@@ -52,27 +53,27 @@ Findings are Markdown files named `f-NNNN-<description>.md`.
 | `UNTESTABLE` | An acceptance criterion cannot be verified programmatically. |
 | `UNQUANTIFIED` | An NFR lacks a measurable numeric bound. |
 | `ENV-UNRESOLVABLE` | A named infrastructure element cannot be confirmed in the target environment (Grounder finding). |
-| `RES-CONTRADICTS-CODE` | A RES hypothesis is contradicted by actual code behaviour (SDAIS-RE only). |
-| `CODE-INTENT-UNCLEAR` | Code behaviour cannot be mapped to any requirement (SDAIS-RE only). |
+| `TRS-CONTRADICTS-CODE` | A TRS hypothesis is contradicted by actual code behaviour (SDAIS-T only). |
+| `CODE-INTENT-UNCLEAR` | Code behaviour cannot be mapped to any requirement (SDAIS-T only). |
 
 ---
 
-## RES Item Types (SDAIS-RE)
+## TRS Item Types (SDAIS-T)
 
-RES items are hypotheses, not assertions. Files are named `res-<prefix>-NNNN-<description>.md`.
+TRS items are hypotheses, not assertions. Files are named `trs-<prefix>-NNNN-<description>.md`.
 
 | Prefix | Full Name | Purpose |
 |---|---|---|
-| `res-fr-NNNN-` | Re-engineering Functional Requirement (RES-FR) | Hypothesis about a functional behaviour of the existing system. |
-| `res-nfr-NNNN-` | Re-engineering Non-Functional Requirement (RES-NFR) | Hypothesis about a quality attribute of the existing system. |
-| `res-c-NNNN-` | Re-engineering Constraint (RES-C) | Hypothesis about a constraint observed in the existing system. |
+| `trs-fr-NNNN-` | Transformation Functional Requirement (TRS-FR) | Hypothesis about a functional behaviour of the existing system. |
+| `trs-nfr-NNNN-` | Transformation Non-Functional Requirement (TRS-NFR) | Hypothesis about a quality attribute of the existing system. |
+| `trs-c-NNNN-` | Transformation Constraint (TRS-C) | Hypothesis about a constraint observed in the existing system. |
 
 Status values: `Hypothesis | Confirmed | Refuted | Refined`  
 Confidence levels: `High | Medium | Low`
 
 ---
 
-## CDF Category Prefixes (SDAIS-RE)
+## CDF Category Prefixes (SDAIS-T)
 
 Each CDF covers exactly one transformation dimension. Multiple CDFs may be applied to the same codebase. Files are named `<category>-NNNN-<description>.md`.
 
@@ -131,7 +132,7 @@ Each CDF covers exactly one transformation dimension. Multiple CDFs may be appli
 | `(AGENT)` | Agent role name | Role of the agent that last wrote or modified this block. |
 | `(VERIFIED)` | `true` or `false` | Whether the Reviewer confirmed the block is correct. |
 | `(ROUND)` | Integer (0, 1, 2, …) | Review round in which the block was last written or updated. |
-| `(CONFIDENCE)` | `Inferred-High`, `Inferred-Medium`, or `Inferred-Low` | Confidence of inferred annotations; set by Analyzer in SDAIS-RE only. |
+| `(CONFIDENCE)` | `Inferred-High/Medium/Low` on ANN blocks; `High/Medium/Low` on TRS items | Set by Analyzer on ANN blocks (SDAIS-T); set by TransformationEngineer on TRS items. |
 
 ### Review Finding Labels
 
@@ -153,7 +154,8 @@ Each CDF covers exactly one transformation dimension. Multiple CDFs may be appli
 | `SecurityAuditor` | Specialised pass for `(CONSTRAINT:SEC)` compliance. |
 | `TestGenerator` | Derives tests from `(PRE)`, `(POST)`, and acceptance criteria. |
 | `SemanticAuditor` | RSF-level semantic validation before generation. |
-| `Analyzer` | Re-engineering: annotates existing codebase and derives RES items. |
-| `Re-engineering` | Applies CDF transformations; preserves all `(ANN-ID)` values. |
+| `TransformationEngineer` | Clarification and TRS/CDF derivation from free-form prose in `sdais/tspec/`. |
+| `Analyzer` | Transformation: annotates existing codebase and derives RSF items; references TRS item IDs in `(ORIGIN)`. |
+| `Transformation` | Applies CDF transformations; preserves all `(ANN-ID)` values. |
 | `Designer` | Produces ADF from a cleared RSF. |
 | `Grounder` | Verifies infrastructure assumptions in E- items. |

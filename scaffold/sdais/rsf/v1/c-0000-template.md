@@ -4,6 +4,7 @@
 **Status:** Template
 **Introduced:** v1 (YYYY-MM-DD)
 **Last modified:** v1 (YYYY-MM-DD)
+**Source:** [sdais/gspec/v<N>/filename.md or sdais/trs/v<N>/trs-fr-NNNN-... — omit if item was authored directly]
 
 ## Requirement
 

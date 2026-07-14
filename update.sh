@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# SDAIS update script — v0.9.0
-# Usage: bash update.sh [--from <old-version>]
+# SDAIS update script — v0.10.0
+# Usage: update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
 # AGENTS.md, sdais/SDAIS.md) with the current SDAIS version while leaving
@@ -9,14 +9,14 @@
 # Project content left untouched:
 #   sdais/rsf/v*/  — items with sequence number 0001 or higher
 #   sdais/rar/v*/  — findings with sequence number 0001 or higher
-#   sdais/res/v*/  — re-engineering hypotheses
+#   sdais/trs/v*/  — transformation hypotheses
 #   sdais/cdf/v*/  — change definition files
 #   sdais/adf/v*/  — architecture definition files
 #   All source code outside sdais/
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.9.0"
+SDAIS_VERSION="v0.10.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FROM_VERSION=""
 
@@ -74,6 +74,13 @@ fi
 # Update sdais/SDAIS.md
 cp "$SCRIPT_DIR/SDAIS.md" sdais/SDAIS.md
 
+# Refresh the sdais launcher in ~/.local/bin/
+LOCAL_BIN="$HOME/.local/bin"
+if [ -f "$LOCAL_BIN/sdais" ]; then
+    cp "$SCRIPT_DIR/sdais.sh" "$LOCAL_BIN/sdais"
+    chmod +x "$LOCAL_BIN/sdais"
+fi
+
 # Restore project name in the new AGENTS.md
 tmp=$(mktemp)
 sed "s/<Project Name>/$PROJECT/g" AGENTS.md > "$tmp" && mv "$tmp" AGENTS.md
@@ -95,6 +102,7 @@ echo "  sdais/prompts/ refreshed"
 echo "  *-0000-template.md files refreshed"
 echo "  AGENTS.md regenerated (Custom Agents Extension preserved)"
 echo "  sdais/SDAIS.md updated"
+[ -f "$LOCAL_BIN/sdais" ] && echo "  $LOCAL_BIN/sdais updated"
 echo ""
 echo "Project content (rsf, rar, res, cdf, adf, source files) left unchanged."
 echo "Review sdais/SDAIS.md for workflow changes introduced in $SDAIS_VERSION."
