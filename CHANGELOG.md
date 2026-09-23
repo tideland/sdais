@@ -8,6 +8,51 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **All 12 agent prompts rewritten in a compact structural notation.** Prompts are
+  now read by agents, not by humans, so they drop prose, Markdown decoration, and
+  tables in favour of `@section` markers and ASCII sigils (`->`, `!`, `~`, `?`,
+  `>`, `|`). The notation legend lives in `AGENTS.md` (read once per session)
+  rather than in each prompt file. Semantics are unchanged: every obligation,
+  finding category, file-format template, and `Output exactly:` block from
+  v0.10.0 is preserved, with all literal output kept byte-for-byte under
+  `@out verbatim:`. Net 17% smaller across the prompt set — 50% on rule-only
+  prompts such as `generator.md`, 12–16% on prompts dominated by incompressible
+  verbatim templates.
+- **Prompts now declare the SDAIS.md sections they need** via an `@spec` line
+  (e.g. `@spec SDAIS.md#annotation-syntax #syntax-table`), and `AGENTS.md`
+  instructs agents to read those sections rather than the whole document.
+  Per-role budgets range from 2% to 32% of SDAIS.md against 100% previously.
+- **`AGENTS.md` role table replaced with a plain list.** Table pipes and
+  alignment padding cost more than they conveyed to an agent reader.
+
+### Added
+- **`examples/line-counter/`** — a minimal SDAIS-G fixture for evaluating the
+  workflow end to end. Fifteen lines of deliberately loose prose that exercise
+  every RSF item type and force a RequirementsEngineer Mode A pass before
+  Mode B. Not part of the scaffold; nothing under `examples/` ships into user
+  projects.
+- **`examples/line-counter/bootstrap.sh`** — scaffolds the fixture into a
+  target directory given as its argument and generates `data/records.csv` at a
+  requested size (`--rows N` or `--size 500M`, with K/M/G suffixes).
+  `--malformed N` injects malformed rows — too few fields, one field too many,
+  and an unterminated quote, in rotation — spread evenly by progress through
+  the file so the count is exact in both modes. The CSV directory is what the
+  fixture's `SDAIS_DEMO_INPUT` environment item points at, giving the Grounder
+  a real element to confirm. `--force` replaces only a directory that already
+  looks like a bootstrapped fixture.
+
+### Fixed
+- **`update.sh` aborted on every run.** It scanned
+  `scaffold/sdais/rar/` for templates, a directory that has never existed in the
+  scaffold; under `set -e` the failing `find` terminated the script before it
+  restored the project name in `AGENTS.md` or re-injected the Custom Agents
+  Extension block. The scan is now guarded by a directory check.
+
+---
+
 ## [v0.10.0] — 2026-05-31
 
 ### Added

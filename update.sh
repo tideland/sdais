@@ -59,12 +59,15 @@ elif [ -d "$SCRIPT_DIR/scaffold" ]; then
         mkdir -p "$dir"
         cp -p "$src" "$rel"
     done
-    find "$SCRIPT_DIR/scaffold/sdais/rar" -name "*-0000-template.md" | while read -r src; do
-        rel="${src#$SCRIPT_DIR/scaffold/}"
-        dir="$(dirname "$rel")"
-        mkdir -p "$dir"
-        cp -p "$src" "$rel"
-    done
+    # rar/ templates are optional — absent in scaffolds that predate them
+    if [ -d "$SCRIPT_DIR/scaffold/sdais/rar" ]; then
+        find "$SCRIPT_DIR/scaffold/sdais/rar" -name "*-0000-template.md" | while read -r src; do
+            rel="${src#$SCRIPT_DIR/scaffold/}"
+            dir="$(dirname "$rel")"
+            mkdir -p "$dir"
+            cp -p "$src" "$rel"
+        done
+    fi
 else
     echo "error: neither $TGZ nor $SCRIPT_DIR/scaffold/ found" >&2
     rm -f "$CUSTOM_BLOCK"
