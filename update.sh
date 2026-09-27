@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS update script — v0.10.0
+# SDAIS update script — v0.11.0
 # Usage: update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.10.0"
+SDAIS_VERSION="v0.11.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FROM_VERSION=""
 
@@ -59,12 +59,15 @@ elif [ -d "$SCRIPT_DIR/scaffold" ]; then
         mkdir -p "$dir"
         cp -p "$src" "$rel"
     done
-    find "$SCRIPT_DIR/scaffold/sdais/rar" -name "*-0000-template.md" | while read -r src; do
-        rel="${src#$SCRIPT_DIR/scaffold/}"
-        dir="$(dirname "$rel")"
-        mkdir -p "$dir"
-        cp -p "$src" "$rel"
-    done
+    # rar/ templates are optional — absent in scaffolds that predate them
+    if [ -d "$SCRIPT_DIR/scaffold/sdais/rar" ]; then
+        find "$SCRIPT_DIR/scaffold/sdais/rar" -name "*-0000-template.md" | while read -r src; do
+            rel="${src#$SCRIPT_DIR/scaffold/}"
+            dir="$(dirname "$rel")"
+            mkdir -p "$dir"
+            cp -p "$src" "$rel"
+        done
+    fi
 else
     echo "error: neither $TGZ nor $SCRIPT_DIR/scaffold/ found" >&2
     rm -f "$CUSTOM_BLOCK"

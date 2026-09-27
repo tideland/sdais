@@ -1,10 +1,10 @@
 # TRS-NFR-0000: [Short title of the transformation non-functional requirement]
 
-**Type:** Non-Functional Requirement
-**Status:** Hypothesis
-**Introduced:** v1 (YYYY-MM-DD)
-**Confidence:** Low | Medium | High
-**Source:** [sdais/tspec/v<N>/filename.md — omit if item was authored directly]
+- **Type:** Non-Functional Requirement
+- **Status:** Hypothesis
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Confidence:** Low | Medium | High
+- **Source:** [sdais/tspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Hypothesis
 

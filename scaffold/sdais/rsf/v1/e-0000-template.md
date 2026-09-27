@@ -1,11 +1,11 @@
 # E-0000: [Short title of the environment item]
 
-**Type:** Environment
-**Status:** Template
-**Introduced:** v1 (YYYY-MM-DD)
-**Last modified:** v1 (YYYY-MM-DD)
-**Verified:** Pending
-**Source:** [sdais/gspec/v<N>/filename.md or sdais/trs/v<N>/trs-fr-NNNN-... — omit if item was authored directly]
+- **Type:** Environment
+- **Status:** Template
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Last modified:** v1 (YYYY-MM-DD)
+- **Source:** [sdais/gspec/v<N>/filename.md or sdais/trs/v<N>/trs-fr-NNNN-... — omit if item was authored directly]
+- **Verified:** Pending
 
 ## Requirement
 

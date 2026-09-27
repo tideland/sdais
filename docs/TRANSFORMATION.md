@@ -1,6 +1,6 @@
 # SDAIS — Transformation Workflow
 
-**Version:** v0.10.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.11.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-T (Transformation) workflow applies when an existing codebase precedes the specification. Most real-world systems do not start with a clean specification. They start with code — accumulated over years, built by people who are often no longer around, with intent that lives in git history at best and in tribal knowledge at worst. SDAIS-T is the workflow for those systems.
 
@@ -116,10 +116,10 @@ File naming mirrors the RSF convention: `trs-fr-NNNN-<description>.md`, `trs-nfr
 ```markdown
 # TRS-FR-0001: Short Title
 
-**Type:** Functional Requirement
-**Status:** Hypothesis
-**Confidence:** Low | Medium | High
-**Introduced:** v1 (YYYY-MM-DD)
+- **Type:** Functional Requirement
+- **Status:** Hypothesis
+- **Confidence:** Low | Medium | High
+- **Introduced:** v1 (YYYY-MM-DD)
 
 ## Hypothesis
 
@@ -222,10 +222,10 @@ If authoring CDFs directly, use the naming scheme `<category>-NNNN-<description>
 ```markdown
 # LANG-0001: Java 8 to Go 1.22 Migration
 
-**Category:** lang-
-**Status:** Active
-**Affects:** all
-**Source:** sdais/tspec/v3/migration-goals.md
+- **Category:** lang-
+- **Status:** Active
+- **Affects:** all
+- **Source:** sdais/tspec/v3/migration-goals.md
 
 ## Source
 

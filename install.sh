@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS install script — v0.10.0
+# SDAIS install script — v0.11.0
 # Usage: install.sh <project-name>
 #
 # Run from your project root. Creates AGENTS.md and the full sdais/ scaffold.
@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.10.0"
+SDAIS_VERSION="v0.11.0"
 if [[ $# -lt 1 ]]; then
     echo "Usage: install.sh <project-name>" >&2
     exit 1

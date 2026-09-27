@@ -1,8 +1,8 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Date:** 2026-05-08
-**Version:** v0.10.0
-**Status:** Draft
+- **Date:** 2026-09-27
+- **Version:** v0.11.0
+- **Status:** Draft
 
 ---
 
@@ -374,15 +374,15 @@ Finding categories: `AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTES
 
 #### Step 0.2 — Review each finding
 
-For each `### F<n>:` entry in the staged RSF files, the human chooses exactly one resolution action and fills in the `**Resolution:**` field:
+Each `### F<n>:` entry in the staged RSF files ends in a list of solution variants (see Findings Appendix Format). For each finding the human ticks exactly one variant — `- [x]` — replaces every `{{placeholder}}` in the ticked line, and applies it in `rsf/v<N+1>/` according to its action. If no variant fits, the human ticks `Own` and writes the resolution there.
 
-| Resolution action | When to use | What to do in rsf/v<N+1>/ |
+| Variant action | When it is offered | What to do in rsf/v<N+1>/ |
 |---|---|---|
-| **Fix** | Item kept; wording corrected or quantified | Rewrite the `## Requirement` text above the `—` separator |
+| **Fix** | Item kept; wording corrected or quantified | Replace the `## Requirement` text above the `—` separator with the variant text |
 | **Drop** | Item irrecoverably ambiguous or no longer needed | Delete the file from `rsf/v<N+1>/`; set Status to Dropped in the original |
-| **Supersede** | Replace with a cleaner formulation under a new ID | Create a new item file; note the supersession in `**Resolution:**` |
-| **Split** | One item covered two distinct concerns | Create two new item files; note the split in `**Resolution:**` |
-| **Waive** | Finding acknowledged; item intentionally unchanged | Note the rationale in `**Resolution:**`; leave requirement text unchanged |
+| **Supersede** | Replace with a cleaner formulation under a new ID | Create a new item file with the variant text; the ticked variant records the supersession |
+| **Split** | One item covered two distinct concerns | Create one new item file per variant text; the ticked variant records the split |
+| **Waive** | Finding acknowledged; item intentionally unchanged | Leave the requirement text unchanged; the filled `{{rationale}}` records why |
 
 **Rules for RSF item IDs:**
 - IDs are never reused. A dropped or superseded item file remains as a tombstone with `Status: Dropped` or `Status: Superseded`.
@@ -390,7 +390,8 @@ For each `### F<n>:` entry in the staged RSF files, the human chooses exactly on
 
 #### Step 0.3 — Re-audit or proceed
 
-- If any `**Resolution:**` fields remain unfilled: return to Step 0.1 with the new RSF version.
+- A finding is resolved when exactly one variant is ticked and that line contains no `{{placeholder}}`.
+- If any finding remains unresolved: return to Step 0.1 with the new RSF version.
 - If all findings are resolved: proceed to Step 0.4 if the RSF contains any `E-` items, otherwise proceed to Step 1.
 
 #### Step 0.4 — Infrastructure Grounding (mandatory when `E-` items are present)
@@ -430,11 +431,11 @@ Each RSF item is one Markdown file in `sdais/rsf/v<N>/`. The prefix encodes the 
 ```markdown
 # FR-0001: Short Title of the Requirement
 
-**Type:** Functional Requirement
-**Status:** Active
-**Introduced:** v1 (2026-04-21)
-**Last modified:** v1 (2026-04-21)
-**Source:** sdais/gspec/v3/auth-requirements.md
+- **Type:** Functional Requirement
+- **Status:** Active
+- **Introduced:** v1 (2026-04-21)
+- **Last modified:** v1 (2026-04-21)
+- **Source:** sdais/gspec/v3/auth-requirements.md
 
 ## Requirement
 
@@ -455,11 +456,11 @@ Environment (`E-`) items carry an additional field set by the Grounder:
 ```markdown
 # E-0001: Short Title of the Environment Item
 
-**Type:** Environment
-**Status:** Active
-**Introduced:** v1 (2026-04-21)
-**Last modified:** v1 (2026-04-21)
-**Verified:** Pending
+- **Type:** Environment
+- **Status:** Active
+- **Introduced:** v1 (2026-04-21)
+- **Last modified:** v1 (2026-04-21)
+- **Verified:** Pending
 
 ## Requirement
 
@@ -492,9 +493,9 @@ The Designer reads all active RSF items and produces one Architecture Definition
 ```markdown
 # Architecture Definition — <project> v<N>
 
-**RSF Version:** v<N>
-**Status:** Draft | Approved | Superseded
-**Designer:** <agent run date>
+- **RSF Version:** v<N>
+- **Status:** Draft | Approved | Superseded
+- **Designer:** <agent run date>
 
 ## Module Decomposition
 
@@ -670,11 +671,11 @@ Each TRS item is one Markdown file in `sdais/trs/v<N>/`. TRS items represent hyp
 ```markdown
 # TRS-FR-0001: LDAP Authentication Subsystem
 
-**Type:** Functional Requirement
-**Status:** Hypothesis
-**Introduced:** v1 (2026-05-02)
-**Confidence:** Medium
-**Source:** sdais/tspec/v3/auth-system.md
+- **Type:** Functional Requirement
+- **Status:** Hypothesis
+- **Introduced:** v1 (2026-05-02)
+- **Confidence:** Medium
+- **Source:** sdais/tspec/v3/auth-system.md
 
 ## Hypothesis
 
@@ -738,11 +739,11 @@ Each CDF in `sdais/cdf/v<N>/` describes exactly one dimension of change. CDFs ar
 ```markdown
 # lang-0001: Java 8 to Go 1.22 Migration
 
-**Type:** Language Migration
-**Status:** Active
-**Introduced:** v1 (2026-05-02)
-**Affects:** all
-**Source:** sdais/tspec/v3/migration-goals.md
+- **Type:** Language Migration
+- **Status:** Active
+- **Introduced:** v1 (2026-05-02)
+- **Affects:** all
+- **Source:** sdais/tspec/v3/migration-goals.md
 
 ## Source
 
@@ -845,33 +846,33 @@ Any tool, prompt, or human that regenerates `AGENTS.md` must preserve the entire
 ```markdown
 #### <AgentName>
 
-**Role:** <one-line description>
-**Triggers:** <when this agent is invoked in the lifecycle>
-**Reads:** <which artefacts the agent consumes>
-**Writes:** <which artefacts the agent produces>
-**Annotation Permissions:** <which [ANN] fields the agent may modify>
-**Prompt:** `sdais/prompts/<agent-name>.md`
+- **Role:** <one-line description>
+- **Triggers:** <when this agent is invoked in the lifecycle>
+- **Reads:** <which artefacts the agent consumes>
+- **Writes:** <which artefacts the agent produces>
+- **Annotation Permissions:** <which [ANN] fields the agent may modify>
+- **Prompt:** `sdais/prompts/<agent-name>.md`
 ```
 
 ### Worked Examples
 
 #### DomainAuditor
 
-**Role:** Validates domain-specific business rules beyond functional correctness.
-**Triggers:** Runs after Reviewer in each review round.
-**Reads:** Annotated source files; active RSF items; domain rule catalogue.
-**Writes:** `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)` labels on affected `[ANN]` blocks. Prefixes all finding descriptions with `DOMAIN-`.
-**Annotation Permissions:** Same as Reviewer — appends finding labels; updates `(AGENT)`, `(VERIFIED)`, `(ROUND)`.
-**Prompt:** `sdais/prompts/domain-auditor.md`
+- **Role:** Validates domain-specific business rules beyond functional correctness.
+- **Triggers:** Runs after Reviewer in each review round.
+- **Reads:** Annotated source files; active RSF items; domain rule catalogue.
+- **Writes:** `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)` labels on affected `[ANN]` blocks. Prefixes all finding descriptions with `DOMAIN-`.
+- **Annotation Permissions:** Same as Reviewer — appends finding labels; updates `(AGENT)`, `(VERIFIED)`, `(ROUND)`.
+- **Prompt:** `sdais/prompts/domain-auditor.md`
 
 #### ComplianceAuditor-GDPR
 
-**Role:** GDPR-specific data-flow audit; verifies that all personal data handling complies with GDPR requirements.
-**Triggers:** Runs mandatorily before any approval gate when at least one active `[ANN]` block carries `(CONSTRAINT:SEC) PII`.
-**Reads:** Annotated source files; active RSF items; GDPR compliance checklist.
-**Writes:** `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)` labels on affected `[ANN]` blocks. Prefixes all finding descriptions with `GDPR-`.
-**Annotation Permissions:** Same as SecurityAuditor — appends finding labels for `(CONSTRAINT:SEC)` violations; updates `(AGENT)`, `(VERIFIED)`, `(ROUND)`.
-**Prompt:** `sdais/prompts/compliance-auditor-gdpr.md`
+- **Role:** GDPR-specific data-flow audit; verifies that all personal data handling complies with GDPR requirements.
+- **Triggers:** Runs mandatorily before any approval gate when at least one active `[ANN]` block carries `(CONSTRAINT:SEC) PII`.
+- **Reads:** Annotated source files; active RSF items; GDPR compliance checklist.
+- **Writes:** `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)` labels on affected `[ANN]` blocks. Prefixes all finding descriptions with `GDPR-`.
+- **Annotation Permissions:** Same as SecurityAuditor — appends finding labels for `(CONSTRAINT:SEC)` violations; updates `(AGENT)`, `(VERIFIED)`, `(ROUND)`.
+- **Prompt:** `sdais/prompts/compliance-auditor-gdpr.md`
 
 ### Rules
 
@@ -1130,12 +1131,12 @@ Findings are appended to RSF item files in `## Findings` sections. The SemanticA
 ```markdown
 # <TYPE>-NNNN: Short Title
 
-**Type:** Functional Requirement | Non-Functional Requirement | Constraint | Environment | Acceptance Criterion
-**Status:** Active | Dropped | Superseded | Split
-**Introduced:** v<N> (<YYYY-MM-DD>)
-**Last modified:** v<N> (<YYYY-MM-DD>)
-**Verified:** Pending | true    ← Environment items only; omitted for all other types
-**Source:** sdais/gspec/v<N>/filename.md  ← omit when item was authored directly without Step −2
+- **Type:** Functional Requirement | Non-Functional Requirement | Constraint | Environment | Acceptance Criterion
+- **Status:** Active | Dropped | Superseded | Split
+- **Introduced:** v<N> (<YYYY-MM-DD>)
+- **Last modified:** v<N> (<YYYY-MM-DD>)
+- **Source:** sdais/gspec/v<N>/filename.md  ← omit when item was authored directly without Step −2
+- **Verified:** Pending | true    ← Environment items only; omitted for all other types
 
 ## Requirement
 
@@ -1151,17 +1152,21 @@ Related: [FR-NNNN], [NFR-NNNN], [AC-NNNN]
 
 ### F1: <Short title of finding>
 
-**Category:** AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE
-**Severity:** Critical | High | Medium | Low
-**References:** [RSF-<TYPE>-NNNN-V<N>], …
+- **Category:** AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE
+- **Severity:** Critical | High | Medium | Low
+- **References:** [RSF-<TYPE>-NNNN-V<N>], …
 
 <Precise description of the problem.>
 
-**Hint:** <Concrete, actionable instruction for the human author.>
-
-**Resolution:**
-(filled in by human after review)
+<Resolution block: Variants (SemanticAuditor) or Hint + Resolution (Grounder,
+Analyzer) — see Findings Appendix Format.>
 ```
+
+Header fields (and the Category/Severity/References block of each finding) are
+written as list items. Consecutive plain `**Field:** value` lines form a single
+Markdown paragraph and run together in previewers; one list item per field
+keeps them on separate lines. The same applies to every SDAIS artefact with a
+field header — TRS items, CDFs, ADFs, and custom agent definitions.
 
 ---
 
@@ -1169,20 +1174,39 @@ Related: [FR-NNNN], [NFR-NNNN], [AC-NNNN]
 
 Findings are appended to RSF item files by the SemanticAuditor, Grounder, and Analyzer agents. They appear after a `—` separator as a `## Findings` section within the staged copy of the RSF file in `sdais/rsf/v<N+1>/`. Finding numbers are local to each RSF item file, starting at 1 and incrementing across audit rounds.
 
+Every finding opens the same way — title, field list, description — and closes with a resolution block whose form depends on the agent.
+
+**SemanticAuditor findings** close with solution variants. The agent writes two to four variants, each a complete resolution that clears the finding once applied; a fixed `Own` line follows for anything the variants miss. The human ticks exactly one box and replaces every `{{placeholder}}` in the ticked line.
+
 ```markdown
 —
 
 ## Findings
 
-### F1: Short Title of Finding
+### F1: Processing Time Bound Lacks a Measurement Basis
 
-**Category:** AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE
-**Severity:** Critical | High | Medium | Low
-**References:** [RSF-<TYPE>-NNNN-V<N>], …
+- **Category:** UNQUANTIFIED
+- **Severity:** Medium
+- **References:** [RSF-NFR-0001-V1], [RSF-AC-0010-V1]
 
-<Precise description of the problem found in the RSF item. State what the
-problem is and why it prevents deterministic synthesis or testing.>
+NFR-0001 bounds processing time per row but states neither the hardware nor
+what is timed, so AC-0010 cannot be checked reproducibly.
 
+**Variants** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
+
+- [ ] **V1 — Fix** (recommended): The system must process a {{file_size_mb}} MB CSV file in at most {{max_seconds}} s wall-clock time, measured end to end from process start to exit on {{reference_hardware}}.
+- [ ] **V2 — Fix:** The system must sustain a throughput of at least {{min_rows_per_second}} rows per second, measured over a file of at least 1,000,000 rows on {{reference_hardware}}, excluding process startup.
+- [ ] **V3 — Drop:** Performance is not a requirement for this tool; remove NFR-0001 and AC-0010.
+- [ ] **Own:** {{your_resolution}}
+```
+
+- Variant actions are `Fix`, `Drop`, `Supersede`, `Split`, and `Waive`, as in Step 0.2. For `Fix`, `Supersede`, and `Split` the variant text is the exact replacement `## Requirement` text, ready to paste.
+- `{{snake_case}}` placeholders mark only details the human must supply: numbers, units, names, and choices the specification leaves open. Anything derivable from the RSF is written out. Double braces, not angle brackets: Markdown previewers treat `<rationale>` as an unknown HTML tag and render nothing.
+- `V1` is the auditor's recommendation. The agent never ticks a box.
+
+**Grounder and Analyzer findings** close with a hint and a resolution field:
+
+```markdown
 **Hint:** <Concrete, actionable instruction for the human author to resolve this
 finding. Be specific about what text to add, remove, or change.>
 
@@ -1203,11 +1227,11 @@ The `0000` files in `sdais/rsf/v1/` are inert scaffolds. They are never processe
 ```markdown
 # FR-0000: [Short title of the functional requirement]
 
-**Type:** Functional Requirement
-**Status:** Template
-**Introduced:** v1 (YYYY-MM-DD)
-**Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Type:** Functional Requirement
+- **Status:** Template
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Last modified:** v1 (YYYY-MM-DD)
+- **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1223,11 +1247,11 @@ Related: [Cross-references to related items, e.g. [NFR-0001], [AC-0001]. Omit se
 ```markdown
 # NFR-0000: [Short title of the non-functional requirement]
 
-**Type:** Non-Functional Requirement
-**Status:** Template
-**Introduced:** v1 (YYYY-MM-DD)
-**Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Type:** Non-Functional Requirement
+- **Status:** Template
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Last modified:** v1 (YYYY-MM-DD)
+- **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1244,11 +1268,11 @@ Related: [Cross-references to related items. Omit section if none.]
 ```markdown
 # C-0000: [Short title of the constraint]
 
-**Type:** Constraint
-**Status:** Template
-**Introduced:** v1 (YYYY-MM-DD)
-**Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Type:** Constraint
+- **Status:** Template
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Last modified:** v1 (YYYY-MM-DD)
+- **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1264,12 +1288,12 @@ Related: [Cross-references to related items. Omit section if none.]
 ```markdown
 # E-0000: [Short title of the environment item]
 
-**Type:** Environment
-**Status:** Template
-**Introduced:** v1 (YYYY-MM-DD)
-**Last modified:** v1 (YYYY-MM-DD)
-**Verified:** Pending
-**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Type:** Environment
+- **Status:** Template
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Last modified:** v1 (YYYY-MM-DD)
+- **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Verified:** Pending
 
 ## Requirement
 
@@ -1287,11 +1311,11 @@ Related: [Cross-references to related items. Omit section if none.]
 ```markdown
 # AC-0000: [Short title of the acceptance criterion]
 
-**Type:** Acceptance Criterion
-**Status:** Template
-**Introduced:** v1 (YYYY-MM-DD)
-**Last modified:** v1 (YYYY-MM-DD)
-**Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Type:** Acceptance Criterion
+- **Status:** Template
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Last modified:** v1 (YYYY-MM-DD)
+- **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
 
 ## Requirement
 
@@ -1302,4 +1326,3 @@ programmatically are flagged UNTESTABLE by the SemanticAuditor.]
 
 Related: [Cross-references to the FR(s) this criterion verifies, e.g. [FR-0001].]
 ```
-

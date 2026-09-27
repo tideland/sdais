@@ -1,6 +1,6 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.10.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.11.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-G (Greenfield) workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
 
@@ -172,16 +172,16 @@ Use `[FR-NNNN]`, `[NFR-NNNN]`, `[AC-NNNN]`, etc. inline in the `## Requirement` 
 Before any code is generated, the RSF must pass a semantic audit. This is the quality gate that catches problems in the specification itself — ambiguity, gaps, contradictions, NFRs without numeric bounds — before they propagate into code that is hard to fix.
 
 1. Run the **SemanticAuditor**, providing all RSF item files for the current version.
-2. The agent copies each affected RSF item to `sdais/rsf/v<N+1>/` and appends a `## Findings` section (below a `—` separator) with one `### F<n>:` entry per finding. Each entry contains the category, severity, references, a precise description, and a **Hint** with a concrete resolution instruction. RSF files with no findings are not copied.
-3. For each finding in `sdais/rsf/v<N+1>/`, choose exactly one resolution action and fill in the `**Resolution:**` field below the finding:
+2. The agent copies each affected RSF item to `sdais/rsf/v<N+1>/` and appends a `## Findings` section (below a `—` separator) with one `### F<n>:` entry per finding. Each entry contains the category, severity, references, a precise description, and two to four **solution variants** — complete resolutions to choose from, with `{{placeholders}}` for the details only you can supply — followed by an `Own` option. RSF files with no findings are not copied.
+3. For each finding in `sdais/rsf/v<N+1>/`, tick exactly one variant (`- [x]`), replace every `{{placeholder}}` in it, and apply it according to its action. `V1` is the auditor's recommendation; if none fits, tick `Own` and write your own resolution:
 
-| Action | When to use | What to do |
+| Action | When it is offered | What to do |
 |---|---|---|
-| **Fix** | Item kept; wording corrected or quantified | Rewrite the requirement text above the `—` separator |
+| **Fix** | Item kept; wording corrected or quantified | Replace the requirement text above the `—` separator with the variant text |
 | **Drop** | Item irrecoverably ambiguous or no longer needed | Delete the file from `rsf/v<N+1>/` |
-| **Supersede** | Replace with a cleaner formulation under a new ID | Create a new item file; note the supersession in `**Resolution:**` |
-| **Split** | One item covered two distinct concerns | Create two new item files; note the split in `**Resolution:**` |
-| **Waive** | Finding acknowledged; item intentionally unchanged | Note the rationale in `**Resolution:**`; leave requirement text unchanged |
+| **Supersede** | Replace with a cleaner formulation under a new ID | Create a new item file with the variant text |
+| **Split** | One item covered two distinct concerns | Create one new item file per variant text |
+| **Waive** | Finding acknowledged; item intentionally unchanged | Leave the requirement text unchanged; the filled `{{rationale}}` records why |
 
 4. Re-run the SemanticAuditor on the amended `rsf/v<N+1>/`. Repeat until no new findings are produced — the RSF is now **Cleared**.
 
