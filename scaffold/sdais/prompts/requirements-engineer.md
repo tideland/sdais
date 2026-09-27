@@ -110,11 +110,11 @@ B.2 write rsf item files
 ```
 # FR-NNNN: Short Title
 
-**Type:** Functional Requirement
-**Status:** Active
-**Introduced:** v1 (YYYY-MM-DD)
-**Last modified:** v1 (YYYY-MM-DD)
-**Source:** sdais/gspec/v<N>/filename.md
+- **Type:** Functional Requirement
+- **Status:** Active
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Last modified:** v1 (YYYY-MM-DD)
+- **Source:** sdais/gspec/v<N>/filename.md
 
 ## Requirement
 
@@ -129,7 +129,7 @@ Related: [AC-NNNN]
   FR  Functional Requirement
   NFR Non-Functional Requirement
   C   Constraint
-  E   Environment  (+ `**Verified:** Pending` after `**Source:**`)
+  E   Environment  (+ list item `- **Verified:** Pending` after `**Source:**`)
   AC  Acceptance Criterion
  @never write [ANN] blocks / write source code / modify any spec file
 

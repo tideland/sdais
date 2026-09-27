@@ -24,7 +24,7 @@ Examples per role (use high-reasoning models for spec/audit, high-coding for syn
 
 Alternative tools:
   sdais.sh ollama  gemma4             Generator
-  sdais.sh codex   codex-mini         Generator
+  sdais.sh codex   gpt-6-sol          Generator
   sdais.sh gemini  gemini-2.0-flash   Generator
 
 Role names are accepted in CamelCase or kebab-case (e.g. SemanticAuditor or semantic-auditor).
@@ -54,6 +54,21 @@ camel_to_kebab() {
     echo "$1" | sed 's/\([A-Z]\)/-\1/g' | tr '[:upper:]' '[:lower:]' | sed 's/^-//'
 }
 
+# Quote a value as a TOML basic string for Codex's --config option.
+toml_string() {
+    local value="$1"
+
+    value="${value//\\/\\\\}"
+    value="${value//\"/\\\"}"
+    value="${value//$'\b'/\\b}"
+    value="${value//$'\f'/\\f}"
+    value="${value//$'\t'/\\t}"
+    value="${value//$'\r'/\\r}"
+    value="${value//$'\n'/\\n}"
+
+    printf '"%s"' "$value"
+}
+
 # Accept CamelCase (RequirementsEngineer) or kebab-case (requirements-engineer)
 PROMPT_FILE="$PROMPTS_DIR/$(camel_to_kebab "$ROLE").md"
 if [[ ! -f "$PROMPT_FILE" ]]; then
@@ -80,7 +95,11 @@ case "$TOOL" in
         exec ollama run "$MODEL" --system "$SYSTEM_PROMPT"
         ;;
     codex)
-        exec codex --model "$MODEL" --system-prompt "$SYSTEM_PROMPT"
+        # Codex has no --system-prompt flag. Supply the role as additional
+        # developer instructions while retaining Codex's built-in instructions.
+        exec codex --model "$MODEL" \
+            --config "developer_instructions=$(toml_string "$SYSTEM_PROMPT")" \
+            "Please begin."
         ;;
     gemini)
         # Verify --system-instruction is the correct flag for your Gemini CLI version.

@@ -10,8 +10,9 @@
      path|dir -> exists with described perms|content structure
      env var -> set & value matches any stated pattern|constraint
      other -> most appropriate confirmation method available for the description
-@confirmed append `**Verified:** true`, replacing any existing
-           `**Verified:** Pending`; update `**Last modified:**` to today
+@confirmed header list item `- **Verified:** true`, replacing the existing
+           `**Verified:** Pending` line in place (absent -> append to the header
+           list); update `**Last modified:**` to today
 @unconfirmed
   original file: leave `**Verified:** Pending`, ## Requirement text untouched
   copy the E- item verbatim -> rsf/v<N+1>/ (mkdir if absent), append verbatim:
@@ -22,9 +23,9 @@
 
   ### F1: ENV-UNRESOLVABLE — <short description>
 
-  **Category:** ENV-UNRESOLVABLE
-  **Severity:** High
-  **References:** [RSF-E-NNNN-V<N>]
+  - **Category:** ENV-UNRESOLVABLE
+  - **Severity:** High
+  - **References:** [RSF-E-NNNN-V<N>]
 
   E- item <E-ID> names the infrastructure element "<element name>" but this
   element could not be confirmed: <specific reason — connection refused,

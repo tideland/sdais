@@ -8,9 +8,9 @@
 ```
 # Architecture Definition — <project> v<N>
 
-**RSF Version:** v<N>
-**Status:** Draft
-**Designer:** <YYYY-MM-DD>
+- **RSF Version:** v<N>
+- **Status:** Draft
+- **Designer:** <YYYY-MM-DD>
 
 ## Module Decomposition
 

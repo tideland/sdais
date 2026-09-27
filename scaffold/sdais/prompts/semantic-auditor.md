@@ -22,18 +22,35 @@
 
    ### F<n>: <Short title of finding>
 
-   **Category:** <category>
-   **Severity:** Critical | High | Medium | Low
-   **References:** [RSF-<TYPE>-NNNN-V<N>], …
+   - **Category:** <category>
+   - **Severity:** Critical | High | Medium | Low
+   - **References:** [RSF-<TYPE>-NNNN-V<N>], …
 
    <Precise description of the problem. State which item is affected, what the
    problem is, and why it prevents deterministic synthesis or testing.>
 
-   **Hint:** <Concrete, actionable instruction for the human author. Be specific
-   about what text to add, remove, or change.>
+   **Variants** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
 
-   **Resolution:**
-   (filled in by human after review)
+   - [ ] **V1 — <Action>** (recommended): <variant text>
+   - [ ] **V2 — <Action>:** <variant text>
+   - [ ] **Own:** {{your_resolution}}
+
+ 4 variants ! 2-4 agent-written variants, then the fixed Own line last
+   - <Action> = Fix | Drop | Supersede | Split | Waive
+   - each variant is a complete, valid resolution: applied with its
+     placeholders filled, it clears the finding. no variant may leave the
+     problem in place (e.g. UNQUANTIFIED Fix must contain the numeric bound)
+   - Fix|Supersede|Split -> <variant text> is the exact replacement
+     ## Requirement text (Split: one text per new item), ready to paste
+   - Drop -> one sentence on why the item can go; Waive -> "Keep unchanged
+     because {{rationale}}." offer Waive only if leaving the item unchanged is
+     defensible
+   - {{snake_case}} placeholders mark only details the human must supply
+     (numbers, units, names, choices the spec leaves open). everything
+     derivable from the rsf is written out. never use <angle> placeholders in
+     variant text — previewers swallow them as HTML
+   - variants differ in substance, not wording. V1 = your recommendation
+   - never tick a box yourself
 
  F-numbers (F1, F2, …) local per file, from F1
  prior `## Findings` from an earlier round -> append as ### F<n+1>: after the

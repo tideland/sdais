@@ -123,11 +123,11 @@ B.2 derive trs items from all files in tspec/v<N>/, describing what you believe
 ```
 # TRS-FR-NNNN: Short Title
 
-**Type:** Functional Requirement
-**Status:** Hypothesis
-**Introduced:** v1 (YYYY-MM-DD)
-**Confidence:** High | Medium | Low
-**Source:** sdais/tspec/v<N>/filename.md
+- **Type:** Functional Requirement
+- **Status:** Hypothesis
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Confidence:** High | Medium | Low
+- **Source:** sdais/tspec/v<N>/filename.md
 
 ## Hypothesis
 
@@ -171,11 +171,11 @@ B.3 derive cdf files from all files in tspec/v<N>/, one per distinct
 ```
 # <CATEGORY>-NNNN: Short Title
 
-**Category:** <category>-
-**Status:** Draft
-**Introduced:** v1 (YYYY-MM-DD)
-**Affects:** all
-**Source:** sdais/tspec/v<N>/filename.md
+- **Category:** <category>-
+- **Status:** Draft
+- **Introduced:** v1 (YYYY-MM-DD)
+- **Affects:** all
+- **Source:** sdais/tspec/v<N>/filename.md
 
 ## Source
 

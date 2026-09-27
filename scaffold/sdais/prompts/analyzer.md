@@ -35,9 +35,9 @@
 
       ### F<n>: <Short title>
 
-      **Category:** TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR
-      **Severity:** High | Medium
-      **References:** [RSF-<TYPE>-NNNN-V1]
+      - **Category:** TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR
+      - **Severity:** High | Medium
+      - **References:** [RSF-<TYPE>-NNNN-V1]
 
       <Precise description of the unclear or contradicted mapping.>
 

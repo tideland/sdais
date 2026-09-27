@@ -140,7 +140,9 @@ else
     echo "Generating $CSV ($ROWS rows, $MALFORMED malformed)"
 fi
 
-awk -v mode="${SIZE:+size}" \
+# Keep decimal amounts to one CSV field even when the host locale uses a
+# comma as its decimal separator.
+LC_NUMERIC=C awk -v mode="${SIZE:+size}" \
     -v rows="${ROWS:-0}" \
     -v target_bytes="${TARGET_BYTES:-0}" \
     -v malformed="$MALFORMED" \

@@ -1,6 +1,6 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Version:** v0.10.0 | **Status:** Draft | **License:** BSD 3-Clause
+**Version:** v0.11.0 | **Status:** Draft | **License:** BSD 3-Clause
 
 SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
 
