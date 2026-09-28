@@ -1,31 +1,31 @@
 #!/usr/bin/env bash
-# sdais — launch an SDAIS agent role with a specific tool and model
+# sdais.sh — launch an SDAIS agent role with a specific tool and model
 # Run from the project root (the directory that contains sdais/prompts/).
 
 set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: sdais.sh <tool> <model> <role>
+Usage: ./sdais.sh <tool> <model> <role>
 
 Examples per role (use high-reasoning models for spec/audit, high-coding for synthesis):
-  sdais.sh claude  claude-opus-4-5    RequirementsEngineer
-  sdais.sh claude  claude-opus-4-5    TransformationEngineer
-  sdais.sh claude  claude-opus-4-5    SemanticAuditor
-  sdais.sh claude  claude-opus-4-5    Architect
-  sdais.sh claude  claude-sonnet-4-5  Grounder
-  sdais.sh claude  claude-sonnet-4-5  Analyzer
-  sdais.sh claude  claude-sonnet-4-5  Generator
-  sdais.sh claude  claude-opus-4-5    Reviewer
-  sdais.sh claude  claude-sonnet-4-5  Refiner
-  sdais.sh claude  claude-sonnet-4-5  Transformation
-  sdais.sh claude  claude-opus-4-5    SecurityAuditor
-  sdais.sh claude  claude-sonnet-4-5  TestGenerator
+  ./sdais.sh claude  claude-opus-4-5    RequirementsEngineer
+  ./sdais.sh claude  claude-opus-4-5    TransformationEngineer
+  ./sdais.sh claude  claude-opus-4-5    SemanticAuditor
+  ./sdais.sh claude  claude-opus-4-5    Architect
+  ./sdais.sh claude  claude-sonnet-4-5  Grounder
+  ./sdais.sh claude  claude-sonnet-4-5  Analyzer
+  ./sdais.sh claude  claude-sonnet-4-5  Generator
+  ./sdais.sh claude  claude-opus-4-5    Reviewer
+  ./sdais.sh claude  claude-sonnet-4-5  Refiner
+  ./sdais.sh claude  claude-sonnet-4-5  Transformation
+  ./sdais.sh claude  claude-opus-4-5    SecurityAuditor
+  ./sdais.sh claude  claude-sonnet-4-5  TestGenerator
 
 Alternative tools:
-  sdais.sh ollama  gemma4             Generator
-  sdais.sh codex   gpt-6-sol          Generator
-  sdais.sh gemini  gemini-2.0-flash   Generator
+  ./sdais.sh ollama  gemma4             Generator
+  ./sdais.sh codex   gpt-6-sol          Generator
+  ./sdais.sh gemini  gemini-2.0-flash   Generator
 
 Role names are accepted in CamelCase or kebab-case (e.g. SemanticAuditor or semantic-auditor).
 EOF
@@ -43,7 +43,7 @@ ROLE="$3"
 PROMPTS_DIR="sdais/prompts"
 
 if [[ ! -d "$PROMPTS_DIR" ]]; then
-    echo "error: sdais/prompts/ not found — run sdais from the project root." >&2
+    echo "error: sdais/prompts/ not found — run ./sdais.sh from the project root." >&2
     exit 1
 fi
 

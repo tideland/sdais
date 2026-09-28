@@ -66,8 +66,8 @@ if ! command -v sdais >/dev/null 2>&1; then
 fi
 echo "Next:"
 echo "  Option A (SDAIS-G) — draft prose first: create sdais/gspec/v1/, write freely,"
-echo "             then run: sdais <tool> <model> RequirementsEngineer"
+echo "             then run: ./sdais.sh <tool> <model> RequirementsEngineer"
 echo "  Option A (SDAIS-T) — draft transformation prose: create sdais/tspec/v1/,"
-echo "             then run: sdais <tool> <model> TransformationEngineer"
+echo "             then run: ./sdais.sh <tool> <model> TransformationEngineer"
 echo "  Option B — author RSF items directly in sdais/rsf/v1/, then run:"
-echo "             sdais <tool> <model> SemanticAuditor"
+echo "             ./sdais.sh <tool> <model> SemanticAuditor"

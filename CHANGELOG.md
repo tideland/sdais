@@ -27,6 +27,9 @@ version will advance to v1.0.0 on first stable release.
 - **Architect prompt follows the compact v0.11.0 notation.** It declares only
   inputs, artefacts, invariant shapes, and validation rules needed by the role,
   including cross-document component naming and complete RSF traceability.
+- **Launcher examples use the distribution filename.** README, guides, examples,
+  installer output, and launcher help now consistently invoke `./sdais.sh`
+  from the project root instead of the optional global `sdais` alias.
 - Version bumped from v0.11.0 to v0.12.0 in the specification, guides, installer,
   and updater.
 
