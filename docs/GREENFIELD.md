@@ -211,14 +211,14 @@ Run the Architect if you want a human-approved architecture checkpoint before an
 
 The Architect reads all cleared RSF items and produces this UTF-8 Markdown set under `sdais/adf/v<N>/`:
 
-- `glossary.md` — project, domain, integration, component, data, and acronym terms.
-- `context-and-goals.md` — context, goals, stakeholders, scope, quality goals, and constraints.
-- `requirement-trace.md` — every active specification ID and title mapped to architecture components, external interfaces, decisions, and verification.
-- `internal-architecture.md` — components, boundary contracts, data flows, and the Mermaid diagrams needed to describe the internal structure.
-- `external-architecture.md` — actors, external systems, integration contracts, trust boundaries, failure handling, flows, and the Mermaid diagrams needed to describe integrations.
+- `adf-01-context-and-goals.md` — context, goals, stakeholders, scope, quality goals, and constraints.
+- `adf-02-internal-architecture.md` — components, boundary contracts, data flows, and the Mermaid diagrams needed to describe the internal structure.
+- `adf-03-external-architecture.md` — actors, external systems, integration contracts, trust boundaries, failure handling, flows, and the Mermaid diagrams needed to describe integrations.
+- `adf-04-requirement-trace.md` — every active specification ID and title mapped to architecture components, external interfaces, decisions, and verification.
+- `adf-05-glossary.md` — project, domain, integration, component, data, and acronym terms.
 - `decisions/adr-NNNN-<short-title>.md` — one ADR per significant architecture decision.
 
-Every ADR contains Status, Context, Decision, Justification, Consequences, Alternatives, Relevant Requirements, and Verification Tests. The final two sections are item lists whose entries start with a specification ID and its exact title.
+Every ADR contains Status, Context, Decision, Justification, Consequences, Alternatives, Relevant Requirements, and Verification Tests. Every entry in the final two sections uses `- **[<id>]:** <text>`, where the ID is a real specification ID and the text is its exact title.
 
 Review the complete ADF set and either approve it—set every core document to `**Status:** Approved` and every ADR to `**Status:** Accepted`—or reject it with written feedback for the Architect to revise. A fully approved ADF is read by the Generator as structural context; a partial set is ignored. It guides module and package layout without overriding RSF requirements. RSF items remain authoritative if ADF and RSF ever conflict.
 

@@ -68,11 +68,11 @@ sdais/
 │   └── v1/           ← items introduced or amended in version 1
 ├── adf/              ← UTF-8 Markdown architecture definition files; produced by Architect
 │   └── v1/
-│       ├── glossary.md
-│       ├── context-and-goals.md
-│       ├── requirement-trace.md
-│       ├── internal-architecture.md
-│       ├── external-architecture.md
+│       ├── adf-01-context-and-goals.md
+│       ├── adf-02-internal-architecture.md
+│       ├── adf-03-external-architecture.md
+│       ├── adf-04-requirement-trace.md
+│       ├── adf-05-glossary.md
 │       └── decisions/adr-NNNN-<slug>.md
 ├── trs/              ← transformation hypotheses; one file per item
 │   └── v1/

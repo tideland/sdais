@@ -45,7 +45,7 @@ The paradigm defines a set of specialist agent roles, each with a focused respon
 | `requirements-engineer.md` | RequirementsEngineer | Transforms loose prose in `sdais/gspec/` into formal RSF items through an iterative clarification loop; inserts `[[QN]]` questions for every ambiguity and generates RSF files once the spec is clean | High-reasoning (e.g. Claude Opus) |
 | `semantic-auditor.md` | SemanticAuditor | Validates RSF items before generation: detects ambiguity, incompleteness, contradictions, and untestable acceptance criteria | High-reasoning (e.g. Claude Opus) |
 | `grounder.md` | Grounder | Verifies that every Environment item describes something that actually exists in your infrastructure | High-reasoning (e.g. Claude Opus or Sonnet) |
-| `architect.md` | Architect | Produces the traceable ADF document set: glossary, context and goals, requirement trace, internal and external architecture, and ADRs | High-reasoning (e.g. Claude Opus or Sonnet) |
+| `architect.md` | Architect | Produces the traceable ADF document set: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs | High-reasoning (e.g. Claude Opus or Sonnet) |
 | `generator.md` | Generator | Synthesises a complete, annotated implementation from cleared RSF items | High-coding (e.g. Claude Sonnet) |
 | `reviewer.md` | Reviewer | Checks every annotation block against the RSF; sets blocks verified or raises findings | High-reasoning or high-coding (e.g. Claude Opus or Sonnet) |
 | `refiner.md` | Refiner | Fixes every violation directed by the Reviewer's hints; marks resolved blocks verified | High-coding (e.g. Claude Sonnet) |

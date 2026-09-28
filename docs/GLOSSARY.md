@@ -22,7 +22,7 @@
 | **RAR** | *(deprecated)* Requirements Audit Report | — | Previously used for separate finding files; findings are now appended as `## Findings` sections within RSF item files. |
 | **TRS** | Transformation Specification | `sdais/trs/v<N>/` | Hypotheses about the behaviour and structure of an existing codebase (SDAIS-T only). |
 | **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-T only). |
-| **ADF** | Architecture Definition Files | `sdais/adf/v<N>/` | UTF-8 Markdown set containing glossary, context and goals, requirement trace, internal and external architecture, and ADRs produced by the Architect. |
+| **ADF** | Architecture Definition Files | `sdais/adf/v<N>/` | UTF-8 Markdown set containing context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs produced by the Architect. |
 | **ADR** | Architecture Decision Record | `sdais/adf/v<N>/decisions/adr-NNNN-<short-title>.md` | One significant architecture decision with rationale, consequences, alternatives, requirements, and verification tests. |
 
 ---

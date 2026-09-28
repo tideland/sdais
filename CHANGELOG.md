@@ -17,9 +17,10 @@ version will advance to v1.0.0 on first stable release.
   glossary now consistently use `Architect` and `architect.md`. The updater
   removes the obsolete managed `designer.md` prompt from existing projects.
 - **ADF expanded from one document to a reviewable document set.** The Architect
-  now writes UTF-8 Markdown files for the glossary, context and goals,
-  requirement trace, internal architecture, and external architecture, plus one
-  ADR per significant decision under `sdais/adf/v<N>/decisions/`.
+  now writes five sortable UTF-8 Markdown files named `adf-01-` through
+  `adf-05-` for context and goals, internal architecture, external architecture,
+  requirement trace, and glossary, plus one ADR per significant decision under
+  `sdais/adf/v<N>/decisions/`.
 - **Architecture approval is atomic.** The Generator consumes an ADF set only
   when all five core documents are Approved and every ADR is Accepted; partial
   sets are ignored. RSF remains authoritative over ADF.
@@ -33,8 +34,8 @@ version will advance to v1.0.0 on first stable release.
 
 - **Standalone Architecture Decision Records.** Every ADR contains Status,
   Context, Decision, Justification, Consequences, Alternatives, Relevant
-  Requirements, and Verification Tests. The final two sections are item lists
-  beginning with a real specification ID and its exact title.
+  Requirements, and Verification Tests. Every entry in the final two sections
+  uses `- **[<id>]:** <text>`, with a real specification ID and its exact title.
 - **Internal and external Mermaid views.** Each architecture description
   requires at least one Mermaid diagram and additional flow or sequence diagrams
   wherever non-trivial behaviour or integration would otherwise be ambiguous.

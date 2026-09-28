@@ -4,11 +4,11 @@
 @never read source code; none exists at this stage
 @root sdais/adf/v<N>, <N> = current rsf version
 @task write UTF-8 Markdown architecture set:
-  glossary.md
-  context-and-goals.md
-  requirement-trace.md
-  internal-architecture.md
-  external-architecture.md
+  adf-01-context-and-goals.md
+  adf-02-internal-architecture.md
+  adf-03-external-architecture.md
+  adf-04-requirement-trace.md
+  adf-05-glossary.md
   decisions/adr-NNNN-<slug>.md (one/significant decision)
 
 @common core-doc header:
@@ -18,13 +18,7 @@
   - **Status:** Draft
   - **Architect:** <YYYY-MM-DD>
 
-@doc glossary.md
-  ## Terms
-  | Term | Definition |
-  |---|---|
-  <project, domain, integration, component, data + acronym terms>
-
-@doc context-and-goals.md
+@doc adf-01-context-and-goals.md
   ## Context
   ## Goals
   ## Stakeholders
@@ -34,13 +28,7 @@
   ## Quality Goals
   ## Constraints
 
-@doc requirement-trace.md
-  ## Traceability
-  | Specification | Architecture Components | External Interfaces | Decisions | Verification |
-  |---|---|---|---|---|
-  <one row/active rsf item; Specification = [ID] Title>
-
-@doc internal-architecture.md
+@doc adf-02-internal-architecture.md
   ## Components
   <each: stable name, responsibility, owned data, rsf IDs>
   ## Interfaces
@@ -51,7 +39,7 @@
   <>=1 fenced mermaid component/dependency diagram; add flow/sequence diagrams
    needed to make non-trivial behaviour unambiguous>
 
-@doc external-architecture.md
+@doc adf-03-external-architecture.md
   ## Actors and External Systems
   ## Integration Interfaces
   <protocol, direction, data, auth, failure handling, rsf IDs>
@@ -60,6 +48,18 @@
   ## Diagrams
   <>=1 fenced mermaid context/integration diagram; add sequence diagrams needed
    to make non-trivial integrations unambiguous>
+
+@doc adf-04-requirement-trace.md
+  ## Traceability
+  | Specification | Architecture Components | External Interfaces | Decisions | Verification |
+  |---|---|---|---|---|
+  <one row/active rsf item; Specification = [ID] Title>
+
+@doc adf-05-glossary.md
+  ## Terms
+  | Term | Definition |
+  |---|---|
+  <project, domain, integration, component, data + acronym terms>
 
 @adr shape:
   # ADR-NNNN: <Decision Title>
@@ -89,11 +89,11 @@
 
   ## Relevant Requirements
 
-  - [<RSF-ID>] <exact RSF title>
+  - **[<id>]:** <text>
 
   ## Verification Tests
 
-  - [<RSF-ID>] <exact RSF title> — <architecture-level assertion/test>
+  - **[<id>]:** <text>
 
 @rules !
  1 core docs use common header; Status=Draft; Architect=today YYYY-MM-DD
@@ -101,10 +101,11 @@
  3 create >=1 ADR; one/significant decision; every architecture-affecting rsf
    constraint covered by >=1 ADR
  4 Relevant Requirements + Verification Tests = non-empty item lists only;
-   every item starts [<RSF-ID>] <exact title>; never invent IDs; tests state an
-   architecture-level assertion tied to that item
- 5 trace every active FR NFR C E AC exactly once in requirement-trace; use `—`
-   plus reason where no component/interface/decision applies
+   every item exactly `- **[<id>]:** <text>` where id = real RSF ID and text =
+   its exact title; never invent IDs
+ 5 trace every active FR NFR C E AC exactly once in
+   adf-04-requirement-trace.md; use `—` plus reason where no
+   component/interface/decision applies
  6 every active FR maps to >=1 internal component and verification
  7 component names identical across trace, internal, external, ADRs
  8 Mermaid syntax valid; labels contain no raw Markdown links

@@ -119,11 +119,11 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │       └── ...            ← only items new or amended in v2
     ├── adf/                    ← Architecture Definition Files; produced by Architect
     │   └── v1/
-    │       ├── glossary.md
-    │       ├── context-and-goals.md
-    │       ├── requirement-trace.md
-    │       ├── internal-architecture.md
-    │       ├── external-architecture.md
+    │       ├── adf-01-context-and-goals.md
+    │       ├── adf-02-internal-architecture.md
+    │       ├── adf-03-external-architecture.md
+    │       ├── adf-04-requirement-trace.md
+    │       ├── adf-05-glossary.md
     │       └── decisions/
     │           └── adr-0001-<short-title>.md
     ├── trs/
@@ -150,7 +150,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 - Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative. Audit findings from the SemanticAuditor or Grounder are appended as `## Findings` sections within the staged copies in `rsf/v<N+1>/`.
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
-- Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: the glossary, context and goals, requirement trace, internal and external architecture descriptions, and ADRs under `decisions/`. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
+- Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs under `decisions/`. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
 - The distribution set is `SDAIS.md`, `install`, `update`, `sdais`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `./install <project-name>` once to scaffold a new project; run `./update --from <old-version>` to upgrade; run `sdais <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
 
@@ -498,11 +498,11 @@ The Architect reads all active RSF items and produces an Architecture Definition
 
 | File | Required content |
 |---|---|
-| `glossary.md` | Project, domain, integration, component, data, and acronym terms. |
-| `context-and-goals.md` | Context, goals, stakeholders, scope, quality goals, and constraints. |
-| `requirement-trace.md` | One row per active RSF item, mapping its ID and exact title to architecture components, external interfaces, decisions, and verification. |
-| `internal-architecture.md` | Components, responsibilities, owned data, boundary contracts, data flows, and at least one Mermaid component or dependency diagram. |
-| `external-architecture.md` | Actors, external systems, integrations, trust boundaries, failure handling, integration flows, and at least one Mermaid context or integration diagram. |
+| `adf-01-context-and-goals.md` | Context, goals, stakeholders, scope, quality goals, and constraints. |
+| `adf-02-internal-architecture.md` | Components, responsibilities, owned data, boundary contracts, data flows, and at least one Mermaid component or dependency diagram. |
+| `adf-03-external-architecture.md` | Actors, external systems, integrations, trust boundaries, failure handling, integration flows, and at least one Mermaid context or integration diagram. |
+| `adf-04-requirement-trace.md` | One row per active RSF item, mapping its ID and exact title to architecture components, external interfaces, decisions, and verification. |
+| `adf-05-glossary.md` | Project, domain, integration, component, data, and acronym terms. |
 | `decisions/adr-NNNN-<short-title>.md` | One Architecture Decision Record per significant decision, numbered contiguously from `ADR-0001`. |
 
 All ADF documents are UTF-8 Markdown. Each of the five core documents starts with:
@@ -535,14 +535,14 @@ Every ADR has the following sections in order:
 
 ## Relevant Requirements
 
-- [<RSF-ID>] <exact RSF title>
+- **[<id>]:** <text>
 
 ## Verification Tests
 
-- [<RSF-ID>] <exact RSF title> — <architecture-level assertion or test>
+- **[<id>]:** <text>
 ```
 
-`Relevant Requirements` and `Verification Tests` are non-empty item lists. Every item begins with a real specification ID in brackets and its exact RSF title; every verification item adds an architecture-level assertion or test tied to that item. The Architect never invents specification IDs. Every active RSF item appears exactly once in the requirement trace, and every active FR maps to at least one internal component and verification. Component names remain identical throughout the set. Mermaid diagrams are added wherever needed to make non-trivial internal flows or integrations unambiguous.
+`Relevant Requirements` and `Verification Tests` are non-empty item lists. Every item has the exact form `- **[<id>]:** <text>`, where `<id>` is a real specification ID and `<text>` is its exact title. The Architect never invents specification IDs. Every active RSF item appears exactly once in the requirement trace, and every active FR maps to at least one internal component and verification. Component names remain identical throughout the set. Mermaid diagrams are added wherever needed to make non-trivial internal flows or integrations unambiguous.
 
 **Human review gate:** the human reads the complete ADF set and either:
 - **Approves** — sets all five core document statuses to `Approved` and every ADR status to `Accepted`; proceed to Step 2.
