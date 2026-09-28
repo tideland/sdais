@@ -1,6 +1,6 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.11.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.12.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-G (Greenfield) workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
 
@@ -30,7 +30,7 @@ flowchart TD
     I -- Yes --> J[Resolve:\nFix · Drop · Waive]
     J --> H
     I -- No --> K
-    G -- No --> K[Step 4\nDesigner\noptional]
+    G -- No --> K[Step 4\nArchitect\noptional]
     K --> L[Step 5\nGenerator]
     L --> M[Step 6\nReviewer]
     M --> N{Violations?}
@@ -78,7 +78,7 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
     │   ├── requirements-engineer.md
     │   ├── semantic-auditor.md
     │   ├── grounder.md
-    │   ├── designer.md
+    │   ├── architect.md
     │   ├── generator.md
     │   ├── reviewer.md
     │   ├── refiner.md
@@ -203,20 +203,24 @@ Resolve all `ENV-UNRESOLVABLE` findings before proceeding:
 
 ---
 
-## Step 4 — Design (optional)
+## Step 4 — Architecture (optional)
 
-**Prompt:** `sdais/prompts/designer.md` | **Recommended model:** High-reasoning (e.g. Claude Opus or Sonnet)
+**Prompt:** `sdais/prompts/architect.md` | **Recommended model:** High-reasoning (e.g. Claude Opus or Sonnet)
 
-Run the Designer if you want a human-approved architecture checkpoint before any code is written. This is particularly valuable for systems with non-trivial module boundaries or complex data flows — it surfaces structural disagreements early, when they are cheap to fix.
+Run the Architect if you want a human-approved architecture checkpoint before any code is written. This is particularly valuable for systems with non-trivial module boundaries or complex data flows — it surfaces structural disagreements early, when they are cheap to fix.
 
-The Designer reads all cleared RSF items and produces `sdais/adf/v<N>/design.md` covering:
+The Architect reads all cleared RSF items and produces this UTF-8 Markdown set under `sdais/adf/v<N>/`:
 
-- Module decomposition (name, responsibility, RSF item IDs addressed)
-- API surfaces (signatures and contracts, not implementations)
-- Data flows between modules
-- Design decisions, each traceable to one or more RSF item IDs
+- `glossary.md` — project, domain, integration, component, data, and acronym terms.
+- `context-and-goals.md` — context, goals, stakeholders, scope, quality goals, and constraints.
+- `requirement-trace.md` — every active specification ID and title mapped to architecture components, external interfaces, decisions, and verification.
+- `internal-architecture.md` — components, boundary contracts, data flows, and the Mermaid diagrams needed to describe the internal structure.
+- `external-architecture.md` — actors, external systems, integration contracts, trust boundaries, failure handling, flows, and the Mermaid diagrams needed to describe integrations.
+- `decisions/adr-NNNN-<short-title>.md` — one ADR per significant architecture decision.
 
-Review the ADF and either approve it (set `**Status:** Approved`) or reject it with written feedback for the Designer to revise. An approved ADF is read by the Generator as structural context — it guides module and package layout without overriding RSF requirements. RSF items remain authoritative if ADF and RSF ever conflict.
+Every ADR contains Status, Context, Decision, Justification, Consequences, Alternatives, Relevant Requirements, and Verification Tests. The final two sections are item lists whose entries start with a specification ID and its exact title.
+
+Review the complete ADF set and either approve it—set every core document to `**Status:** Approved` and every ADR to `**Status:** Accepted`—or reject it with written feedback for the Architect to revise. A fully approved ADF is read by the Generator as structural context; a partial set is ignored. It guides module and package layout without overriding RSF requirements. RSF items remain authoritative if ADF and RSF ever conflict.
 
 ---
 
@@ -231,7 +235,7 @@ The Generator reads the cleared RSF and synthesises a complete implementation. I
 The Generator:
 
 - Reads all active RSF items.
-- Reads `sdais/adf/v<N>/design.md` as structural context if present and Approved.
+- Reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted.
 - Synthesises a complete implementation.
 - Writes one `[ANN]` block per callable unit and type. Every block starts with `(VERIFIED) false` and `(ROUND) 0`.
 

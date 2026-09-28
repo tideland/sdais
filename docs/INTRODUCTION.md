@@ -1,6 +1,6 @@
 # SDAIS — Introduction
 
-**Version:** v0.11.0 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.12.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 
@@ -45,7 +45,7 @@ The paradigm defines a set of specialist agent roles, each with a focused respon
 | `requirements-engineer.md` | RequirementsEngineer | Transforms loose prose in `sdais/gspec/` into formal RSF items through an iterative clarification loop; inserts `[[QN]]` questions for every ambiguity and generates RSF files once the spec is clean | High-reasoning (e.g. Claude Opus) |
 | `semantic-auditor.md` | SemanticAuditor | Validates RSF items before generation: detects ambiguity, incompleteness, contradictions, and untestable acceptance criteria | High-reasoning (e.g. Claude Opus) |
 | `grounder.md` | Grounder | Verifies that every Environment item describes something that actually exists in your infrastructure | High-reasoning (e.g. Claude Opus or Sonnet) |
-| `designer.md` | Designer | Produces a module decomposition, API surface, and design decisions document (ADF) traceable to RSF items | High-reasoning (e.g. Claude Opus or Sonnet) |
+| `architect.md` | Architect | Produces the traceable ADF document set: glossary, context and goals, requirement trace, internal and external architecture, and ADRs | High-reasoning (e.g. Claude Opus or Sonnet) |
 | `generator.md` | Generator | Synthesises a complete, annotated implementation from cleared RSF items | High-coding (e.g. Claude Sonnet) |
 | `reviewer.md` | Reviewer | Checks every annotation block against the RSF; sets blocks verified or raises findings | High-reasoning or high-coding (e.g. Claude Opus or Sonnet) |
 | `refiner.md` | Refiner | Fixes every violation directed by the Reviewer's hints; marks resolved blocks verified | High-coding (e.g. Claude Sonnet) |
@@ -81,7 +81,7 @@ A full SDAIS project moves through a predictable lifecycle, regardless of the sc
 1. **Specify** — write or review RSF items in `sdais/rsf/v1/`.
 2. **Audit** — the SemanticAuditor validates the specification; you resolve findings.
 3. **Ground** — the Grounder confirms infrastructure assumptions; you resolve any unresolvable items.
-4. **Design** (optional) — the Designer produces a module decomposition before any code is written.
+4. **Architect** (optional) — the Architect produces a human-reviewed architecture document set before any code is written.
 5. **Generate** — the Generator synthesises the implementation with full annotation coverage.
 6. **Review** — the Reviewer checks every block; findings are precise and actionable.
 7. **Refine** — the Refiner fixes violations; verified blocks accumulate.

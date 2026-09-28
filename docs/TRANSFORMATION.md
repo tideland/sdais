@@ -1,6 +1,6 @@
 # SDAIS — Transformation Workflow
 
-**Version:** v0.11.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.12.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-T (Transformation) workflow applies when an existing codebase precedes the specification. Most real-world systems do not start with a clean specification. They start with code — accumulated over years, built by people who are often no longer around, with intent that lives in git history at best and in tribal knowledge at worst. SDAIS-T is the workflow for those systems.
 

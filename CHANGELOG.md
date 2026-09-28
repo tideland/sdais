@@ -8,6 +8,40 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
+## [v0.12.0] — 2026-09-28
+
+### Changed
+
+- **Designer renamed to Architect.** The role, compact prompt, launcher example,
+  scaffold instructions, normative specification, workflow documentation, and
+  glossary now consistently use `Architect` and `architect.md`. The updater
+  removes the obsolete managed `designer.md` prompt from existing projects.
+- **ADF expanded from one document to a reviewable document set.** The Architect
+  now writes UTF-8 Markdown files for the glossary, context and goals,
+  requirement trace, internal architecture, and external architecture, plus one
+  ADR per significant decision under `sdais/adf/v<N>/decisions/`.
+- **Architecture approval is atomic.** The Generator consumes an ADF set only
+  when all five core documents are Approved and every ADR is Accepted; partial
+  sets are ignored. RSF remains authoritative over ADF.
+- **Architect prompt follows the compact v0.11.0 notation.** It declares only
+  inputs, artefacts, invariant shapes, and validation rules needed by the role,
+  including cross-document component naming and complete RSF traceability.
+- Version bumped from v0.11.0 to v0.12.0 in the specification, guides, installer,
+  and updater.
+
+### Added
+
+- **Standalone Architecture Decision Records.** Every ADR contains Status,
+  Context, Decision, Justification, Consequences, Alternatives, Relevant
+  Requirements, and Verification Tests. The final two sections are item lists
+  beginning with a real specification ID and its exact title.
+- **Internal and external Mermaid views.** Each architecture description
+  requires at least one Mermaid diagram and additional flow or sequence diagrams
+  wherever non-trivial behaviour or integration would otherwise be ambiguous.
+- **Requirement-to-architecture trace.** Every active FR, NFR, C, E, and AC maps
+  to architecture components, external interfaces, decisions, and verification;
+  every active FR maps to at least one internal component and verification.
+
 ## [v0.11.0] — 2026-09-27
 
 ### Changed

@@ -32,7 +32,7 @@ Role — prompt file — when to invoke:
 - TransformationEngineer — `sdais/prompts/transformation-engineer.md` — T: before authoring TRS/CDF; refines transformation prose
 - SemanticAuditor — `sdais/prompts/semantic-auditor.md` — before each generation pass
 - Grounder — `sdais/prompts/grounder.md` — after audit Cleared; when E- items exist
-- Designer — `sdais/prompts/designer.md` — optional; after Grounder, before Generator
+- Architect — `sdais/prompts/architect.md` — optional; after Grounder, before Generator
 - Generator — `sdais/prompts/generator.md` — after RSF is Cleared by audit
 - Reviewer — `sdais/prompts/reviewer.md` — after each Generate or Refine pass
 - Refiner — `sdais/prompts/refiner.md` — after each Review pass with violations
@@ -66,8 +66,14 @@ sdais/
 │   └── v1/           ← initial human prose about existing system + desired changes
 ├── rsf/              ← requirements; one file per item; versioned by subdirectory
 │   └── v1/           ← items introduced or amended in version 1
-├── adf/              ← architecture definition files; produced by Designer
+├── adf/              ← UTF-8 Markdown architecture definition files; produced by Architect
 │   └── v1/
+│       ├── glossary.md
+│       ├── context-and-goals.md
+│       ├── requirement-trace.md
+│       ├── internal-architecture.md
+│       ├── external-architecture.md
+│       └── decisions/adr-NNNN-<slug>.md
 ├── trs/              ← transformation hypotheses; one file per item
 │   └── v1/
 └── cdf/              ← change definition files; one file per transformation dimension

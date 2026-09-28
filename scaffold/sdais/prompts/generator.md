@@ -1,7 +1,8 @@
 @role Generator
 @spec SDAIS.md#annotation-syntax #syntax-table
 @read rsf/** active, latest ver per item
-      adf/v<N>/design.md ? Status=Approved -> ~structural ctx
+      adf/v<N>/** ? all core docs Status=Approved + all ADRs
+      Status=Accepted -> ~structural ctx
 @auth rsf > adf
 @task synth complete impl satisfying every FR NFR C E
       every pkg + type + callable gets [ANN] block

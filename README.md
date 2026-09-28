@@ -1,6 +1,6 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Version:** v0.11.0 | **Status:** Draft | **License:** BSD 3-Clause
+**Version:** v0.12.0 | **Status:** Draft | **License:** BSD 3-Clause
 
 SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
 
@@ -82,7 +82,7 @@ If you find it easier to start with free-form prose, write your ideas into `sdai
 2. Run the **SemanticAuditor** — it reads your requirements and writes findings for anything ambiguous, incomplete, or contradictory.
 3. Resolve each finding: fix the requirement in place, drop it, split it, or waive the finding with a rationale.
 4. If you have environment items (`E-`), run the **Grounder** to verify they exist in your infrastructure.
-5. Optionally run the **Designer** to produce a module decomposition and API surface document before any code is written.
+5. Optionally run the **Architect** to produce the architecture document set and ADRs before any code is written.
 
 Repeat phases 1–5 until all findings are resolved. That cleared RSF is your contract with the AI.
 

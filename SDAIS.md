@@ -1,7 +1,7 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-- **Date:** 2026-09-27
-- **Version:** v0.11.0
+- **Date:** 2026-09-28
+- **Version:** v0.12.0
 - **Status:** Draft
 
 ---
@@ -61,7 +61,7 @@ Pin the model version used for each agent in your project's `AGENTS.md` or equiv
 | SemanticAuditor, SecurityAuditor | High reasoning (e.g. Claude Opus) | Ambiguity detection and security analysis benefit from deeper inference |
 | Generator, Refiner, Analyzer, Transformation | High coding ability (e.g. Claude Sonnet) | Code synthesis and annotation precision are primary demands |
 | Reviewer | High reasoning or high coding (e.g. Claude Opus or Sonnet) | Finding quality directly determines loop convergence speed |
-| Designer, Grounder | High reasoning (e.g. Claude Opus or Sonnet) | Design decisions and infrastructure validation require sound judgment |
+| Architect, Grounder | High reasoning (e.g. Claude Opus or Sonnet) | Architecture decisions and infrastructure validation require sound judgment |
 | TestGenerator | High coding ability (e.g. Claude Sonnet) | Test correctness and coverage require deep code understanding |
 
 ### Agent Output Storage
@@ -84,7 +84,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │   ├── transformation-engineer.md
     │   ├── semantic-auditor.md
     │   ├── grounder.md
-    │   ├── designer.md
+    │   ├── architect.md
     │   ├── generator.md
     │   ├── reviewer.md
     │   ├── refiner.md
@@ -117,9 +117,15 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │   │   └── ac-0001-<short-description>.md
     │   └── v2/
     │       └── ...            ← only items new or amended in v2
-    ├── adf/
+    ├── adf/                    ← Architecture Definition Files; produced by Architect
     │   └── v1/
-    │       └── design.md      ← Architecture Definition File; produced by Designer
+    │       ├── glossary.md
+    │       ├── context-and-goals.md
+    │       ├── requirement-trace.md
+    │       ├── internal-architecture.md
+    │       ├── external-architecture.md
+    │       └── decisions/
+    │           └── adr-0001-<short-title>.md
     ├── trs/
     │   ├── v1/
     │   │   ├── trs-fr-0000-template.md   ← template; copy to start a new TRS-FR
@@ -144,7 +150,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 - Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative. Audit findings from the SemanticAuditor or Grounder are appended as `## Findings` sections within the staged copies in `rsf/v<N+1>/`.
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
-- Each `adf/v<N>/` directory contains the Architecture Definition File (`design.md`) produced by the Designer for version N. The directory is absent if the Designer step was skipped.
+- Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: the glossary, context and goals, requirement trace, internal and external architecture descriptions, and ADRs under `decisions/`. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
 - The distribution set is `SDAIS.md`, `install`, `update`, `sdais`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `./install <project-name>` once to scaffold a new project; run `./update --from <old-version>` to upgrade; run `sdais <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
 
@@ -213,11 +219,11 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
                   │            │
                   │            ▼
                   │   ┌─────────────────┐
-                  │   │ AI: Designer    │  optional; produces ADF
+                  │   │ AI: Architect   │  optional; produces ADF set
                   │   │ (optional)      │
                   │   └────────┬────────┘
                   │            │  Human approves ADF?
-                  │            ├── no ──► Designer revises
+                  │            ├── no ──► Architect revises
                   │            │
                   └───►        ▼
                         ┌──────────────────┐
@@ -478,43 +484,73 @@ Related: [FR-NNNN]
 
 ---
 
-### Step 1b — Architecture Definition (optional)
+### Architecture Definition
 
-Step 1b is skipped unless either of the following conditions holds:
+Step 1b is optional and skipped unless either of the following conditions holds:
 - The cleared RSF contains at least one `C-` item that explicitly requires design approval (i.e., its text calls for architectural sign-off before code is generated).
-- The human explicitly invokes the Designer.
+- The human explicitly invokes the Architect.
 
-When Step 1b runs, provide all cleared RSF items to the Designer agent. Use the prompt from `sdais/prompts/designer.md`.
+When Step 1b runs, provide all cleared RSF items to the Architect agent. Use the prompt from `sdais/prompts/architect.md`.
 
-The Designer reads all active RSF items and produces one Architecture Definition File (ADF) at `sdais/adf/v<N>/design.md`. The ADF covers module decomposition, API surfaces (signatures and contracts, not implementations), data flows, and key design decisions, each traceable to an RSF item ID. The Designer does not write any source code or `[ANN]` blocks.
+The Architect reads all active RSF items and produces an Architecture Definition File set (ADF) under `sdais/adf/v<N>/`. The set separates concerns so that architecture can be reviewed, linked, and evolved without rewriting one monolithic document. The Architect does not read or write source code and does not write `[ANN]` blocks.
 
-**ADF file format:**
+**ADF document set:**
+
+| File | Required content |
+|---|---|
+| `glossary.md` | Project, domain, integration, component, data, and acronym terms. |
+| `context-and-goals.md` | Context, goals, stakeholders, scope, quality goals, and constraints. |
+| `requirement-trace.md` | One row per active RSF item, mapping its ID and exact title to architecture components, external interfaces, decisions, and verification. |
+| `internal-architecture.md` | Components, responsibilities, owned data, boundary contracts, data flows, and at least one Mermaid component or dependency diagram. |
+| `external-architecture.md` | Actors, external systems, integrations, trust boundaries, failure handling, integration flows, and at least one Mermaid context or integration diagram. |
+| `decisions/adr-NNNN-<short-title>.md` | One Architecture Decision Record per significant decision, numbered contiguously from `ADR-0001`. |
+
+All ADF documents are UTF-8 Markdown. Each of the five core documents starts with:
 
 ```markdown
-# Architecture Definition — <project> v<N>
+# <Document Title> — <project> v<N>
 
 - **RSF Version:** v<N>
 - **Status:** Draft | Approved | Superseded
-- **Designer:** <agent run date>
-
-## Module Decomposition
-
-## API Surfaces
-
-## Data Flows
-
-## Design Decisions
-
-| ID | Decision | RSF Origin | Rationale |
+- **Architect:** <agent run date>
 ```
 
-**Human review gate:** the human reads `sdais/adf/v<N>/design.md` and either:
-- **Approves** — sets `**Status:**` to `Approved`; proceed to Step 2.
-- **Rejects** — provides written feedback; the Designer revises and the human reviews again.
+Every ADR has the following sections in order:
 
-**Generator reads the ADF:** if `sdais/adf/v<N>/design.md` exists and its `**Status:**` is `Approved`, the Generator reads it as structural context before synthesising. The ADF is advisory; RSF items remain authoritative.
+```markdown
+# ADR-NNNN: <Decision Title>
 
-The full prompt is in `sdais/prompts/designer.md`.
+- **Status:** Proposed | Accepted | Rejected | Superseded
+- **Date:** <agent run date>
+
+## Context
+
+## Decision
+
+## Justification
+
+## Consequences
+
+## Alternatives
+
+## Relevant Requirements
+
+- [<RSF-ID>] <exact RSF title>
+
+## Verification Tests
+
+- [<RSF-ID>] <exact RSF title> — <architecture-level assertion or test>
+```
+
+`Relevant Requirements` and `Verification Tests` are non-empty item lists. Every item begins with a real specification ID in brackets and its exact RSF title; every verification item adds an architecture-level assertion or test tied to that item. The Architect never invents specification IDs. Every active RSF item appears exactly once in the requirement trace, and every active FR maps to at least one internal component and verification. Component names remain identical throughout the set. Mermaid diagrams are added wherever needed to make non-trivial internal flows or integrations unambiguous.
+
+**Human review gate:** the human reads the complete ADF set and either:
+- **Approves** — sets all five core document statuses to `Approved` and every ADR status to `Accepted`; proceed to Step 2.
+- **Rejects** — provides written feedback; the Architect revises the set and the human reviews again.
+
+**Generator reads the ADF:** if `sdais/adf/v<N>/` exists, all five core documents have `**Status:** Approved`, and every ADR has `**Status:** Accepted`, the Generator reads the complete set as structural context before synthesising. An incomplete or partly approved set is not used. The ADF is advisory; RSF items remain authoritative.
+
+The full prompt is in `sdais/prompts/architect.md`.
 
 ---
 
@@ -522,7 +558,7 @@ The full prompt is in `sdais/prompts/designer.md`.
 
 Provide all active RSF item files to the Generator. Use the prompt from `sdais/prompts/generator.md`.
 
-The full prompt is in `sdais/prompts/generator.md`. Summary of agent behaviour: reads all active RSF items; reads `sdais/adf/v<N>/design.md` as structural context if it exists and its Status is Approved; synthesises a complete implementation; writes one `[ANN]` block per callable unit and type with `(ANN-ID)` as the first label; sets `(AGENT)` to `Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every block; outputs a summary of files created and RSF items addressed.
+The full prompt is in `sdais/prompts/generator.md`. Summary of agent behaviour: reads all active RSF items; reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted; synthesises a complete implementation; writes one `[ANN]` block per callable unit and type with `(ANN-ID)` as the first label; sets `(AGENT)` to `Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every block; outputs a summary of files created and RSF items addressed.
 
 #### Step 2 — TDD Mode (optional)
 
@@ -533,7 +569,7 @@ TDD mode inverts the normal generation order. The TestGenerator runs before the 
 **TDD mode steps:**
 
 1. Run the **TestGenerator** in TDD mode: reads all FR, AC, and NFR items; writes test files with test functions that assert expected behaviour but have no passing implementation. Each test function receives an `[ANN]` block with `(AGENT) TestGenerator`, `(VERIFIED) false`, `(ROUND) 0`, and `(TEST-MODE) TDD`.
-2. Run the **Generator**: reads all active RSF items, the ADF (if present and Approved), and the test files from step 1. Synthesises implementation targeting a 100% pass rate on those tests. Writes `[ANN]` blocks as normal. Does not set `(TEST-MODE)` — that label is exclusive to TestGenerator.
+2. Run the **Generator**: reads all active RSF items, the ADF set (if present and fully approved), and the test files from step 1. Synthesises implementation targeting a 100% pass rate on those tests. Writes `[ANN]` blocks as normal. Does not set `(TEST-MODE)` — that label is exclusive to TestGenerator.
 3. Continue with the standard Review → Refine loop. The Reviewer additionally verifies that all `(TEST-MODE) TDD` blocks pass against the generated implementation.
 
 ---
@@ -1024,7 +1060,7 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 | TestGenerator | Write entire block on test functions (TDD mode only); set `(TEST-MODE) TDD`; otherwise read-only |
 | Analyzer | Write the entire block (initial creation on existing code); generate `(ANN-ID)`; write `(CONFIDENCE)` |
 | Transformation | Write the entire block on transformed code; preserve `(ANN-ID)` per split/merge rules; may not modify `(ANN-ID)` beyond those rules; write `(DEPENDS-ON)` |
-| Designer | Does not write `[ANN]` blocks; writes only `sdais/adf/v<N>/design.md` |
+| Architect | Does not write `[ANN]` blocks; writes only UTF-8 Markdown under `sdais/adf/v<N>/` |
 | Grounder | Does not write `[ANN]` blocks; writes only `**Verified:**` fields in `E-` item files and appends findings to those files |
 
 `(ANN-ID)` is written only by Generator and Analyzer at block creation time. No other agent may modify `(ANN-ID)` under any circumstance, except Transformation applying the split/merge rules. Finding labels are never removed or renumbered. `(FINDING:n:STATUS)` is appended directly after the `(HINT:n)` for the same index.
@@ -1094,7 +1130,7 @@ Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any u
 | `SemanticAuditor` | RSF-level semantic validation before generation; appends findings to RSF files |
 | `Analyzer`        | Transformation: annotates existing codebase; derives RSF items; appends findings to RSF files |
 | `Transformation`  | Transformation: applies CDF transformations; preserves `(ANN-ID)` values       |
-| `Designer`        | Produces ADF from cleared RSF; runs between infrastructure grounding and generation |
+| `Architect`       | Produces the ADF document set from cleared RSF; runs between infrastructure grounding and generation |
 | `Grounder`        | Verifies infrastructure assumptions in `E-` items before generation; appends `ENV-UNRESOLVABLE` findings to E- item files |
 
 ### Scope Levels
