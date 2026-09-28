@@ -98,13 +98,13 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
 
 Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
 
-To launch any agent, use the `sdais` launcher from the project root:
+To launch any agent, use `./sdais.sh` from the project root:
 
 ```
-sdais <tool> <model> <role>
+./sdais.sh <tool> <model> <role>
 ```
 
-Example: `sdais claude claude-opus-4-5 SemanticAuditor`. The role may be CamelCase or kebab-case. Supported tools: `claude`, `ollama`.
+Example: `./sdais.sh claude claude-opus-4-5 SemanticAuditor`. The role may be CamelCase or kebab-case. Supported tools: `claude`, `ollama`.
 
 ---
 

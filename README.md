@@ -1,6 +1,6 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Version:** v0.12.0 | **Status:** Draft | **License:** BSD 3-Clause
+**Version:** v0.12.1 | **Status:** Final | **License:** BSD 3-Clause
 
 SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
 
@@ -27,7 +27,7 @@ Run the installer:
 
 `<project-name>` is a human-readable label substituted into `AGENTS.md` — it does not have to match your directory name.
 
-`install.sh` creates `AGENTS.md`, the full `sdais/` scaffold with all prompt files and templates, and installs the `sdais` launcher into `~/.local/bin/sdais` so it is available as a global command. If `~/.local/bin` is not in your `PATH`, the script will tell you.
+`install.sh` creates `AGENTS.md` and the full `sdais/` scaffold with all prompt files and templates. The repository-local launcher is `./sdais.sh`. The installer also places a convenience copy in `~/.local/bin/sdais`; the canonical invocation used by SDAIS documentation remains `./sdais.sh` from the project root.
 
 `SDAIS.md` in the project root is the distribution file. `install.sh` copies it into `sdais/SDAIS.md` — the project-local copy that agents read. These are intentionally two separate files at different paths: when you upgrade, you replace the root-level `SDAIS.md` and run `./update.sh`, which refreshes `sdais/SDAIS.md` without touching any project content.
 
@@ -41,10 +41,10 @@ To upgrade an existing project to a new SDAIS version, replace the distribution 
 
 ## Running Agents
 
-The `sdais` command launches any agent role against a model of your choice. It is installed globally by `./install.sh` and must be run from the project root (the directory that contains `sdais/prompts/`):
+The `./sdais.sh` script launches any agent role against a model of your choice. Run it from the project root—the directory containing `sdais/prompts/`:
 
 ```
-sdais <tool> <model> <role>
+./sdais.sh <tool> <model> <role>
 ```
 
 | Argument | Values | Example |
@@ -56,12 +56,12 @@ sdais <tool> <model> <role>
 Examples:
 
 ```
-sdais claude  claude-opus-4-5    RequirementsEngineer
-sdais claude  claude-sonnet-4-5  Generator
-sdais claude  claude-opus-4-5    SemanticAuditor
-sdais ollama  gemma4             Reviewer
-sdais codex   codex-mini         Generator
-sdais gemini  gemini-2.0-flash   Generator
+./sdais.sh claude  claude-opus-4-5    RequirementsEngineer
+./sdais.sh claude  claude-sonnet-4-5  Generator
+./sdais.sh claude  claude-opus-4-5    SemanticAuditor
+./sdais.sh ollama  gemma4             Reviewer
+./sdais.sh codex   codex-mini         Generator
+./sdais.sh gemini  gemini-2.0-flash   Generator
 ```
 
 Pin the model per role in your `AGENTS.md` to prevent version drift between rounds.

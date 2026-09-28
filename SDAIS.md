@@ -151,7 +151,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
 - Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs under `decisions/`. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
-- The distribution set is `SDAIS.md`, `install`, `update`, `sdais`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `./install <project-name>` once to scaffold a new project; run `./update --from <old-version>` to upgrade; run `sdais <tool> <model> <role>` to launch any agent.
+- The distribution set is `SDAIS.md`, `install.sh`, `update.sh`, `sdais.sh`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `./install.sh <project-name>` once to scaffold a new project; run `./update.sh --from <old-version>` to upgrade; run `./sdais.sh <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
 
 **File naming — why no date in the filename:**
@@ -332,13 +332,13 @@ Before authoring any RSF items, run `install` from the project root to scaffold 
 
 This copies `SDAIS.md` to `sdais/SDAIS.md`, installs all prompt files into `sdais/prompts/`, installs all `*-0000-template.md` files, and writes `AGENTS.md` at the project root with the project name substituted.
 
-To launch an agent, use the `sdais` launcher:
+To launch an agent from the project root, use `./sdais.sh`:
 
 ```
-sdais <tool> <model> <role>
+./sdais.sh <tool> <model> <role>
 ```
 
-For example: `sdais claude claude-opus-4-5 SemanticAuditor`. The launcher accepts the role as CamelCase (`SemanticAuditor`) or kebab-case (`semantic-auditor`). Supported tools: `claude`, `ollama`. Run from the project root.
+For example: `./sdais.sh claude claude-opus-4-5 SemanticAuditor`. The launcher accepts the role as CamelCase (`SemanticAuditor`) or kebab-case (`semantic-auditor`). Supported tools: `claude`, `ollama`. Run from the project root.
 
 ### Step −1b — Update Scaffolding to a New SDAIS Version
 

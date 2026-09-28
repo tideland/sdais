@@ -127,6 +127,8 @@ PROJECT="$(basename "$TARGET")"
 echo "Scaffolding SDAIS project '$PROJECT' in $TARGET"
 ( cd "$TARGET" && "$SDAIS_ROOT/install.sh" "$PROJECT" >/dev/null )
 
+cp "$SDAIS_ROOT/sdais.sh" "$TARGET/sdais.sh"
+chmod +x "$TARGET/sdais.sh"
 cp "$SCRIPT_DIR/sdais/gspec/v1/idea.md" "$TARGET/sdais/gspec/v1/idea.md"
 
 # --- generate the CSV -------------------------------------------------------
@@ -211,7 +213,7 @@ real to confirm:
 
   cd $TARGET
   export SDAIS_DEMO_INPUT="$TARGET/data"
-  sdais claude <model> RequirementsEngineer
+  ./sdais.sh claude <model> RequirementsEngineer
 
 A correct first run lands in Mode A and writes sdais/gspec/v2/ with open
 questions. Answer them there, re-run, and the second pass should reach Mode B

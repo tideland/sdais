@@ -29,7 +29,7 @@ repo — and generates a CSV for the synthesised tool to read:
     ./bootstrap.sh /tmp/lc
     cd /tmp/lc
     export SDAIS_DEMO_INPUT=/tmp/lc/data
-    sdais claude <model> RequirementsEngineer
+    ./sdais.sh claude <model> RequirementsEngineer
 
 Options:
 
