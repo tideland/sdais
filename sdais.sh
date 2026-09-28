@@ -12,7 +12,7 @@ Examples per role (use high-reasoning models for spec/audit, high-coding for syn
   sdais.sh claude  claude-opus-4-5    RequirementsEngineer
   sdais.sh claude  claude-opus-4-5    TransformationEngineer
   sdais.sh claude  claude-opus-4-5    SemanticAuditor
-  sdais.sh claude  claude-opus-4-5    Designer
+  sdais.sh claude  claude-opus-4-5    Architect
   sdais.sh claude  claude-sonnet-4-5  Grounder
   sdais.sh claude  claude-sonnet-4-5  Analyzer
   sdais.sh claude  claude-sonnet-4-5  Generator

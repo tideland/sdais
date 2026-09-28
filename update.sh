@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS update script — v0.11.0
+# SDAIS update script — v0.12.0
 # Usage: update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.11.0"
+SDAIS_VERSION="v0.12.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FROM_VERSION=""
 
@@ -74,6 +74,10 @@ else
     exit 1
 fi
 
+# v0.12.0 renamed Designer to Architect. Remove the obsolete managed prompt so
+# upgraded projects expose only current roles; project-authored files are untouched.
+rm -f sdais/prompts/designer.md
+
 # Update sdais/SDAIS.md
 cp "$SCRIPT_DIR/SDAIS.md" sdais/SDAIS.md
 
@@ -102,6 +106,7 @@ rm -f "$CUSTOM_BLOCK"
 
 echo "Done."
 echo "  sdais/prompts/ refreshed"
+echo "  obsolete designer.md prompt removed"
 echo "  *-0000-template.md files refreshed"
 echo "  AGENTS.md regenerated (Custom Agents Extension preserved)"
 echo "  sdais/SDAIS.md updated"

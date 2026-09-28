@@ -1,6 +1,6 @@
 # SDAIS — Glossary
 
-**Version:** v0.11.0 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.12.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 
@@ -22,7 +22,8 @@
 | **RAR** | *(deprecated)* Requirements Audit Report | — | Previously used for separate finding files; findings are now appended as `## Findings` sections within RSF item files. |
 | **TRS** | Transformation Specification | `sdais/trs/v<N>/` | Hypotheses about the behaviour and structure of an existing codebase (SDAIS-T only). |
 | **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-T only). |
-| **ADF** | Architecture Definition File | `sdais/adf/v<N>/design.md` | Module decomposition, API surfaces, data flows, and design decisions produced by the Designer. |
+| **ADF** | Architecture Definition Files | `sdais/adf/v<N>/` | UTF-8 Markdown set containing context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs produced by the Architect. |
+| **ADR** | Architecture Decision Record | `sdais/adf/v<N>/decisions/adr-NNNN-<short-title>.md` | One significant architecture decision with rationale, consequences, alternatives, requirements, and verification tests. |
 
 ---
 
@@ -157,5 +158,5 @@ Each CDF covers exactly one transformation dimension. Multiple CDFs may be appli
 | `TransformationEngineer` | Clarification and TRS/CDF derivation from free-form prose in `sdais/tspec/`. |
 | `Analyzer` | Transformation: annotates existing codebase and derives RSF items; references TRS item IDs in `(ORIGIN)`. |
 | `Transformation` | Applies CDF transformations; preserves all `(ANN-ID)` values. |
-| `Designer` | Produces ADF from a cleared RSF. |
+| `Architect` | Produces the ADF document set from a cleared RSF. |
 | `Grounder` | Verifies infrastructure assumptions in E- items. |
