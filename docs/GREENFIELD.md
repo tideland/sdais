@@ -1,6 +1,6 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.12.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.12.2 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-G (Greenfield) workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
 
@@ -61,11 +61,22 @@ Dark blue = AI agent step. Teal = optional AI agent step. Orange = human decisio
 
 ## Step −1 — Install the Scaffold
 
-Copy the SDAIS distribution files into your project root (`SDAIS.md`, `install.sh`, `update.sh`, `sdais.sh`, and either `sdais-vX.Y.Z.tgz` or the `scaffold/` directory from the repo), then run:
+Create the project root, copy or download the distribution archive into it,
+unpack the archive there, and run the installer:
 
+```sh
+mkdir my-project
+cd my-project
+cp /path/to/sdais-v0.12.2.tgz .
+tar xzf sdais-v0.12.2.tgz
+./install.sh "My Project"
 ```
-./install.sh <project-name>
-```
+
+The archive expands directly into the current directory and includes the
+installer, updater, launcher, specification, documentation, and `scaffold/`.
+It does not create an extra version-named directory.
+The installer argument is the human-readable project name written to
+`AGENTS.md`; it does not have to match the directory name.
 
 This creates `AGENTS.md` at the project root and the `sdais/` directory with all prompt files and templates:
 

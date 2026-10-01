@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS update script — v0.12.0
+# SDAIS update script — v0.12.2
 # Usage: update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
@@ -16,7 +16,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.12.0"
+SDAIS_VERSION="v0.12.2"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FROM_VERSION=""
 
@@ -42,14 +42,11 @@ PROJECT=$(head -1 AGENTS.md | sed 's/^# AGENTS — //')
 CUSTOM_BLOCK=$(mktemp)
 awk '/<!-- BEGIN: Custom Agents Extension -->/,/<!-- END: Custom Agents Extension -->/' AGENTS.md > "$CUSTOM_BLOCK"
 
-# Locate scaffold: tgz takes precedence over scaffold/ directory
+# Locate scaffold. The v0.12.2 distribution archive expands beside scaffold/,
+# so the unpacked directory takes precedence over the archive itself.
 TGZ="$SCRIPT_DIR/sdais-$SDAIS_VERSION.tgz"
 
-if [ -f "$TGZ" ]; then
-    # Extract only scaffold files from the tgz, skipping project content
-    tar tf "$TGZ" | grep -E '(^AGENTS\.md$|prompts/|rsf/v[0-9]+/[a-z]+-0000-template|rar/v[0-9]+/f-0000-template)' \
-        | xargs tar xzf "$TGZ"
-elif [ -d "$SCRIPT_DIR/scaffold" ]; then
+if [ -d "$SCRIPT_DIR/scaffold" ]; then
     cp -p "$SCRIPT_DIR/scaffold/AGENTS.md" AGENTS.md
     cp -rp "$SCRIPT_DIR/scaffold/sdais/prompts/." sdais/prompts/
     # Update 0000-template files only — never touch numbered project files
@@ -68,6 +65,11 @@ elif [ -d "$SCRIPT_DIR/scaffold" ]; then
             cp -p "$src" "$rel"
         done
     fi
+elif [ -f "$TGZ" ]; then
+    # Backward-compatible support for a scaffold-only distribution archive.
+    # Extract only managed scaffold files, skipping project content.
+    tar tf "$TGZ" | grep -E '(^AGENTS\.md$|prompts/|rsf/v[0-9]+/[a-z]+-0000-template|rar/v[0-9]+/f-0000-template)' \
+        | xargs tar xzf "$TGZ"
 else
     echo "error: neither $TGZ nor $SCRIPT_DIR/scaffold/ found" >&2
     rm -f "$CUSTOM_BLOCK"

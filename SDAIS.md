@@ -1,7 +1,7 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-- **Date:** 2026-09-28
-- **Version:** v0.12.0
+- **Date:** 2026-10-01
+- **Version:** v0.12.2
 - **Status:** Draft
 
 ---
@@ -151,7 +151,7 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
 - Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs under `decisions/`. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
-- The distribution set is `SDAIS.md`, `install.sh`, `update.sh`, `sdais.sh`, and `sdais-vX.Y.Z.tgz` (or the `scaffold/` directory from the SDAIS repository). Run `./install.sh <project-name>` once to scaffold a new project; run `./update.sh --from <old-version>` to upgrade; run `./sdais.sh <tool> <model> <role>` to launch any agent.
+- The distribution is `sdais-vX.Y.Z.tgz`. It contains `SDAIS.md`, `README.md`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `update.sh`, `sdais.sh`, `docs/`, and `scaffold/`, and expands directly into the current directory. Create a project root, copy or download the archive into it, run `tar xzf sdais-vX.Y.Z.tgz`, then run `./install.sh <project-name>` once to scaffold the project. To upgrade, unpack the new archive in the existing project root and run `./update.sh --from <old-version>`. Run `./sdais.sh <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
 
 **File naming — why no date in the filename:**

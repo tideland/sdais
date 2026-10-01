@@ -1,6 +1,6 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Version:** v0.12.1 | **Status:** Final | **License:** BSD 3-Clause
+**Version:** v0.12.2 | **Status:** Final | **License:** BSD 3-Clause
 
 SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
 
@@ -10,32 +10,43 @@ Read [docs/INTRODUCTION.md](docs/INTRODUCTION.md) for the full concept and motiv
 
 ## Installation
 
-Create a directory for your project and copy the SDAIS distribution files into it:
+Create a directory for your project, copy or download the distribution archive
+into it, unpack the archive, and run the installer:
 
-```
-mkdir my-project && cd my-project
-cp /path/to/sdais-dist/{SDAIS.md,install.sh,update.sh,sdais.sh,sdais-vX.Y.Z.tgz} .
-```
-
-`install.sh` and `update.sh` must be run from this project root — the directory that contains `SDAIS.md`, `install.sh`, and `update.sh`. Do not run them from inside the SDAIS distribution repository.
-
-Run the installer:
-
-```
-./install.sh <project-name>
+```sh
+mkdir my-project
+cd my-project
+cp /path/to/sdais-v0.12.2.tgz .
+tar xzf sdais-v0.12.2.tgz
+./install.sh "My Project"
 ```
 
-`<project-name>` is a human-readable label substituted into `AGENTS.md` — it does not have to match your directory name.
+The archive expands directly into the current directory; it does not create an
+extra version-named directory. You can replace the `cp` command with a download
+command that saves the archive as `sdais-v0.12.2.tgz`.
+
+`install.sh` and `update.sh` must be run from this project root — the directory
+that contains `SDAIS.md`, `install.sh`, `update.sh`, and `scaffold/`. Do not run
+them from inside the SDAIS distribution repository.
+
+The installer argument is a human-readable label substituted into `AGENTS.md`
+— it does not have to match your directory name.
 
 `install.sh` creates `AGENTS.md` and the full `sdais/` scaffold with all prompt files and templates. The repository-local launcher is `./sdais.sh`. The installer also places a convenience copy in `~/.local/bin/sdais`; the canonical invocation used by SDAIS documentation remains `./sdais.sh` from the project root.
 
 `SDAIS.md` in the project root is the distribution file. `install.sh` copies it into `sdais/SDAIS.md` — the project-local copy that agents read. These are intentionally two separate files at different paths: when you upgrade, you replace the root-level `SDAIS.md` and run `./update.sh`, which refreshes `sdais/SDAIS.md` without touching any project content.
 
-To upgrade an existing project to a new SDAIS version, replace the distribution files and run:
+To upgrade an existing project, copy or download the new archive into the
+project root, unpack it there, and run:
 
+```sh
+tar xzf sdais-v0.12.2.tgz
+./update.sh --from v0.12.1
 ```
-./update.sh --from <old-version>
-```
+
+Unpacking replaces only distribution files and the bundled `scaffold/` tree.
+`update.sh` then refreshes managed project files while preserving project
+content as documented below.
 
 ---
 
@@ -126,6 +137,7 @@ If you find it easier to start with free-form prose, write your ideas about the 
 | `update.sh` | Upgrades an existing project's scaffold |
 | `sdais.sh` | Launcher — runs any agent role with a chosen tool and model |
 | `scaffold/` | Prompt files and templates installed by `install` |
+| `sdais-vX.Y.Z.tgz` | Complete distribution archive; unpack before running `install.sh` or `update.sh` |
 | `docs/INTRODUCTION.md` | Concepts, motivation, agent roles, and prompt reference |
 | `docs/GREENFIELD.md` | Detailed greenfield workflow with process diagram |
 | `docs/TRANSFORMATION.md` | Detailed transformation workflow with process diagram |

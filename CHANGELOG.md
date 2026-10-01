@@ -8,6 +8,25 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
+## [v0.12.2] — 2026-10-01
+
+### Changed
+
+- **The release tarball is now the complete distribution package.**
+  `sdais-v0.12.2.tgz` contains the install, update, and launcher scripts;
+  `SDAIS.md`, README, changelog, and license; and the complete `scaffold/` and
+  `docs/` trees. It expands directly into the current directory without a
+  version-named parent directory.
+- **Installation is archive-first.** Create a project directory, copy or
+  download the release tarball into it, unpack it, and run `./install.sh`.
+  README, greenfield, transformation, and normative documentation now describe
+  the same four-step flow.
+- **Unpacked scaffold takes precedence.** `install.sh` and `update.sh` use the
+  bundled `scaffold/` directory before considering a same-named release
+  archive left in the project root after extraction.
+- Version bumped to v0.12.2 in the specification, guides, installer, and
+  updater.
+
 ## [v0.12.0] — 2026-09-28
 
 ### Changed

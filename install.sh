@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS install script — v0.12.0
+# SDAIS install script — v0.12.2
 # Usage: install.sh <project-name>
 #
 # Run from your project root. Creates AGENTS.md and the full sdais/ scaffold.
@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.12.0"
+SDAIS_VERSION="v0.12.2"
 if [[ $# -lt 1 ]]; then
     echo "Usage: install.sh <project-name>" >&2
     exit 1
@@ -18,13 +18,15 @@ TODAY="$(date +%Y-%m-%d)"
 
 echo "SDAIS $SDAIS_VERSION — installing scaffold for: $PROJECT"
 
-# Locate scaffold: tgz takes precedence over scaffold/ directory
+# Locate scaffold. The v0.12.2 distribution archive expands beside scaffold/,
+# so the unpacked directory takes precedence over the archive itself.
 TGZ="$SCRIPT_DIR/sdais-$SDAIS_VERSION.tgz"
 
-if [ -f "$TGZ" ]; then
-    tar xzf "$TGZ"
-elif [ -d "$SCRIPT_DIR/scaffold" ]; then
+if [ -d "$SCRIPT_DIR/scaffold" ]; then
     cp -rp "$SCRIPT_DIR/scaffold/." .
+elif [ -f "$TGZ" ]; then
+    # Backward-compatible support for a scaffold-only distribution archive.
+    tar xzf "$TGZ"
 else
     echo "error: neither $TGZ nor $SCRIPT_DIR/scaffold/ found" >&2
     exit 1
