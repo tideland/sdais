@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Bootstrap the line-counter fixture into a throwaway project directory.
 #
-# Scaffolds an SDAIS-G project, drops in the fixture prose, and generates a
-# CSV of the requested size for the tool under test to read.
+# Scaffolds an SDAIS-G project, drops in the fixture prose and pinned library,
+# and generates a CSV of the requested size for the tool under test to read.
 #
 # Usage: bootstrap.sh <target-dir> [options]
 
@@ -130,6 +130,7 @@ echo "Scaffolding SDAIS project '$PROJECT' in $TARGET"
 cp "$SDAIS_ROOT/sdais.sh" "$TARGET/sdais.sh"
 chmod +x "$TARGET/sdais.sh"
 cp "$SCRIPT_DIR/sdais/gspec/v1/idea.md" "$TARGET/sdais/gspec/v1/idea.md"
+cp -R "$SCRIPT_DIR/sdais/library/." "$TARGET/sdais/library/"
 
 # --- generate the CSV -------------------------------------------------------
 
@@ -206,6 +207,7 @@ cat <<EOF
 Done.
   project:  $TARGET
   prose:    sdais/gspec/v1/idea.md
+  library:  sdais/library/csv-records/v1/format.md
   data:     data/records.csv ($DATA_ROWS data rows + 1 header, $CSV_BYTES bytes)
 
 The fixture's E- item names SDAIS_DEMO_INPUT, so the Grounder has something

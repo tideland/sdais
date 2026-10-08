@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS update script — v0.12.2
+# SDAIS update script — v0.13.0
 # Usage: update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
@@ -12,11 +12,12 @@
 #   sdais/trs/v*/  — transformation hypotheses
 #   sdais/cdf/v*/  — change definition files
 #   sdais/adf/v*/  — architecture definition files
+#   sdais/library/** — every project-owned reference library and version
 #   All source code outside sdais/
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.12.2"
+SDAIS_VERSION="v0.13.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FROM_VERSION=""
 
@@ -42,7 +43,7 @@ PROJECT=$(head -1 AGENTS.md | sed 's/^# AGENTS — //')
 CUSTOM_BLOCK=$(mktemp)
 awk '/<!-- BEGIN: Custom Agents Extension -->/,/<!-- END: Custom Agents Extension -->/' AGENTS.md > "$CUSTOM_BLOCK"
 
-# Locate scaffold. The v0.12.2 distribution archive expands beside scaffold/,
+# Locate scaffold. The v0.13.0 distribution archive expands beside scaffold/,
 # so the unpacked directory takes precedence over the archive itself.
 TGZ="$SCRIPT_DIR/sdais-$SDAIS_VERSION.tgz"
 
@@ -114,5 +115,5 @@ echo "  AGENTS.md regenerated (Custom Agents Extension preserved)"
 echo "  sdais/SDAIS.md updated"
 [ -f "$LOCAL_BIN/sdais" ] && echo "  $LOCAL_BIN/sdais updated"
 echo ""
-echo "Project content (rsf, rar, res, cdf, adf, source files) left unchanged."
+echo "Project content (library, gspec, tspec, rsf, rar, trs, cdf, adf, source files) left unchanged."
 echo "Review sdais/SDAIS.md for workflow changes introduced in $SDAIS_VERSION."

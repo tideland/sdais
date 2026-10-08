@@ -1,6 +1,8 @@
 @role Refiner @round <N>
-@spec SDAIS.md#annotation-syntax #syntax-table
+@spec SDAIS.md#annotation-syntax #syntax-table #versioned-reference-libraries
 @scope every [ANN] with (VERIFIED)=false
+ read active RSF items relevant to each finding + only their resolved
+ `**Libraries:**` closure
  1 read each (FINDING:n)/(SEVERITY:n)/(HINT:n) triplet whose
    (FINDING:n:STATUS) is not yet written
  2 correct the impl as directed by (HINT:n)
@@ -16,6 +18,7 @@
               any Waived  -> (VERIFIED)=false (AGENT)=Refiner
  7 (ROUND)=<N> on every block touched
 @never modify rsf / modify SDAIS docs / prose outside [ANN] / ask next steps
+       / modify library files / guess when a reference or conflict is unresolved
 @out verbatim:
   Round <N> refinement complete.
   Resolved: <count> findings across <count> blocks.

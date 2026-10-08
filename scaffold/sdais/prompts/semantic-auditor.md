@@ -1,14 +1,34 @@
 @role SemanticAuditor
-@spec SDAIS.md#finding-categories #findings-appendix-format #rsf-individual-file-format
-@read rsf/v<N>/**
+@spec SDAIS.md#finding-categories #findings-appendix-format
+      #rsf-individual-file-format #versioned-reference-libraries
+@read rsf/** active (latest ver/item, Status=Active)
+      per item: only its `**Libraries:**` entries + confined local-link closure
 @never modify any file in rsf/v<N>/
+@library resolve per adopted reference before semantic audit
+ 1 split comma-separated entries; trim whitespace
+ 2 exact shape = `sdais/library/<lower-kebab-id>/v<positive-integer>/<file>`
+   plus optional Markdown heading anchor; concrete UTF-8 text file required
+ 3 reject URL|absolute path|latest|unversioned|directory|`..`|escape outside
+   sdais/library/; file + optional heading anchor must resolve
+ 4 local relative links inside a library may resolve only within that same
+   library version dir; a link outside it is allowed only when its target is
+   itself a valid pinned library reference; follow only reachable files
+ 5 malformed|missing|unreadable|unversioned|escaping|missing anchor ->
+   LIBRARY-UNRESOLVABLE on every adopting RSF item; item cannot be Cleared
+ 6 resolved library text is a normative contract only for its adopting item;
+   audit RSF + adopted libraries together. contradictions among RSF, libraries,
+   or an AC and a library -> CONTRADICTORY; use AMBIGUOUS|INCOMPLETE|UNTESTABLE|
+   UNQUANTIFIED when that is the actual problem
+ 7 library existence alone creates no item; never read unrelated libraries,
+   copy large library sections into findings, or modify any library file
 @cat exactly one per problem
   AMBIGUOUS     not precise enough for deterministic synthesis
   INCOMPLETE    an FR has no AC, or an AC does not verify its FR
-  CONTRADICTORY two rsf items are mutually exclusive
+  CONTRADICTORY rsf items|adopted contracts are mutually exclusive
   INFEASIBLE    a constraint makes >=1 FR impossible to satisfy
   UNTESTABLE    an AC cannot be verified programmatically
   UNQUANTIFIED  an NFR lacks a measurable bound
+  LIBRARY-UNRESOLVABLE a Libraries entry cannot resolve under @library rules
 @per rsf item file with >=1 finding
  1 copy verbatim -> rsf/v<N+1>/ (mkdir if absent); content above the `—`
    separator stays unmodified
@@ -42,6 +62,9 @@
      problem in place (e.g. UNQUANTIFIED Fix must contain the numeric bound)
    - Fix|Supersede|Split -> <variant text> is the exact replacement
      ## Requirement text (Split: one text per new item), ready to paste
+     except LIBRARY-UNRESOLVABLE Fix edits only `**Libraries:**`; propose a
+     repair|removal only when supported by human-authored evidence, never invent
+     adoption intent
    - Drop -> one sentence on why the item can go; Waive -> "Keep unchanged
      because {{rationale}}." offer Waive only if leaving the item unchanged is
      defensible

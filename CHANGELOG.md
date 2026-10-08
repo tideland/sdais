@@ -8,6 +8,45 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
+## [v0.13.0] — 2026-10-08
+
+### Added
+
+- **Versioned local reference libraries.** Installed projects now have an empty,
+  project-owned `sdais/library/` root. Reusable contracts live under
+  `sdais/library/<library-id>/v<N>/`; published versions are immutable and are
+  normative only when explicitly adopted.
+- **Canonical `Libraries` header.** RSF, TRS, and CDF items may adopt one or
+  more exact files with `- **Libraries:** sdais/library/.../v<N>/<file>`, with
+  optional Markdown heading anchors. `Source` remains provenance.
+- **Library-aware lifecycle.** RequirementsEngineer and
+  TransformationEngineer preserve scoped adoption; SemanticAuditor validates
+  paths, anchors, UTF-8 files, confined links, and composed-contract semantics;
+  Architect traces libraries; synthesis, transformation, review, refinement,
+  testing, and relevant security audits use the same pinned files.
+- **`LIBRARY-UNRESOLVABLE` finding category** for malformed, missing,
+  unreadable, unversioned, escaping, or anchor-less references.
+- **Library support verification** covering fresh installation, update
+  preservation across two versions, Custom Agents Extension preservation,
+  managed prompt mirrors, header placement, and positive/negative reference
+  cases.
+- **Line-counter library fixture.** The example now ships a small pinned CSV
+  record-format contract, explicitly adopts it from prose, and documents that
+  only dependent RSF items receive `Libraries` while the library creates no
+  standalone requirements.
+
+### Changed
+
+- All RSF and TRS templates include the optional `Libraries` field immediately
+  after `Source`; normative and user documentation explain authority,
+  lifecycle, TDS and external API examples, auditing, versioning, and
+  compatibility.
+- `install.sh` creates `sdais/library/` without bundled project contracts.
+  `update.sh` explicitly treats every `sdais/library/**` file as project-owned
+  content and never rewrites or removes it.
+- Version bumped from v0.12.2 to v0.13.0 in the specification, guides,
+  installer, and updater.
+
 ## [v0.12.2] — 2026-10-01
 
 ### Changed

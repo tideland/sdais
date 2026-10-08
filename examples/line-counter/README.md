@@ -3,12 +3,14 @@
 A deliberately small SDAIS-G project for evaluating the workflow and the prompt
 notation. Not part of the scaffold; nothing here ships into user projects.
 
-`sdais/gspec/v1/idea.md` is fifteen lines of loose prose chosen to exercise
-every RSF item type and both RequirementsEngineer modes:
+`sdais/gspec/v1/idea.md` is loose prose chosen to exercise every RSF item type,
+both RequirementsEngineer modes, and scoped adoption of the small CSV contract
+in `sdais/library/csv-records/v1/format.md`:
 
 | Prose                                    | Should become                        |
 |------------------------------------------|--------------------------------------|
 | counts records, skips header row         | FR + AC                              |
+| pinned CSV record format                 | `Libraries` on relevant FR/AC only   |
 | "fast even on big files"                 | NFR — no numeric bound, must ask     |
 | Go, standard library only                | C                                    |
 | `SDAIS_DEMO_INPUT` environment variable  | E (and a Grounder check)             |
@@ -22,9 +24,10 @@ markers, `gspec/v2/` written, `gspec/v1/` untouched. Answer the questions in
 
 ## Running it
 
-This directory holds only the prose input. `bootstrap.sh` scaffolds it into a
-throwaway project — so the agent's new version directories land outside the
-repo — and generates a CSV for the synthesised tool to read:
+This directory holds the prose input and its project-owned reference library.
+`bootstrap.sh` scaffolds them into a throwaway project—so the agent's new
+version directories land outside the repo—and generates a CSV for the
+synthesised tool to read:
 
     ./bootstrap.sh /tmp/lc
     cd /tmp/lc
@@ -55,6 +58,7 @@ fixture; it refuses to delete anything else.
 Mode A:
 
 - `gspec/v1/` is byte-for-byte unchanged
+- `library/csv-records/v1/format.md` is byte-for-byte unchanged
 - `gspec/v2/` exists, one file per source file, same filename
 - each `[[QN]]` in the prose has a matching `### QN:` under `## Questions`
 - the summary matches the `A.4 output verbatim` block in the prompt, line for line
@@ -65,6 +69,15 @@ Mode B, after answering:
 - every NFR carries a numeric bound
 - the `SDAIS_DEMO_INPUT` item is an `e-` file and carries `**Verified:** Pending`
 - every item has a `**Source:**` line pointing back into `gspec/`
+- only items whose behavior depends on the CSV format carry
+  `**Libraries:** sdais/library/csv-records/v1/format.md`
+- no standalone RSF item is derived from the library text itself
+
+SemanticAuditor:
+
+- resolves the pinned file and audits the relevant items against its field and
+  quoting rules
+- does not load or turn the library into requirements merely because it exists
 
 Grounder, with `SDAIS_DEMO_INPUT` exported as above:
 

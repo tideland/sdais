@@ -1,6 +1,6 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.12.2 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.13.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-G (Greenfield) workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
 
@@ -20,6 +20,7 @@ flowchart TD
     B5 -- No --> B7[RequirementsEngineer\nRSF Generation]
     B7 --> C
     B2 -- No: author directly --> C
+    LIB[(Adopted pinned files\nsdais/library/id/vN)] --> C
     C[Step 1\nAuthor / review RSF items\nFR · NFR · C · E · AC] --> D[Step 2\nSemanticAuditor]
     D --> E{Findings?}
     E -- Yes --> F[Resolve findings\nFix · Drop · Supersede · Split · Waive]
@@ -36,6 +37,11 @@ flowchart TD
     M --> N{Violations?}
     N -- Yes --> O[Step 7\nRefiner]
     O --> M
+    LIB -. same resolved files .-> D
+    LIB -. trace .-> K
+    LIB -. implement .-> L
+    LIB -. verify/refine .-> M
+    LIB -. verify/refine .-> O
     N -- No: all Verified --> P[Step 8\nHuman Approval Gate]
     P --> Q{Decision}
     Q -- Approve --> R([Done])
@@ -67,8 +73,8 @@ unpack the archive there, and run the installer:
 ```sh
 mkdir my-project
 cd my-project
-cp /path/to/sdais-v0.12.2.tgz .
-tar xzf sdais-v0.12.2.tgz
+cp /path/to/sdais-v0.13.0.tgz .
+tar xzf sdais-v0.13.0.tgz
 ./install.sh "My Project"
 ```
 
@@ -98,6 +104,7 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
     │   ├── analyzer.md
     │   ├── transformation.md
     │   └── transformation-engineer.md
+    ├── library/              # empty until your project adds a library
     ├── rsf/
     │   └── v1/
     │       ├── fr-0000-template.md
@@ -108,6 +115,8 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
 ```
 
 Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
+The installer creates `sdais/library/` empty. Its contents are project-owned;
+SDAIS updates never replace or delete them.
 
 To launch any agent, use `./sdais.sh` from the project root:
 
@@ -135,7 +144,7 @@ Use Step 0 when you have a clear idea of what you want but struggle to express i
 2. Run the **RequirementsEngineer**. It reads every spec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`.
 3. Open the files in `sdais/gspec/v2/` and answer each open question by writing your answer as free prose immediately below the corresponding `### QN:` heading in the `## Questions` section. Do not remove, reword, or add `### QN:` headings — questions are the agent's domain.
 4. Re-run the RequirementsEngineer. It incorporates answers into the prose, removes answered `[[QN]]` inline markers, and appends any newly discovered questions. Repeat until it reports zero open questions.
-5. With no open questions remaining, the agent switches to RSF Generation mode: it reads the clean spec files and writes one RSF item file per derived requirement into `sdais/rsf/v1/`, each carrying a `**Source:**` field pointing to the spec file it was derived from.
+5. With no open questions remaining, the agent switches to RSF Generation mode: it reads the clean spec files and writes one RSF item file per derived requirement into `sdais/rsf/v1/`, each carrying a `**Source:**` field pointing to the spec file it was derived from and, where explicitly adopted, the smallest applicable `**Libraries:**` set.
 6. Review `sdais/rsf/v1/`: amend wording, delete artefacts, and add anything the agent could not derive. The `**Source:**` field traces each item back to the original prose.
 
 Proceed to Step 1 (or directly to Step 2 if satisfied with the generated RSF).
@@ -174,13 +183,58 @@ Sequence numbers start at `0001` and are never reused. Items retired during an a
 
 Use `[FR-NNNN]`, `[NFR-NNNN]`, `[AC-NNNN]`, etc. inline in the `## Requirement` section to link related items. References resolve to the most recent active version.
 
+### Adopt versioned reference libraries
+
+Use a library for a reusable contract, language, protocol, schema, notation,
+design system, or interface that should remain its own source of truth. Store it
+as UTF-8 text under `sdais/library/<lower-kebab-id>/v<N>/`. Published versions
+are immutable.
+
+Human prose must adopt an exact file and scope it clearly. A TUI requirement
+might say:
+
+```markdown
+The puzzle screen must use the TDS workspace, coordinates, and widgets defined
+by `sdais/library/tds/v1/tds.md`.
+```
+
+RequirementsEngineer reads the referenced definition for terminology but does
+not turn its contents into hundreds of requirements. The generated item keeps
+provenance and normative support separate:
+
+```markdown
+- **Last modified:** v1 (2026-10-08)
+- **Source:** sdais/gspec/v1/ui.md
+- **Libraries:** sdais/library/tds/v1/tds.md
+
+## Requirement
+
+The puzzle screen must present the game workspace using TDS.
+```
+
+The mechanism is not UI-specific. An API requirement can adopt a schema section:
+
+```markdown
+- **Libraries:** sdais/library/billing-api/v3/openapi.yaml#paths
+```
+
+Multiple paths are comma-separated. URLs, `latest`, unversioned paths,
+directories, traversal, and missing files or anchors are invalid. If prose says
+only “use TDS” or “follow the billing API,” the RequirementsEngineer asks for
+the exact version, file, and adoption scope. A library file creates no
+requirement merely by existing.
+
+To amend TDS, add (for example) `sdais/library/tds/v2/tds.md`; never rewrite
+`v1`. Existing RSF items continue to use `v1` until a human-authored amendment
+changes their `**Libraries:**` field. `update.sh` preserves both versions.
+
 ---
 
 ## Step 2 — Semantic Audit
 
 **Prompt:** `sdais/prompts/semantic-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
 
-Before any code is generated, the RSF must pass a semantic audit. This is the quality gate that catches problems in the specification itself — ambiguity, gaps, contradictions, NFRs without numeric bounds — before they propagate into code that is hard to fix.
+Before any code is generated, the RSF must pass a semantic audit. This is the quality gate that catches problems in the specification itself — ambiguity, gaps, contradictions, NFRs without numeric bounds, and unresolvable library references — before they propagate into code that is hard to fix.
 
 1. Run the **SemanticAuditor**, providing all RSF item files for the current version.
 2. The agent copies each affected RSF item to `sdais/rsf/v<N+1>/` and appends a `## Findings` section (below a `—` separator) with one `### F<n>:` entry per finding. Each entry contains the category, severity, references, a precise description, and two to four **solution variants** — complete resolutions to choose from, with `{{placeholders}}` for the details only you can supply — followed by an `Own` option. RSF files with no findings are not copied.
@@ -195,6 +249,12 @@ Before any code is generated, the RSF must pass a semantic audit. This is the qu
 | **Waive** | Finding acknowledged; item intentionally unchanged | Leave the requirement text unchanged; the filled `{{rationale}}` records why |
 
 4. Re-run the SemanticAuditor on the amended `rsf/v<N+1>/`. Repeat until no new findings are produced — the RSF is now **Cleared**.
+
+For each `**Libraries:**` entry the auditor validates the pinned path, UTF-8
+file, optional heading anchor, and confined local links, then audits the RSF
+against the referenced definitions. Missing or malformed references produce
+`LIBRARY-UNRESOLVABLE` and block Cleared status. Contract contradictions use
+`CONTRADICTORY`; an untestable library-derived AC still uses `UNTESTABLE`.
 
 ---
 
@@ -220,18 +280,24 @@ Resolve all `ENV-UNRESOLVABLE` findings before proceeding:
 
 Run the Architect if you want a human-approved architecture checkpoint before any code is written. This is particularly valuable for systems with non-trivial module boundaries or complex data flows — it surfaces structural disagreements early, when they are cheap to fix.
 
-The Architect reads all cleared RSF items and produces this UTF-8 Markdown set under `sdais/adf/v<N>/`:
+The Architect reads all cleared RSF items and their adopted libraries and produces this UTF-8 Markdown set under `sdais/adf/v<N>/`:
 
 - `adf-01-context-and-goals.md` — context, goals, stakeholders, scope, quality goals, and constraints.
 - `adf-02-internal-architecture.md` — components, boundary contracts, data flows, and the Mermaid diagrams needed to describe the internal structure.
 - `adf-03-external-architecture.md` — actors, external systems, integration contracts, trust boundaries, failure handling, flows, and the Mermaid diagrams needed to describe integrations.
-- `adf-04-requirement-trace.md` — every active specification ID and title mapped to architecture components, external interfaces, decisions, and verification.
+- `adf-04-requirement-trace.md` — every active specification ID and title mapped to exact `Library References` (or `—`), architecture components, external interfaces, decisions, and verification.
 - `adf-05-glossary.md` — project, domain, integration, component, data, and acronym terms.
 - `decisions/adr-NNNN-<short-title>.md` — one ADR per significant architecture decision.
 
 Every ADR contains Status, Context, Decision, Justification, Consequences, Alternatives, Relevant Requirements, and Verification Tests. Every entry in the final two sections uses `- **[<id>]:** <text>`, where the ID is a real specification ID and the text is its exact title.
 
-Review the complete ADF set and either approve it—set every core document to `**Status:** Approved` and every ADR to `**Status:** Accepted`—or reject it with written feedback for the Architect to revise. A fully approved ADF is read by the Generator as structural context; a partial set is ignored. It guides module and package layout without overriding RSF requirements. RSF items remain authoritative if ADF and RSF ever conflict.
+Components and interfaces name the pinned libraries they realize. UI/design
+languages belong in internal interfaces and relevant ADRs; API/schema/protocol
+contracts belong in external architecture and integrations. The ADF links to
+definitions instead of copying them and cannot weaken the composed RSF plus
+library contract.
+
+Review the complete ADF set and either approve it—set every core document to `**Status:** Approved` and every ADR to `**Status:** Accepted`—or reject it with written feedback for the Architect to revise. A fully approved ADF is read by the Generator as structural context; a partial set is ignored.
 
 ---
 
@@ -246,6 +312,7 @@ The Generator reads the cleared RSF and synthesises a complete implementation. I
 The Generator:
 
 - Reads all active RSF items.
+- Reads only the resolved libraries adopted by each active item.
 - Reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted.
 - Synthesises a complete implementation.
 - Writes one `[ANN]` block per callable unit and type. Every block starts with `(VERIFIED) false` and `(ROUND) 0`.
@@ -296,6 +363,10 @@ The Reviewer checks every `[ANN]` block:
 - Are `(PRE)` and `(POST)` enforced in the implementation?
 - Are all `(CONSTRAINT)` labels respected?
 - Is every FR covered, and does at least one AC pass?
+- Does the implementation conform to every library adopted by the relevant RSF item?
+
+Library failures are findings on the relevant `[ANN]` block. `(ORIGIN)` remains
+RSF/TRS IDs; filesystem paths never go there.
 
 It also runs a **dependency cascade check**: when a block is set `(VERIFIED) false`, every block whose `(DEPENDS-ON)` references that block's `(ANN-ID)` receives an automatic Medium cascade finding. This prevents silent propagation of errors through the call graph.
 
@@ -326,6 +397,7 @@ The Refiner works block by block through every `(VERIFIED) false` block:
 - If a code fix makes a descriptive label inaccurate (e.g. `(TASK)` no longer matches), updates the label and appends `(FIELD-CHANGE:n)` documenting what changed and why.
 - Sets `(VERIFIED) true` when all findings in a block are resolved.
 - Marks unresolvable findings `Waived — requires RSF amendment` rather than silently papering over them.
+- Reads the same pinned libraries as the Reviewer and never edits them.
 
 Return to Step 6 at round N+1. Repeat until the Reviewer reports zero violations.
 
@@ -349,10 +421,10 @@ When the Reviewer reports zero violations and all ACs pass, you make the final c
 
 **Prompt:** `sdais/prompts/security-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
 
-Run the SecurityAuditor on demand or after generation. It checks all `(CONSTRAINT:SEC)` labels and scans for hard-coded credentials, unvalidated inputs passed to sensitive operations, missing authorisation checks, and unsafe cryptography. It uses the same `(FINDING:n)` / `(HINT:n)` mechanism as the Reviewer so findings flow directly to the Refiner. Security findings are prefixed `SEC:`.
+Run the SecurityAuditor on demand or after generation. It checks all `(CONSTRAINT:SEC)` labels and scans for hard-coded credentials, unvalidated inputs passed to sensitive operations, missing authorisation checks, and unsafe cryptography. When a security claim depends on an adopted protocol, schema, or interface definition, it reads that pinned contract. It uses the same `(FINDING:n)` / `(HINT:n)` mechanism as the Reviewer so findings flow directly to the Refiner. Security findings are prefixed `SEC:`.
 
 ### Test Generation (Standard Mode)
 
 **Prompt:** `sdais/prompts/test-generator.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
-After all `[ANN]` blocks are `(VERIFIED) true`, run TestGenerator in Standard mode. It derives test functions from `(PRE)`, `(POST)`, and AC items in the verified implementation. It reads annotation blocks in implementation files but does not modify them.
+After all `[ANN]` blocks are `(VERIFIED) true`, run TestGenerator in Standard mode. It derives test functions from `(PRE)`, `(POST)`, AC items, and relevant adopted-library boundaries, grammars, compatibility rules, and conformance clauses. It reads annotation blocks in implementation files but does not modify them.

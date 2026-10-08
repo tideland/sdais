@@ -5,6 +5,7 @@
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Confidence:** Low | Medium | High
 - **Source:** [sdais/tspec/v<N>/filename.md — omit if item was authored directly]
+- **Libraries:** [sdais/library/<library-id>/v<N>/<file> — optional; comma-separated]
 
 ## Hypothesis
 

@@ -1,8 +1,8 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Version:** v0.12.2 | **Status:** Final | **License:** BSD 3-Clause
+**Version:** v0.13.0 | **Status:** Final | **License:** BSD 3-Clause
 
-SDAIS is a software development paradigm in which humans author requirements exclusively and AI agents synthesise, review, and refine all implementation code. No human writes implementation code. The specification is the single source of truth — always.
+SDAIS is a software development paradigm in which humans author requirements and adopted reference contracts while AI agents synthesise, review, and refine all implementation code. No human writes implementation code. Human-authored RSF determines intent and adoption scope; pinned libraries supply the adopted contract details.
 
 Read [docs/INTRODUCTION.md](docs/INTRODUCTION.md) for the full concept and motivation. For step-by-step workflows see [docs/GREENFIELD.md](docs/GREENFIELD.md) and [docs/TRANSFORMATION.md](docs/TRANSFORMATION.md). Terms and acronyms are defined in [docs/GLOSSARY.md](docs/GLOSSARY.md).
 
@@ -16,14 +16,14 @@ into it, unpack the archive, and run the installer:
 ```sh
 mkdir my-project
 cd my-project
-cp /path/to/sdais-v0.12.2.tgz .
-tar xzf sdais-v0.12.2.tgz
+cp /path/to/sdais-v0.13.0.tgz .
+tar xzf sdais-v0.13.0.tgz
 ./install.sh "My Project"
 ```
 
 The archive expands directly into the current directory; it does not create an
 extra version-named directory. You can replace the `cp` command with a download
-command that saves the archive as `sdais-v0.12.2.tgz`.
+command that saves the archive as `sdais-v0.13.0.tgz`.
 
 `install.sh` and `update.sh` must be run from this project root — the directory
 that contains `SDAIS.md`, `install.sh`, `update.sh`, and `scaffold/`. Do not run
@@ -40,13 +40,40 @@ To upgrade an existing project, copy or download the new archive into the
 project root, unpack it there, and run:
 
 ```sh
-tar xzf sdais-v0.12.2.tgz
-./update.sh --from v0.12.1
+tar xzf sdais-v0.13.0.tgz
+./update.sh --from v0.12.2
 ```
 
 Unpacking replaces only distribution files and the bundled `scaffold/` tree.
 `update.sh` then refreshes managed project files while preserving project
 content as documented below.
+
+## Versioned Reference Libraries
+
+Place reusable human-authored contracts under
+`sdais/library/<library-id>/v<N>/`. Requirements adopt them explicitly with an
+exact file path, for example:
+
+```markdown
+The puzzle UI must follow `sdais/library/tds/v1/tds.md`.
+```
+
+The generated or human-authored RSF item carries the same contract separately
+from its prose provenance:
+
+```markdown
+- **Source:** sdais/gspec/v2/ui.md
+- **Libraries:** sdais/library/tds/v1/tds.md
+```
+
+The mechanism is generic: an API requirement can instead adopt
+`sdais/library/example-api/v2/openapi.yaml#paths`. Libraries are normative only
+where human prose or RSF explicitly adopts them. The SemanticAuditor resolves
+and checks them; Architect traces them; Generator and Transformation implement
+them; Reviewer verifies conformance; Refiner and TestGenerator use the same
+pinned files. To amend a published contract, add `v<N+1>` and update only the
+requirements that adopt it—old requirements keep using their pinned version.
+Update preserves every file under `sdais/library/`.
 
 ---
 
@@ -85,7 +112,7 @@ You write specifications. AI writes code. The loop looks like this:
 
 **Phase 0 — Draft (optional)**
 
-If you find it easier to start with free-form prose, write your ideas into `sdais/gspec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field on every item. Skip this phase if you prefer to author RSF items directly.
+If you find it easier to start with free-form prose, write your ideas into `sdais/gspec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field and the smallest applicable `**Libraries:**` set on every adopting item. Skip this phase if you prefer to author RSF items directly.
 
 **Phase 1 — Specify**
 
@@ -137,6 +164,7 @@ If you find it easier to start with free-form prose, write your ideas about the 
 | `update.sh` | Upgrades an existing project's scaffold |
 | `sdais.sh` | Launcher — runs any agent role with a chosen tool and model |
 | `scaffold/` | Prompt files and templates installed by `install` |
+| `sdais/library/` (installed projects) | Project-owned, immutable versioned reference contracts; never bundled with project-specific content |
 | `sdais-vX.Y.Z.tgz` | Complete distribution archive; unpack before running `install.sh` or `update.sh` |
 | `docs/INTRODUCTION.md` | Concepts, motivation, agent roles, and prompt reference |
 | `docs/GREENFIELD.md` | Detailed greenfield workflow with process diagram |

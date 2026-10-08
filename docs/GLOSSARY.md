@@ -1,6 +1,6 @@
 # SDAIS — Glossary
 
-**Version:** v0.12.2 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.13.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 
@@ -24,6 +24,17 @@
 | **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-T only). |
 | **ADF** | Architecture Definition Files | `sdais/adf/v<N>/` | UTF-8 Markdown set containing context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs produced by the Architect. |
 | **ADR** | Architecture Decision Record | `sdais/adf/v<N>/decisions/adr-NNNN-<short-title>.md` | One significant architecture decision with rationale, consequences, alternatives, requirements, and verification tests. |
+| **Library artifact** | Versioned reference contract | `sdais/library/<library-id>/v<N>/` | Human-authored reusable contract, language, protocol, schema, notation, design system, or interface; normative only when explicitly adopted. |
+
+## Library Terms
+
+| Term | Meaning |
+|---|---|
+| **Adoption** | An explicit reference from human requirement prose or an RSF/TRS/CDF header that makes a library normative for that item. |
+| **Library root** | `sdais/library/` in an installed project. It may be absent or empty when unused. |
+| **Short path** | `library/...`, interpreted relative to `sdais/`; canonical headers use `sdais/library/...`. |
+| **Pinned reference** | Project-root-relative concrete file path containing an exact positive `v<N>` segment, optionally with a Markdown heading anchor. |
+| **Resolved library closure** | The adopted file plus only reachable, valid local files in the same version or separately pinned library targets. |
 
 ---
 
@@ -49,10 +60,11 @@ Findings are Markdown files named `f-NNNN-<description>.md`.
 |---|---|
 | `AMBIGUOUS` | Requirement is too vague for deterministic synthesis. |
 | `INCOMPLETE` | FR has no AC, or an AC does not reference a corresponding FR. |
-| `CONTRADICTORY` | Two RSF items are mutually exclusive. |
+| `CONTRADICTORY` | RSF items or adopted contracts are mutually exclusive. |
 | `INFEASIBLE` | A constraint makes one or more FRs impossible to satisfy. |
 | `UNTESTABLE` | An acceptance criterion cannot be verified programmatically. |
 | `UNQUANTIFIED` | An NFR lacks a measurable numeric bound. |
+| `LIBRARY-UNRESOLVABLE` | A `Libraries` entry is malformed, missing, unreadable, unversioned, escapes the library root, or names a missing heading anchor. |
 | `ENV-UNRESOLVABLE` | A named infrastructure element cannot be confirmed in the target environment (Grounder finding). |
 | `TRS-CONTRADICTS-CODE` | A TRS hypothesis is contradicted by actual code behaviour (SDAIS-T only). |
 | `CODE-INTENT-UNCLEAR` | Code behaviour cannot be mapped to any requirement (SDAIS-T only). |
@@ -129,7 +141,7 @@ Each CDF covers exactly one transformation dimension. Multiple CDFs may be appli
 
 | Identifier | Format | Meaning |
 |---|---|---|
-| `(ORIGIN)` | Comma-separated RSF IDs e.g. `FR-0002, NFR-0001` | RSF item(s) this unit implements. |
+| `(ORIGIN)` | Comma-separated RSF/TRS IDs e.g. `FR-0002, NFR-0001` | Specification item(s) this unit implements; never a library filesystem path. |
 | `(AGENT)` | Agent role name | Role of the agent that last wrote or modified this block. |
 | `(VERIFIED)` | `true` or `false` | Whether the Reviewer confirmed the block is correct. |
 | `(ROUND)` | Integer (0, 1, 2, …) | Review round in which the block was last written or updated. |

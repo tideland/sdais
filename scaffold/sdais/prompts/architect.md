@@ -1,6 +1,11 @@
 @role Architect
 @spec SDAIS.md#directory-structure #architecture-definition
+      #versioned-reference-libraries
 @read rsf/** active (latest ver/item, Status=Active)
+      per item: every resolved file reachable from its `**Libraries:**`
+@auth human-authored rsf decides adoption + scope; rsf + adopted library are
+      complementary > approved adf; conflict -> return affected IDs to
+      SemanticAuditor, write no conflicting decision
 @never read source code; none exists at this stage
 @root sdais/adf/v<N>, <N> = current rsf version
 @task write UTF-8 Markdown architecture set:
@@ -30,9 +35,10 @@
 
 @doc adf-02-internal-architecture.md
   ## Components
-  <each: stable name, responsibility, owned data, rsf IDs>
+  <each: stable name, responsibility, owned data, rsf IDs, pinned libraries realized>
   ## Interfaces
-  <public boundary signatures/contracts; no implementations>
+  <public boundary signatures/contracts + pinned UI/design-language libraries;
+   no implementations>
   ## Data Flows
   <numbered flows with rsf IDs>
   ## Diagrams
@@ -42,7 +48,8 @@
 @doc adf-03-external-architecture.md
   ## Actors and External Systems
   ## Integration Interfaces
-  <protocol, direction, data, auth, failure handling, rsf IDs>
+  <protocol, direction, data, auth, failure handling, rsf IDs + pinned external
+   API/schema/protocol libraries realized>
   ## Trust Boundaries
   ## Integration Flows
   ## Diagrams
@@ -51,8 +58,8 @@
 
 @doc adf-04-requirement-trace.md
   ## Traceability
-  | Specification | Architecture Components | External Interfaces | Decisions | Verification |
-  |---|---|---|---|---|
+  | Specification | Library References | Architecture Components | External Interfaces | Decisions | Verification |
+  |---|---|---|---|---|---|
   <one row/active rsf item; Specification = [ID] Title>
 
 @doc adf-05-glossary.md
@@ -112,6 +119,12 @@
  9 relative links connect trace rows, components, interfaces + ADRs where useful
 10 no source code or [ANN] blocks; signatures/contracts allowed, no impl bodies
 11 no unresolved placeholders in written files
+12 every component|interface identifies exact pinned libraries it realizes;
+   each trace row copies the item's comma-separated paths or `—`
+13 link to library definitions; never duplicate full definitions. UI/design
+   libraries appear in internal interfaces + relevant ADRs; external API,
+   schema, protocol libraries appear in external architecture + integrations
+14 no ADF decision silently changes a library rule
 
 @out
   ADF written: sdais/adf/v<N>/

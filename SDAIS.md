@@ -1,7 +1,7 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-- **Date:** 2026-10-01
-- **Version:** v0.12.2
+- **Date:** 2026-10-08
+- **Version:** v0.13.0
 - **Status:** Draft
 
 ---
@@ -34,7 +34,7 @@ This inversion produces several consequences:
 
 **The annotation language is the AI-to-AI handoff protocol.** It derives from Design by Contract (Meyer/Eiffel) — preconditions, postconditions, constraints — but is extended with traceability labels for multi-agent context. It operates at four scope levels: library, package, type, function.
 
-**RSF is always authoritative.** When RSF, ADF, and generated code disagree, the RSF wins. When ADF and generated code disagree without an RSF conflict, the ADF wins. No agent may silently reconcile a conflict: the Generator and Refiner must surface any disagreement as a `(FINDING:n)` label or a finding appended to the affected RSF item file and request human resolution.
+**Requirements and adopted libraries compose the implementation contract.** Human-authored RSF decides whether and where a library applies. An adopted, pinned library file defines the referenced contract details. Approved ADF may explain and structure the solution, but may not weaken either authority. Implementation must satisfy the composed RSF plus library contract. RSF and an adopted library are complementary, not winner/loser alternatives: a contradiction between them blocks synthesis and must be reported by the SemanticAuditor. When ADF and generated code disagree without an RSF or library conflict, the ADF wins. No agent may silently reconcile a conflict.
 
 ---
 
@@ -92,6 +92,9 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
     │   ├── transformation.md
     │   ├── security-auditor.md
     │   └── test-generator.md
+    ├── library/              ← project-owned, versioned reference contracts
+    │   └── <library-id>/
+    │       └── v<N>/         ← immutable version; one or more UTF-8 text files
     ├── gspec/
     │   ├── v1/
     │   │   └── <anything>.md ← initial loose prose; any filename, any format
@@ -151,8 +154,26 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
 - Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs under `decisions/`. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
+- Each `library/<library-id>/v<N>/` directory is a published version of a project-owned reference library. Published version directories are immutable; amendments create `v<N+1>/`. The entire `library/` directory may be absent or empty when no requirement uses it.
 - The distribution is `sdais-vX.Y.Z.tgz`. It contains `SDAIS.md`, `README.md`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `update.sh`, `sdais.sh`, `docs/`, and `scaffold/`, and expands directly into the current directory. Create a project root, copy or download the archive into it, run `tar xzf sdais-vX.Y.Z.tgz`, then run `./install.sh <project-name>` once to scaffold the project. To upgrade, unpack the new archive in the existing project root and run `./update.sh --from <old-version>`. Run `./sdais.sh <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
+
+### Versioned Reference Libraries
+
+A **library artifact** is human-authored, local, versioned reference material that defines a reusable contract, language, protocol, schema, notation, design system, or interface. It is not requirement prose. Its existence never creates an FR, NFR, C, E, or AC, and agents do not load every library into global context.
+
+The canonical layout is `sdais/library/<library-id>/v<N>/<reference-file>`, where `<library-id>` is stable lower-case kebab-case, `v<N>` is an explicit positive integer version, and reference files are UTF-8 text suitable for humans and agents. A published version is immutable. Remote contracts needed for reproducibility must first be captured as a local, reviewed snapshot; agents never fetch live definitions.
+
+A requirement adopts a library only through an explicit `**Libraries:**` header. Each comma-separated entry is a project-root-relative path naming a concrete file, optionally followed by a Markdown heading anchor:
+
+```markdown
+- **Source:** sdais/gspec/v3/ui.md
+- **Libraries:** sdais/library/tds/v1/tds.md#8-workspace-and-coordinates
+```
+
+`Source` records provenance; `Libraries` records normative supporting contracts. They are never interchangeable. When `Source` exists, `Libraries` immediately follows it; otherwise it follows `Last modified`. The field is omitted when an item adopts no library. Unchanged items without it remain valid.
+
+A valid pinned reference stays under `sdais/library/<library-id>/v<N>/`, contains an exact positive version and concrete filename, and resolves to an existing readable file and optional heading. URLs, absolute paths, floating `latest` aliases, unversioned or directory-only paths, path traversal, and references outside `sdais/library/` are invalid. Local relative links inside a library may resolve only within the same version directory unless the link target is itself a valid pinned library reference. Agents read only the files reachable from active adopted references, retain those files as their own source of truth, and link to rather than copy large portions into RSF, ADF, annotations, code comments, or findings. Short paths such as `library/tds/v1/tds.md` are interpreted relative to `sdais/`; canonical fields use the full project-root-relative form.
 
 **File naming — why no date in the filename:**
 Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-myproject-v1-2026-04-21.md`) to timestamp versions without relying on version control. In the current structure each file carries its date in its header metadata, and git history is the authoritative timeline. Dates do not appear in filenames.
@@ -185,7 +206,8 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
              └──────►  AI: RequirementsEngineer
                        (RSF Generation mode)
                        writes sdais/rsf/v1/
-                       with **Source:** field
+                       with **Source:** and applicable
+                       **Libraries:** fields
                              │
                              ▼
                    Human reviews rsf/v1/;
@@ -200,7 +222,8 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
                          ▼
                ┌──────────────────┐
                │ AI: Semantic     │  checks RSF for ambiguity,
-               │ Audit            │  contradictions, infeasibility
+               │ Audit            │  library resolution, ambiguity,
+               │                  │  contradictions, infeasibility
                └────────┬─────────┘
                         │
                ┌────────┴────────┐
@@ -256,6 +279,8 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
 
 RSF amendments increment the version and restart the loop from the semantic audit. The prior annotated codebase is not discarded — it becomes input context for the next generation pass.
 
+Human prose or directly authored RSF may explicitly adopt a pinned file under `sdais/library/`. The RequirementsEngineer preserves the smallest applicable reference set on generated items; the SemanticAuditor resolves each reference and audits the composed contract. Architect, Generator, Reviewer, Refiner, TestGenerator, and—when security claims depend on interface definitions—SecurityAuditor then read those same pinned files. Library existence alone adds no context and produces no requirement.
+
 For SDAIS-T (transformation of existing systems), the lifecycle starts at the SDAIS-T section (see below) and joins the standard SDAIS-G lifecycle at the Generator stage. The annotated existing codebase and the RSF derived by the Analyzer agent are the inputs at that join point.
 
 ---
@@ -287,6 +312,13 @@ the file (after a `—` separator) with the full question text as a `### Q1:`
 heading. The processed files are written to `sdais/gspec/v2/` under the same
 filenames.
 
+The agent also recognizes explicit pinned references such as
+`sdais/library/tds/v1/tds.md`. It reads a referenced file to understand its
+defined terms, preserves the reference and its scope through later prose
+versions, and asks a clarification question when a library is named informally,
+lacks an exact version or file, or has unclear adoption scope. A library file is
+never treated as another gspec input and never generates requirements by itself.
+
 #### Step −2.3 — Answer the questions
 
 Open each file in `sdais/gspec/v2/` that has a `## Questions` section.
@@ -304,7 +336,9 @@ questions.
 When no open questions remain the RequirementsEngineer switches to RSF
 Generation mode automatically. It reads the clean spec files and writes one RSF
 item file per derived requirement into `sdais/rsf/v1/`. Each generated item
-carries a `**Source:**` field listing the spec file(s) it was derived from.
+carries a `**Source:**` field listing the spec file(s) it was derived from and,
+when applicable, a `**Libraries:**` field containing only the pinned references
+that govern that item.
 
 #### Step −2.5 — Human review of generated RSF
 
@@ -330,7 +364,7 @@ Before authoring any RSF items, run `install` from the project root to scaffold 
 ./install <project-name>
 ```
 
-This copies `SDAIS.md` to `sdais/SDAIS.md`, installs all prompt files into `sdais/prompts/`, installs all `*-0000-template.md` files, and writes `AGENTS.md` at the project root with the project name substituted.
+This copies `SDAIS.md` to `sdais/SDAIS.md`, installs all prompt files into `sdais/prompts/`, installs all `*-0000-template.md` files, creates an empty project-owned `sdais/library/`, and writes `AGENTS.md` at the project root with the project name substituted. No project-specific library content ships in the scaffold.
 
 To launch an agent from the project root, use `./sdais.sh`:
 
@@ -364,6 +398,7 @@ When upgrading to a new SDAIS version, replace `SDAIS.md`, `install`, and `updat
 | | `sdais/trs/v*/*.md` |
 | | `sdais/cdf/v*/*.md` |
 | | `sdais/adf/v*/*.md` |
+| | `sdais/library/**` (all project-owned versions and files) |
 | | All source code files |
 
 ---
@@ -376,7 +411,7 @@ Before any code is generated the RSF must pass a semantic audit. The SemanticAud
 
 Provide all RSF item files for the current version to the `SemanticAuditor`. Use the prompt from `sdais/prompts/semantic-auditor.md`. The agent copies each RSF item that has at least one finding to `sdais/rsf/v<N+1>/` and appends a `## Findings` section (after a `—` separator) with one `### F<n>:` entry per finding. RSF files with no findings are not copied. The agent outputs a summary of all findings and staged files.
 
-Finding categories: `AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED`.
+Finding categories: `AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | LIBRARY-UNRESOLVABLE`.
 
 #### Step 0.2 — Review each finding
 
@@ -400,11 +435,21 @@ Each `### F<n>:` entry in the staged RSF files ends in a list of solution varian
 - If any finding remains unresolved: return to Step 0.1 with the new RSF version.
 - If all findings are resolved: proceed to Step 0.4 if the RSF contains any `E-` items, otherwise proceed to Step 1.
 
+An active item with an unresolved `**Libraries:**` entry cannot be Cleared.
+`LIBRARY-UNRESOLVABLE` variants repair or remove only the reference and never
+invent adoption intent. Contradictions between an RSF item and its library,
+between adopted libraries, or between an AC and its library use
+`CONTRADICTORY`, not `LIBRARY-UNRESOLVABLE`.
+
 #### Step 0.4 — Infrastructure Grounding (mandatory when `E-` items are present)
 
 Run the Grounder agent when any active `E-` item exists in the cleared RSF. Use the prompt from `sdais/prompts/grounder.md`.
 
 The Grounder reads every `E-` item and attempts to confirm that each named infrastructure element (database, service endpoint, message queue, file path, API, etc.) exists and matches the item description. For each confirmed element the Grounder sets `**Verified:** true`. For each element that cannot be confirmed the Grounder appends an `ENV-UNRESOLVABLE` finding to the `E-` item file staged in `sdais/rsf/v<N+1>/`.
+
+Library files are not infrastructure and are never converted to E-items. The
+Grounder may read an adopted contract only when needed to understand an E-item;
+the SemanticAuditor remains responsible for reference validation.
 
 Resolution paths for `ENV-UNRESOLVABLE` findings:
 
@@ -442,6 +487,7 @@ Each RSF item is one Markdown file in `sdais/rsf/v<N>/`. The prefix encodes the 
 - **Introduced:** v1 (2026-04-21)
 - **Last modified:** v1 (2026-04-21)
 - **Source:** sdais/gspec/v3/auth-requirements.md
+- **Libraries:** sdais/library/example-api/v2/openapi.yaml#paths
 
 ## Requirement
 
@@ -457,6 +503,11 @@ this item. It is written by the RequirementsEngineer when generating RSF items
 from prose; it may be omitted when a human authors an RSF item directly without
 going through Step −2.
 
+The optional `**Libraries:**` field records exact pinned supporting contracts.
+Multiple references are comma-separated. It immediately follows `Source`, or
+`Last modified` when `Source` is absent. Paths and anchors must resolve before
+Cleared status; items without the field remain valid.
+
 Environment (`E-`) items carry an additional field set by the Grounder:
 
 ```markdown
@@ -466,6 +517,7 @@ Environment (`E-`) items carry an additional field set by the Grounder:
 - **Status:** Active
 - **Introduced:** v1 (2026-04-21)
 - **Last modified:** v1 (2026-04-21)
+- **Libraries:** sdais/library/deployment-schema/v1/environment.md
 - **Verified:** Pending
 
 ## Requirement
@@ -490,18 +542,18 @@ Step 1b is optional and skipped unless either of the following conditions holds:
 - The cleared RSF contains at least one `C-` item that explicitly requires design approval (i.e., its text calls for architectural sign-off before code is generated).
 - The human explicitly invokes the Architect.
 
-When Step 1b runs, provide all cleared RSF items to the Architect agent. Use the prompt from `sdais/prompts/architect.md`.
+When Step 1b runs, provide all cleared RSF items and the library files reachable from their `**Libraries:**` fields to the Architect agent. Use the prompt from `sdais/prompts/architect.md`.
 
-The Architect reads all active RSF items and produces an Architecture Definition File set (ADF) under `sdais/adf/v<N>/`. The set separates concerns so that architecture can be reviewed, linked, and evolved without rewriting one monolithic document. The Architect does not read or write source code and does not write `[ANN]` blocks.
+The Architect reads all active RSF items plus their resolved library closures and produces an Architecture Definition File set (ADF) under `sdais/adf/v<N>/`. The set separates concerns so that architecture can be reviewed, linked, and evolved without rewriting one monolithic document. The Architect does not read or write source code and does not write `[ANN]` blocks.
 
 **ADF document set:**
 
 | File | Required content |
 |---|---|
 | `adf-01-context-and-goals.md` | Context, goals, stakeholders, scope, quality goals, and constraints. |
-| `adf-02-internal-architecture.md` | Components, responsibilities, owned data, boundary contracts, data flows, and at least one Mermaid component or dependency diagram. |
-| `adf-03-external-architecture.md` | Actors, external systems, integrations, trust boundaries, failure handling, integration flows, and at least one Mermaid context or integration diagram. |
-| `adf-04-requirement-trace.md` | One row per active RSF item, mapping its ID and exact title to architecture components, external interfaces, decisions, and verification. |
+| `adf-02-internal-architecture.md` | Components, responsibilities, owned data, boundary contracts, data flows, pinned libraries realized by components and internal interfaces, and at least one Mermaid component or dependency diagram. |
+| `adf-03-external-architecture.md` | Actors, external systems, integrations, trust boundaries, failure handling, integration flows, external API/schema/protocol libraries realized, and at least one Mermaid context or integration diagram. |
+| `adf-04-requirement-trace.md` | One row per active RSF item, mapping its ID and exact title to a `Library References` column containing exact pinned paths or `—`, architecture components, external interfaces, decisions, and verification. |
 | `adf-05-glossary.md` | Project, domain, integration, component, data, and acronym terms. |
 | `decisions/adr-NNNN-<short-title>.md` | One Architecture Decision Record per significant decision, numbered contiguously from `ADR-0001`. |
 
@@ -544,11 +596,18 @@ Every ADR has the following sections in order:
 
 `Relevant Requirements` and `Verification Tests` are non-empty item lists. Every item has the exact form `- **[<id>]:** <text>`, where `<id>` is a real specification ID and `<text>` is its exact title. The Architect never invents specification IDs. Every active RSF item appears exactly once in the requirement trace, and every active FR maps to at least one internal component and verification. Component names remain identical throughout the set. Mermaid diagrams are added wherever needed to make non-trivial internal flows or integrations unambiguous.
 
+ADF wording links to library definitions rather than duplicating them. UI and
+design-language libraries are reflected in internal interfaces and relevant
+ADRs; external API, schema, and protocol libraries are reflected in external
+architecture and integration contracts. Every component and interface names
+the pinned libraries it realizes. An ADF decision may not silently change a
+library-defined rule; any conflict returns to semantic audit.
+
 **Human review gate:** the human reads the complete ADF set and either:
 - **Approves** — sets all five core document statuses to `Approved` and every ADR status to `Accepted`; proceed to Step 2.
 - **Rejects** — provides written feedback; the Architect revises the set and the human reviews again.
 
-**Generator reads the ADF:** if `sdais/adf/v<N>/` exists, all five core documents have `**Status:** Approved`, and every ADR has `**Status:** Accepted`, the Generator reads the complete set as structural context before synthesising. An incomplete or partly approved set is not used. The ADF is advisory; RSF items remain authoritative.
+**Generator reads the ADF:** if `sdais/adf/v<N>/` exists, all five core documents have `**Status:** Approved`, and every ADR has `**Status:** Accepted`, the Generator reads the complete set as structural context before synthesising. An incomplete or partly approved set is not used. Human-authored RSF determines adoption and scope; RSF plus adopted libraries are the implementation contract, and ADF is subordinate structural guidance.
 
 The full prompt is in `sdais/prompts/architect.md`.
 
@@ -556,9 +615,9 @@ The full prompt is in `sdais/prompts/architect.md`.
 
 ### Step 2 — Instruct the Generator Agent
 
-Provide all active RSF item files to the Generator. Use the prompt from `sdais/prompts/generator.md`.
+Provide all active RSF item files and each item's resolved library closure to the Generator. Use the prompt from `sdais/prompts/generator.md`.
 
-The full prompt is in `sdais/prompts/generator.md`. Summary of agent behaviour: reads all active RSF items; reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted; synthesises a complete implementation; writes one `[ANN]` block per callable unit and type with `(ANN-ID)` as the first label; sets `(AGENT)` to `Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every block; outputs a summary of files created and RSF items addressed.
+The full prompt is in `sdais/prompts/generator.md`. Summary of agent behaviour: reads all active RSF items and only their adopted library closures; reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted; synthesises a complete implementation of the composed contract; writes one `[ANN]` block per callable unit and type with `(ANN-ID)` as the first label; sets `(AGENT)` to `Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every block; outputs a summary of files created and RSF items addressed. It stops and reports affected IDs rather than guessing if a reference cannot resolve or a contract conflict remains.
 
 #### Step 2 — TDD Mode (optional)
 
@@ -568,7 +627,7 @@ TDD mode inverts the normal generation order. The TestGenerator runs before the 
 
 **TDD mode steps:**
 
-1. Run the **TestGenerator** in TDD mode: reads all FR, AC, and NFR items; writes test files with test functions that assert expected behaviour but have no passing implementation. Each test function receives an `[ANN]` block with `(AGENT) TestGenerator`, `(VERIFIED) false`, `(ROUND) 0`, and `(TEST-MODE) TDD`.
+1. Run the **TestGenerator** in TDD mode: reads all FR, AC, and NFR items plus their adopted libraries; writes test files with test functions that assert expected behaviour—including relevant boundary, grammar, compatibility, and conformance rules—but have no passing implementation. Each test function receives an `[ANN]` block with `(AGENT) TestGenerator`, `(VERIFIED) false`, `(ROUND) 0`, and `(TEST-MODE) TDD`.
 2. Run the **Generator**: reads all active RSF items, the ADF set (if present and fully approved), and the test files from step 1. Synthesises implementation targeting a 100% pass rate on those tests. Writes `[ANN]` blocks as normal. Does not set `(TEST-MODE)` — that label is exclusive to TestGenerator.
 3. Continue with the standard Review → Refine loop. The Reviewer additionally verifies that all `(TEST-MODE) TDD` blocks pass against the generated implementation.
 
@@ -576,9 +635,9 @@ TDD mode inverts the normal generation order. The TestGenerator runs before the 
 
 ### Step 3 — Run the Review Agent
 
-Provide the generated, annotated code and all active RSF item files to the Reviewer. Use the prompt from `sdais/prompts/reviewer.md`. Pass the current round number (starts at 1 after the first Generate pass).
+Provide the generated, annotated code, all active RSF item files, and their resolved library closures to the Reviewer. Use the prompt from `sdais/prompts/reviewer.md`. Pass the current round number (starts at 1 after the first Generate pass).
 
-The full prompt is in `sdais/prompts/reviewer.md`. Summary of agent behaviour: reads all annotated source files and active RSF items, checks every `[ANN]` block against its requirements and implementation, appends finding labels to blocks with violations, sets `(VERIFIED)` and updates `(AGENT)` and `(ROUND)` on every block, runs a dependency cascade check (for every newly-false block, appends a Medium finding to all blocks whose `(DEPENDS-ON)` references that block's `(ANN-ID)`), outputs a structured summary.
+The full prompt is in `sdais/prompts/reviewer.md`. Summary of agent behaviour: reads all annotated source files, active RSF items, and their adopted libraries; checks every `[ANN]` block against the composed requirement and implementation; records library conformance failures on the relevant `[ANN]` block; keeps `(ORIGIN)` limited to RSF/TRS IDs rather than filesystem paths; sets `(VERIFIED)` and updates `(AGENT)` and `(ROUND)` on every block; runs a dependency cascade check; outputs a structured summary.
 
 **Review-loop tracking:**
 
@@ -588,9 +647,9 @@ Each review pass increments the round number. The `(ROUND)` label in every `[ANN
 
 ### Step 4 — Run the Refiner Agent (if violations exist)
 
-Provide the reviewed, annotated code to the Refiner. Use the prompt from `sdais/prompts/refiner.md`. Pass the same round number used in the Review pass.
+Provide the reviewed, annotated code, its active RSF origins, and the same pinned library files to the Refiner. Use the prompt from `sdais/prompts/refiner.md`. Pass the same round number used in the Review pass.
 
-The full prompt is in `sdais/prompts/refiner.md`. Summary of agent behaviour: corrects implementation as directed by `(HINT:n)`, appends `(FINDING:n:STATUS)`, updates descriptive fields only when a fix makes them factually incorrect, sets `(VERIFIED)` and `(AGENT)` to reflect resolution outcome, outputs a structured summary.
+The full prompt is in `sdais/prompts/refiner.md`. Summary of agent behaviour: reads the same pinned contracts used by the Reviewer; corrects implementation as directed by `(HINT:n)`; appends `(FINDING:n:STATUS)`; updates only permitted annotation fields when a fix makes them factually incorrect; never edits RSF or library content; sets `(VERIFIED)` and `(AGENT)` to reflect resolution outcome; outputs a structured summary.
 
 After each Refiner pass:
 - If any blocks remain `(VERIFIED) false` due to Resolved findings (not Waived): run the Reviewer again at round N+1.
@@ -628,16 +687,24 @@ SDAIS-T produces inputs that feed into the standard SDAIS lifecycle from the Gen
 
 Both RequirementsEngineer and TransformationEngineer are instances of the SpecificationEngineer archetype: each accepts free-form prose, refines it through an iterative clarification loop, and produces formal SDAIS artefacts. RequirementsEngineer produces RSF items from `sdais/gspec/`; TransformationEngineer produces TRS items and CDF files from `sdais/tspec/`. The clarification protocol is identical: lightweight `[[QN]]` markers appear inline at each ambiguous point in the prose; the full question text and human answers accumulate in a `## Questions` section at the bottom of each file. The output schema differs between the two agents.
 
+Both engineers recognize explicit pinned library references in the highest input
+version, read them for defined terms, preserve them through later prose
+versions, and attach only the smallest applicable set to each output item. They
+do not treat library files as gspec/tspec inputs or derive standalone items from
+library content. Informal, unversioned, file-less, or ambiguously scoped
+adoption triggers a clarification question.
+
 ### Extended Lifecycle Diagram
 
 ```
 TRS (fuzzy prior knowledge + transformation intent)
+    │  adopts exact files from sdais/library/<id>/v<N>/ when applicable
     │
     ▼
-Analyzer Agent ──► Annotated existing code + RSF v1 (with findings)
+Analyzer Agent ──► Annotated existing code + RSF v1 (with library refs/findings)
     │
     ▼
-Semantic Audit Loop (standard SDAIS Step 0)
+Semantic Audit Loop (resolves libraries; audits composed contract)
     │
     ▼
 Cleaned RSF + Annotated existing code
@@ -646,7 +713,7 @@ Cleaned RSF + Annotated existing code
 Human activates CDF(s)
     │
     ▼
-Transformation Agent ──► Transformed code with stable ANN-IDs
+Transformation Agent ──► Contract-conformant code with stable ANN-IDs
     │
     ▼
 ═══ Transition to Standard SDAIS Lifecycle ═══
@@ -681,7 +748,7 @@ Re-run the TransformationEngineer. Repeat until the agent reports zero open ques
 
 #### Step −2.4 — Output Generation
 
-When no open questions remain the TransformationEngineer switches to Output Generation mode automatically. It writes TRS item files to `sdais/trs/v1/` and CDF files to `sdais/cdf/v1/`. Each TRS item carries a `**Confidence:**` field and a `**Source:**` field. Each CDF carries `**Status:** Draft` — the human must change this to `Active` before running the Transformation agent.
+When no open questions remain the TransformationEngineer switches to Output Generation mode automatically. It writes TRS item files to `sdais/trs/v1/` and CDF files to `sdais/cdf/v1/`. Each TRS item carries a `**Confidence:**` field and a `**Source:**` field. TRS and CDF headers carry `**Libraries:**` immediately after `Source` when they adopt a library. Each CDF carries `**Status:** Draft` — the human must change this to `Active` before running the Transformation agent.
 
 #### Step −2.5 — Human review of generated TRS and CDF files
 
@@ -712,6 +779,7 @@ Each TRS item is one Markdown file in `sdais/trs/v<N>/`. TRS items represent hyp
 - **Introduced:** v1 (2026-05-02)
 - **Confidence:** Medium
 - **Source:** sdais/tspec/v3/auth-system.md
+- **Libraries:** sdais/library/ldap-api/v1/protocol.md
 
 ## Hypothesis
 
@@ -733,6 +801,11 @@ authentication error.
 ```
 
 The `**Source:**` field records which tspec file(s) are the primary reason for this item. It is written by the TransformationEngineer when generating TRS items from prose; it may be omitted when a human authors a TRS item directly without going through Step −2.
+
+The optional `**Libraries:**` field has the same pinned-reference syntax as
+RSF. It immediately follows `Source`, or `Confidence` when `Source` is absent.
+It records normative supporting contracts and is not provenance. In CDF it
+immediately follows `Source`, or `Affects` when `Source` is absent.
 
 **Status values:**
 
@@ -780,6 +853,7 @@ Each CDF in `sdais/cdf/v<N>/` describes exactly one dimension of change. CDFs ar
 - **Introduced:** v1 (2026-05-02)
 - **Affects:** all
 - **Source:** sdais/tspec/v3/migration-goals.md
+- **Libraries:** sdais/library/target-api/v2/openapi.yaml
 
 ## Source
 
@@ -839,13 +913,17 @@ The Analyzer operates in three-output mode:
 
 2. **Derives formal RSF item files** in `sdais/rsf/v1/`. Each distinct observable behaviour, quality attribute, or constraint inferred from the code becomes one RSF item.
 
+   When the behavior depends on a validated library adopted by a relevant TRS
+   or active CDF, the derived RSF item carries that smallest relevant pinned
+   set in `**Libraries:**`. A library never creates an RSF item by itself.
+
 3. **Appends findings** to RSF item files staged in `sdais/rsf/v<N+1>/` for any unclear mappings, using the transformation finding categories `TRS-CONTRADICTS-CODE` and `CODE-INTENT-UNCLEAR`.
 
 The full prompt is in `sdais/prompts/analyzer.md`.
 
 ### Transformation Agent
 
-The Transformation agent reads the annotated existing codebase, all active CDF files, and all active RSF files. It applies each CDF's transformation rules to the units listed in `Affects:`, produces transformed code in the target language or architecture, and preserves all `(ANN-ID)` values according to the split and merge rules below.
+The Transformation agent reads the annotated existing codebase, all active CDF files, all active RSF files, and only their resolved library closures. It applies each CDF's transformation rules to the units listed in `Affects:`, implements the composed RSF plus library contract, produces transformed code in the target language or architecture, and preserves all `(ANN-ID)` values according to the split and merge rules below. It stops and reports affected RSF/CDF IDs without guessing when a reference cannot resolve or a conflict remains.
 
 **`(ANN-ID)` preservation rules:**
 
@@ -1152,10 +1230,11 @@ Findings are appended to RSF item files in `## Findings` sections. The SemanticA
 |---|---|---|
 | `AMBIGUOUS` | SemanticAuditor | Requirement is not precise enough for deterministic synthesis |
 | `INCOMPLETE` | SemanticAuditor | An FR has no corresponding AC, or an AC does not verify its FR |
-| `CONTRADICTORY` | SemanticAuditor | Two RSF items are mutually exclusive |
+| `CONTRADICTORY` | SemanticAuditor | RSF items or adopted library contracts are mutually exclusive |
 | `INFEASIBLE` | SemanticAuditor | A constraint makes one or more FRs impossible to satisfy |
 | `UNTESTABLE` | SemanticAuditor | An acceptance criterion cannot be verified programmatically |
 | `UNQUANTIFIED` | SemanticAuditor | An NFR lacks a measurable bound |
+| `LIBRARY-UNRESOLVABLE` | SemanticAuditor | A `Libraries` entry is malformed, missing, unreadable, unversioned, escapes the library root, or names a missing heading anchor |
 | `TRS-CONTRADICTS-CODE` | Analyzer (SDAIS-T) | A hypothesis from the TRS is contradicted by what the code actually does |
 | `CODE-INTENT-UNCLEAR` | Analyzer (SDAIS-T) | Code behaviour cannot be unambiguously mapped to a specific requirement |
 | `ENV-UNRESOLVABLE` | Grounder | An `E-` item names an infrastructure element that cannot be confirmed to exist or match its description |
@@ -1172,6 +1251,7 @@ Findings are appended to RSF item files in `## Findings` sections. The SemanticA
 - **Introduced:** v<N> (<YYYY-MM-DD>)
 - **Last modified:** v<N> (<YYYY-MM-DD>)
 - **Source:** sdais/gspec/v<N>/filename.md  ← omit when item was authored directly without Step −2
+- **Libraries:** sdais/library/<library-id>/v<N>/<file>[#<anchor>]  ← optional; comma-separated
 - **Verified:** Pending | true    ← Environment items only; omitted for all other types
 
 ## Requirement
@@ -1188,7 +1268,7 @@ Related: [FR-NNNN], [NFR-NNNN], [AC-NNNN]
 
 ### F1: <Short title of finding>
 
-- **Category:** AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE
+- **Category:** AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | LIBRARY-UNRESOLVABLE | TRS-CONTRADICTS-CODE | CODE-INTENT-UNCLEAR | ENV-UNRESOLVABLE
 - **Severity:** Critical | High | Medium | Low
 - **References:** [RSF-<TYPE>-NNNN-V<N>], …
 
@@ -1203,6 +1283,11 @@ written as list items. Consecutive plain `**Field:** value` lines form a single
 Markdown paragraph and run together in previewers; one list item per field
 keeps them on separate lines. The same applies to every SDAIS artefact with a
 field header — TRS items, CDFs, ADFs, and custom agent definitions.
+
+`Libraries` is optional on every RSF type. When present it follows `Source`, or
+`Last modified` if `Source` is absent. Every entry is a concrete, exact-version
+file path under `sdais/library/`, optionally with a heading anchor. Legacy files
+without the field remain valid.
 
 ---
 
@@ -1268,6 +1353,7 @@ The `0000` files in `sdais/rsf/v1/` are inert scaffolds. They are never processe
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Last modified:** v1 (YYYY-MM-DD)
 - **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Libraries:** [sdais/library/<library-id>/v<N>/<file> — optional; comma-separated]
 
 ## Requirement
 
@@ -1288,6 +1374,7 @@ Related: [Cross-references to related items, e.g. [NFR-0001], [AC-0001]. Omit se
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Last modified:** v1 (YYYY-MM-DD)
 - **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Libraries:** [sdais/library/<library-id>/v<N>/<file> — optional; comma-separated]
 
 ## Requirement
 
@@ -1309,6 +1396,7 @@ Related: [Cross-references to related items. Omit section if none.]
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Last modified:** v1 (YYYY-MM-DD)
 - **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Libraries:** [sdais/library/<library-id>/v<N>/<file> — optional; comma-separated]
 
 ## Requirement
 
@@ -1329,6 +1417,7 @@ Related: [Cross-references to related items. Omit section if none.]
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Last modified:** v1 (YYYY-MM-DD)
 - **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Libraries:** [sdais/library/<library-id>/v<N>/<file> — optional; comma-separated]
 - **Verified:** Pending
 
 ## Requirement
@@ -1352,6 +1441,7 @@ Related: [Cross-references to related items. Omit section if none.]
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Last modified:** v1 (YYYY-MM-DD)
 - **Source:** [sdais/gspec/v<N>/filename.md — omit if item was authored directly]
+- **Libraries:** [sdais/library/<library-id>/v<N>/<file> — optional; comma-separated]
 
 ## Requirement
 

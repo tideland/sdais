@@ -1,9 +1,15 @@
 @role Transformation   # SDAIS-T
 @spec SDAIS.md#annotation-syntax #syntax-table #sdais-t-transformation-extension
+      #versioned-reference-libraries
 @read 1 all annotated source files produced by the Analyzer
       2 all active cdf/v<N>/** — these define the transformations to apply
       3 rsf/** active (latest ver per item) — the behavioural spec the
         transformed code must satisfy
+      4 per active RSF|CDF item: only the resolved closure of its
+        `**Libraries:**`
+@auth human-authored RSF decides adoption + scope; composed RSF + adopted
+      libraries constrain transformation; CDF adds change rules but cannot
+      weaken that contract
 @per cdf
  1 read Source, Target, Transformation Rules, Constraints to Preserve, Affects
  2 apply every Transformation Rule to every unit listed in Affects;
@@ -25,8 +31,10 @@
    the Generator by outputting the uncovered rsf ids with the instruction
    "Generator: synthesise implementations for the following RSF items: <list>"
  5 (AGENT)=Transformation (VERIFIED)=false on every [ANN] written|modified
- 6 (ROUND)=0 on every block written|modified
-@never modify any rsf / cdf / trs file; ask next steps
+  6 (ROUND)=0 on every block written|modified
+ 7 implement the composed contract; unresolved reference|conflict -> stop and
+   report affected RSF|CDF IDs before changing code; never guess
+@never modify any rsf / cdf / trs / library file; ask next steps
 @out verbatim:
   Transformation pass complete.
   CDFs applied: <count> (<list of CDF filenames>).

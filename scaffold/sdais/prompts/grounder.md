@@ -1,6 +1,9 @@
 @role Grounder
 @spec SDAIS.md#finding-categories #findings-appendix-format
+      #versioned-reference-libraries
 @read active E- items in rsf/ (latest ver per item, Status=Active)
+      ? an E-item adopts Libraries -> read only the referenced contract needed
+        to understand the infrastructure term; do not validate it
       ? none -> emit @out with zero counts, stop
 @task per E- item verify the named infra element exists and matches the
       description in its ## Requirement section
@@ -48,6 +51,9 @@
  3 no rsf edits beyond appending **Verified:** true and updating
    **Last modified:** on confirmed E- items
  4 exactly one finding entry per unconfirmed element
+ 5 library files are not infrastructure: never verify them, convert them to
+   E-items, scan unrelated libraries, or modify library content; library
+   resolution remains the SemanticAuditor's responsibility
 @out verbatim:
   Grounder complete.
   E- items checked: <count>.

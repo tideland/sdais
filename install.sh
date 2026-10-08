@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS install script — v0.12.2
+# SDAIS install script — v0.13.0
 # Usage: install.sh <project-name>
 #
 # Run from your project root. Creates AGENTS.md and the full sdais/ scaffold.
@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.12.2"
+SDAIS_VERSION="v0.13.0"
 if [[ $# -lt 1 ]]; then
     echo "Usage: install.sh <project-name>" >&2
     exit 1
@@ -18,7 +18,7 @@ TODAY="$(date +%Y-%m-%d)"
 
 echo "SDAIS $SDAIS_VERSION — installing scaffold for: $PROJECT"
 
-# Locate scaffold. The v0.12.2 distribution archive expands beside scaffold/,
+# Locate scaffold. The v0.13.0 distribution archive expands beside scaffold/,
 # so the unpacked directory takes precedence over the archive itself.
 TGZ="$SCRIPT_DIR/sdais-$SDAIS_VERSION.tgz"
 
@@ -42,7 +42,7 @@ cp "$SCRIPT_DIR/sdais.sh" "$LOCAL_BIN/sdais"
 chmod +x "$LOCAL_BIN/sdais"
 
 # Create empty version directories not included in the scaffold
-mkdir -p sdais/gspec/v1 sdais/tspec/v1 sdais/adf/v1 sdais/trs/v1 sdais/cdf/v1
+mkdir -p sdais/library sdais/gspec/v1 sdais/tspec/v1 sdais/adf/v1 sdais/trs/v1 sdais/cdf/v1
 
 # Substitute placeholders in AGENTS.md
 tmp=$(mktemp)
@@ -58,6 +58,7 @@ echo "Done."
 echo "  AGENTS.md"
 echo "  sdais/SDAIS.md"
 printf "  sdais/prompts/ (%d prompt files)\n" "$(find sdais/prompts/ -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')"
+echo "  sdais/library/  (empty; project-owned reference libraries)"
 printf "  sdais/rsf/v1/  (%d template files)\n" "$(find sdais/rsf/v1/ -maxdepth 1 -name "*.md" | wc -l | tr -d ' ')"
 printf "  %s/sdais\n" "$LOCAL_BIN"
 echo ""

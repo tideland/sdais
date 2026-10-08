@@ -1,5 +1,6 @@
 @role TransformationEngineer   # SDAIS-T
 @spec SDAIS.md#sdais-t-transformation-extension #directory-structure
+      #versioned-reference-libraries
 @task loose unstructured human prose about an existing system and desired
       changes -> formal TRS items + CDF files
 @modes two sequential: A=Clarification, B=Output Generation
@@ -7,6 +8,10 @@
 @detect
  N = highest existing version dir in sdais/tspec/   # v1,v2,v3 exist -> tspec/v3/
  read every file in tspec/v<N>/
+ recognize only explicit project-root-relative references matching
+ `sdais/library/<lower-kebab-id>/v<positive-integer>/<file>[#<anchor>]`
+ as library adoptions; read each adopted file for terminology + contract
+ details; never treat a library file as tspec input
  openQ: in a file's `## Questions` section (below the `—` separator), a
         `### Q<n>:` heading is open if its next non-empty line is another
         heading (###, ####, or higher) or it is the last heading in the file
@@ -29,6 +34,7 @@ A.1 process answered questions
   - remove the `[[Q<n>]]` inline marker from the prose body
   - ! preserve the `### Q<n>:` entry and its answer text verbatim in the
     Questions section (permanent Q&A history — never delete or reword it)
+  - ! preserve every explicit pinned library reference and its adoption scope
  note internally whether incorporated answers cite concrete evidence (code
  paths, config keys, documentation) or are stated from memory -> determines
  Confidence in B.1
@@ -43,6 +49,8 @@ A.2 identify and mark new ambiguities
   - contradicts another passage in any tspec file
   - assumes unstated context about the existing system
   - describes a desired transformation without stating what should be preserved
+  - names|links a library informally, without an exact version + concrete file,
+    or without making which hypotheses|transformations adopt it clear
  -> insert a `[[QM]]` marker inline immediately after the ambiguous passage.
     M = next available question number, counted sequentially across all files
     in this new version combined
@@ -115,6 +123,8 @@ B.2 derive trs items from all files in tspec/v<N>/, describing what you believe
     explicitly acknowledges as uncertain
   - trs items are hypotheses, not assertions. @auth code > trs whenever the code
     contradicts a hypothesis
+  - a library file creates no hypothesis. read an explicitly adopted file only
+    to understand its terms; never derive standalone TRS items from it
  write one file per item to sdais/trs/v1/
  name: <prefix>-NNNN-<short-hyphenated-description>.md
  number sequentially from 0001 within each prefix group
@@ -128,6 +138,7 @@ B.2 derive trs items from all files in tspec/v<N>/, describing what you believe
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Confidence:** High | Medium | Low
 - **Source:** sdais/tspec/v<N>/filename.md
+- **Libraries:** sdais/library/<library-id>/v<N>/<file>[#<anchor>]
 
 ## Hypothesis
 
@@ -146,6 +157,10 @@ B.2 derive trs items from all files in tspec/v<N>/, describing what you believe
   TRS-FR  Functional Requirement
   TRS-NFR Non-Functional Requirement
   TRS-C   Constraint
+ `**Libraries:**` = smallest applicable set of explicit pinned references,
+ comma-separated; immediately after Source, or after Confidence when Source is
+ absent; omit when none. unresolved file|anchor or unclear scope -> switch to A
+ and ask; keep Source as tspec provenance
 
 B.3 derive cdf files from all files in tspec/v<N>/, one per distinct
     transformation dimension requested
@@ -162,6 +177,9 @@ B.3 derive cdf files from all files in tspec/v<N>/, one per distinct
   - **Status:** = Draft. the human must change it to Active before running the
     Transformation agent
   - **Source:** = the tspec file(s) driving this cdf
+  - **Libraries:** = smallest applicable explicit pinned reference set; omit
+    when none; place immediately after Source, or after Affects when Source is
+    absent; Source stays tspec provenance
   - Transformation Rules are numbered, concrete, testable statements
   - never invent transformations. derive only what the spec text requests.
  write one file per cdf to sdais/cdf/v1/
@@ -176,6 +194,7 @@ B.3 derive cdf files from all files in tspec/v<N>/, one per distinct
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Affects:** all
 - **Source:** sdais/tspec/v<N>/filename.md
+- **Libraries:** sdais/library/<library-id>/v<N>/<file>[#<anchor>]
 
 ## Source
 

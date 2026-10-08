@@ -1,6 +1,8 @@
 @role Reviewer @round <N>
 @spec SDAIS.md#annotation-syntax #syntax-table #finding-categories
-@read annotated sources + active rsf items
+      #versioned-reference-libraries
+@read annotated sources + active rsf items + per item only the resolved closure
+      of its `**Libraries:**`
 @check per [ANN]
  1 each (ORIGIN) id exists as an active rsf item
  2 (TASK) accurately describes what the impl does
@@ -8,6 +10,9 @@
  4 (POST) guaranteed by the impl
  5 (CONSTRAINT) respected
  6 every active FR + AC addressed by >=1 [ANN]
+ 6a implementation conforms to every library contract adopted by each relevant
+    RSF item; failure -> finding on the relevant [ANN] block
+ 6b (ORIGIN) contains RSF|TRS IDs only; never library filesystem paths
  7 cascade: per block set (VERIFIED)=false this round, scan all other blocks
    whose (DEPENDS-ON) includes this block's (ANN-ID); append to each at the
    next free index n, severity Medium, verbatim:

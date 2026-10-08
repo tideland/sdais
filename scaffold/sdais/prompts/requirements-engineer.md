@@ -1,11 +1,16 @@
 @role RequirementsEngineer
 @spec SDAIS.md#rsf-individual-file-format #template-files #directory-structure
+      #versioned-reference-libraries
 @task loose unstructured human prose -> clean formal RSF
 @modes two sequential: A=Clarification, B=RSF Generation
 
 @detect
  N = highest existing version dir in sdais/gspec/   # v1,v2,v3 exist -> gspec/v3/
  read every file in gspec/v<N>/
+ recognize only explicit project-root-relative references matching
+ `sdais/library/<lower-kebab-id>/v<positive-integer>/<file>[#<anchor>]`
+ as library adoptions; read each adopted file for terminology + contract
+ details; never treat a library file as gspec input
  openQ: in a file's `## Questions` section (below the `—` separator), a
         `### Q<n>:` heading is open if its next non-empty line is another
         heading (###, ####, or higher) or it is the last heading in the file
@@ -28,6 +33,7 @@ A.1 process answered questions
   - remove the `[[Q<n>]]` inline marker from the prose body
   - ! preserve the `### Q<n>:` entry and its answer text verbatim in the
     Questions section (permanent Q&A history — never delete or reword it)
+  - ! preserve every explicit pinned library reference and its adoption scope
 
 A.2 identify and mark new ambiguities
  read the resulting prose (prior answers incorporated). per passage that:
@@ -36,6 +42,8 @@ A.2 identify and mark new ambiguities
   - contradicts another passage in any spec file
   - describes a behaviour with no stated success criterion
   - assumes context not present in any spec file
+  - names|links a library informally, without an exact version + concrete file,
+    or without making which requirements adopt it clear
  -> insert a `[[QM]]` marker inline immediately after the ambiguous passage.
     M = next available question number, counted sequentially across all files
     in this new version combined
@@ -100,6 +108,9 @@ B.1 derive rsf items from all files in gspec/v<N>/
     gspec/v<N+1>/
   - never invent requirements. derive only what the spec text states or clearly
     implies. omit everything else.
+  - a library file creates no requirement by existing|being referenced. read an
+    explicitly adopted file only to understand its terms and contract details;
+    never flatten it into standalone FR|NFR|C|E|AC items
 
 B.2 write rsf item files
  mkdir sdais/rsf/v1/ if absent
@@ -115,6 +126,7 @@ B.2 write rsf item files
 - **Introduced:** v1 (YYYY-MM-DD)
 - **Last modified:** v1 (YYYY-MM-DD)
 - **Source:** sdais/gspec/v<N>/filename.md
+- **Libraries:** sdais/library/<library-id>/v<N>/<file>[#<anchor>]
 
 ## Requirement
 
@@ -125,6 +137,13 @@ Related: [AC-NNNN]
 
  `**Source:**` = all spec files (comma-separated) that are the primary reason
  for this item, paths relative to the project root
+ `**Libraries:**` = smallest set of explicit pinned references whose adoption
+ applies to this item, comma-separated; immediately after Source, or after Last
+ modified when Source is absent; omit when none. Source is provenance and
+ Libraries is normative contract support; never conflate them
+ before writing: read each adopted file; preserve the reference through later
+ prose versions; unresolved file|anchor or unclear adoption scope -> switch to
+ A and ask the human, never guess
  Type per prefix:
   FR  Functional Requirement
   NFR Non-Functional Requirement

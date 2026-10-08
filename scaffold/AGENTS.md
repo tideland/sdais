@@ -28,18 +28,18 @@ it exactly as given, substituting only `<placeholders>`.
 
 Role — prompt file — when to invoke:
 
-- RequirementsEngineer — `sdais/prompts/requirements-engineer.md` — before RSF authoring; refines loose prose into RSF
-- TransformationEngineer — `sdais/prompts/transformation-engineer.md` — T: before authoring TRS/CDF; refines transformation prose
-- SemanticAuditor — `sdais/prompts/semantic-auditor.md` — before each generation pass
+- RequirementsEngineer — `sdais/prompts/requirements-engineer.md` — before RSF authoring; refines loose prose and preserves adopted library references
+- TransformationEngineer — `sdais/prompts/transformation-engineer.md` — T: before authoring TRS/CDF; refines transformation prose and preserves adopted library references
+- SemanticAuditor — `sdais/prompts/semantic-auditor.md` — before each generation pass; resolves and audits adopted libraries
 - Grounder — `sdais/prompts/grounder.md` — after audit Cleared; when E- items exist
-- Architect — `sdais/prompts/architect.md` — optional; after Grounder, before Generator
-- Generator — `sdais/prompts/generator.md` — after RSF is Cleared by audit
-- Reviewer — `sdais/prompts/reviewer.md` — after each Generate or Refine pass
-- Refiner — `sdais/prompts/refiner.md` — after each Review pass with violations
-- Analyzer — `sdais/prompts/analyzer.md` — T: annotate existing code
-- Transformation — `sdais/prompts/transformation.md` — T: transform annotated code
-- SecurityAuditor — `sdais/prompts/security-auditor.md` — on demand or after generation
-- TestGenerator — `sdais/prompts/test-generator.md` — after all blocks Verified; or before Generator in TDD mode
+- Architect — `sdais/prompts/architect.md` — optional; after Grounder, before Generator; traces adopted libraries
+- Generator — `sdais/prompts/generator.md` — after RSF is Cleared; implements RSF plus adopted libraries
+- Reviewer — `sdais/prompts/reviewer.md` — after each Generate or Refine pass; verifies library conformance
+- Refiner — `sdais/prompts/refiner.md` — after each Review pass with violations; reads the same pinned libraries
+- Analyzer — `sdais/prompts/analyzer.md` — T: annotate existing code and carry relevant TRS/CDF library references into RSF
+- Transformation — `sdais/prompts/transformation.md` — T: transform annotated code against the composed contract
+- SecurityAuditor — `sdais/prompts/security-auditor.md` — on demand or after generation; reads relevant adopted interface contracts
+- TestGenerator — `sdais/prompts/test-generator.md` — after all blocks Verified, or before Generator in TDD mode; derives library conformance tests
 
 ## SpecificationEngineer Archetype
 
@@ -60,6 +60,9 @@ are never deleted.
 sdais/
 ├── SDAIS.md
 ├── prompts/          ← one file per agent role
+├── library/          ← project-owned, versioned reusable contracts
+│   └── <library-id>/
+│       └── v<N>/     ← immutable published version; UTF-8 reference files
 ├── gspec/            ← loose prose input; versioned by subdirectory
 │   └── v1/           ← initial human prose (any filenames, any format)
 ├── tspec/            ← transformation prose input; versioned by subdirectory

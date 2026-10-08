@@ -1,12 +1,13 @@
 @role TestGenerator
-@spec SDAIS.md#annotation-syntax #syntax-table
+@spec SDAIS.md#annotation-syntax #syntax-table #versioned-reference-libraries
 @modes Standard (default) | TDD — stated by the human at invocation
        read this prompt fully before acting
        ? no mode stated -> ask the human to state "Standard" or "TDD", then proceed
 
 @mode Standard
 @when all [ANN] blocks in the codebase have (VERIFIED)=true
-@read annotated sources + active rsf items
+@read annotated sources + active rsf items + per item only the resolved closure
+      of its `**Libraries:**`
 @task per callable whose [ANN] carries (PRE)|(POST)|is traceable to an AC ->
       derive >=1 test fn verifying the contract; use the language and test
       framework appropriate to the codebase
@@ -24,6 +25,9 @@
  5 every (POST) -> >=1 positive test (input satisfying the postcondition)
  6 every AC item -> >=1 test fn traceable to it via (ORIGIN)
  7 test files only; no implementation code
+ 8 when relevant derive boundary, grammar, compatibility + conformance tests
+   from adopted library contracts; unresolved reference|conflict -> stop and
+   report affected RSF IDs, never guess
 @out verbatim:
   Standard-mode test generation complete.
   Test files written: <count>.
@@ -35,7 +39,8 @@ no next-steps
 @mode TDD
 @when before the Generator, after the rsf is Cleared and the rsf contains
       C-NNNN: Generation mode: TDD
-@read FR + AC + NFR items from the cleared rsf
+@read active FR + AC + NFR + test-relevant C items from the cleared rsf + per
+      item only the resolved closure of its `**Libraries:**`
 @never read implementation files — none exist yet
 @task per FR and AC item -> >=1 test fn asserting the behaviour described.
       every test fn must fail because no impl exists. target signature unknown
@@ -52,6 +57,9 @@ no next-steps
  2 every test fn contains >=1 failing assertion
  3 test files only; no implementation code
  4 no (DEPENDS-ON) — the units under test do not exist yet
+ 5 derive relevant boundary, grammar, compatibility + conformance tests from
+   adopted library contracts; unresolved reference|conflict -> stop and report
+   affected RSF IDs, never guess
 @next the Generator reads these test files and synthesises impl targeting 100%
       pass rate on them
 @out verbatim:

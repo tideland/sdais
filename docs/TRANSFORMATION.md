@@ -1,6 +1,6 @@
 # SDAIS — Transformation Workflow
 
-**Version:** v0.12.2 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.13.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-T (Transformation) workflow applies when an existing codebase precedes the specification. Most real-world systems do not start with a clean specification. They start with code — accumulated over years, built by people who are often no longer around, with intent that lives in git history at best and in tribal knowledge at worst. SDAIS-T is the workflow for those systems.
 
@@ -34,6 +34,7 @@ flowchart TD
     B7 --> B8[Review TRS items\nPromote CDFs to Active]
     B8 --> C
     B2 -- No: author directly --> C
+    LIB[(Adopted pinned files\nsdais/library/id/vN)] --> C
     C[Step 1\nAuthor / review TRS items\nTRS-FR · TRS-NFR · TRS-C] --> D[Step 2\nAnalyzer\nannotate + derive RSF]
     D --> E[Step 3\nSemantic Audit Loop\nResolve findings in RSF]
     E --> F{Findings\nresolved?}
@@ -49,6 +50,11 @@ flowchart TD
     M --> N{Violations?}
     N -- Yes --> O[Step 9\nRefiner]
     O --> M
+    LIB -. carry into RSF .-> D
+    LIB -. resolve/audit .-> E
+    LIB -. implement .-> J
+    LIB -. verify/refine .-> M
+    LIB -. verify/refine .-> O
     N -- No: all Verified --> P[Step 10\nHuman Approval Gate]
     P --> Q{Decision}
     Q -- Approve --> R([Done])
@@ -75,7 +81,7 @@ Dark blue = AI agent step. Orange = human decision gate.
 
 ## Step −1 — Install the Scaffold
 
-Create the project root, copy or download `sdais-v0.12.2.tgz` into it, unpack
+Create the project root, copy or download `sdais-v0.13.0.tgz` into it, unpack
 the archive there, and run `./install.sh <project-name>` as described in
 [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold and `./sdais.sh`
 launcher are used for both workflows.
@@ -98,11 +104,17 @@ Use Step 0 when the existing system is complex, poorly documented, or when the d
 2. Run the **TransformationEngineer**. It reads every tspec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`.
 3. Open the files in `sdais/tspec/v2/` and answer each open question by writing your answer as free prose immediately below the corresponding `### QN:` heading in the `## Questions` section. Do not remove, reword, or add `### QN:` headings — questions are the agent's domain.
 4. Re-run the TransformationEngineer. It incorporates answers into the prose, removes answered `[[QN]]` inline markers, and appends any newly discovered questions. Repeat until it reports zero open questions.
-5. With no open questions remaining, the agent switches to Output Generation mode: it writes TRS item files to `sdais/trs/v1/` (each carrying `**Confidence:**` and `**Source:**` fields) and CDF files to `sdais/cdf/v1/` (each carrying `**Status:** Draft`).
+5. With no open questions remaining, the agent switches to Output Generation mode: it writes TRS item files to `sdais/trs/v1/` (each carrying `**Confidence:**` and `**Source:**` fields) and CDF files to `sdais/cdf/v1/` (each carrying `**Status:** Draft`). When prose explicitly adopts a pinned library, the smallest applicable reference set is preserved in `**Libraries:**` immediately after `Source`.
 6. Review `sdais/trs/v1/`: amend wording, delete artefacts, and add anything the agent could not derive.
 7. Review `sdais/cdf/v1/`: for each CDF you intend to apply, change `**Status:**` from `Draft` to `Active`.
 
 **A note on Confidence:** answers that cite concrete code paths, configuration keys, or documentation yield High-confidence TRS items. Vague answers stated from memory yield Low-confidence items — the Analyzer will perform deep analysis on these before accepting them.
+
+Library adoption follows the same rules as greenfield prose. Use an exact path
+such as `sdais/library/legacy-api/v1/openapi.yaml`; an informal name, omitted
+version/file, or unclear scope triggers a clarification question. The library
+is read for terminology and contract details but never treated as another tspec
+file or mined for standalone hypotheses.
 
 Proceed to Step 1 (or directly to Step 2 if the generated TRS items are sufficient).
 
@@ -121,8 +133,10 @@ File naming mirrors the RSF convention: `trs-fr-NNNN-<description>.md`, `trs-nfr
 
 - **Type:** Functional Requirement
 - **Status:** Hypothesis
-- **Confidence:** Low | Medium | High
 - **Introduced:** v1 (YYYY-MM-DD)
+- **Confidence:** Low | Medium | High
+- **Source:** sdais/tspec/v2/system.md
+- **Libraries:** sdais/library/legacy-api/v1/openapi.yaml
 
 ## Hypothesis
 
@@ -158,7 +172,7 @@ Point the Analyzer at the existing codebase and any TRS files you authored in St
 The Analyzer works additively — it never modifies existing logic, signatures, or comments. It only adds:
 
 1. `[ANN]` blocks to every callable unit and type. Each block gets a freshly generated `(ANN-ID)`, a reconstructed `(TASK)`, inferred `(PRE)` and `(POST)`, and a `(CONFIDENCE)` label (`Inferred-High`, `Inferred-Medium`, or `Inferred-Low`). Where a TRS item ID can be confidently mapped to a unit, `(ORIGIN)` is set to that TRS item ID for traceability.
-2. Formal RSF item files in `sdais/rsf/v1/` derived from observed behaviour.
+2. Formal RSF item files in `sdais/rsf/v1/` derived from observed behaviour. When that behaviour depends on a validated TRS or active CDF library adoption, the Analyzer carries only the relevant pinned references into the RSF `**Libraries:**` field. Library content alone never creates an item.
 3. Findings appended to RSF item files in `sdais/rsf/v<N+1>/` for anything unclear — using categories `TRS-CONTRADICTS-CODE` (hypothesis contradicted by code) and `CODE-INTENT-UNCLEAR` (behaviour cannot be mapped to any requirement).
 
 After the pass the Analyzer outputs a summary:
@@ -182,7 +196,7 @@ The `(ANN-ID)` values assigned here are permanent. They will be preserved throug
 
 **Prompt:** `sdais/prompts/semantic-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
 
-Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly — findings are appended as `## Findings` sections within the affected RSF files staged in `rsf/v<N+1>/`. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`) before continuing.
+Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly — findings are appended as `## Findings` sections within the affected RSF files staged in `rsf/v<N+1>/`. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`, `LIBRARY-UNRESOLVABLE`) before continuing.
 
 Additionally resolve any transformation-specific findings:
 
@@ -229,6 +243,7 @@ If authoring CDFs directly, use the naming scheme `<category>-NNNN-<description>
 - **Status:** Active
 - **Affects:** all
 - **Source:** sdais/tspec/v3/migration-goals.md
+- **Libraries:** sdais/library/target-api/v2/openapi.yaml
 
 ## Source
 
@@ -272,11 +287,12 @@ Note: when switching languages (e.g. Python to Go), the Transformation agent dis
 
 **Prompt:** `sdais/prompts/transformation.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
-Run the Transformation agent, providing the annotated codebase, all active CDF files, and all active RSF items.
+Run the Transformation agent, providing the annotated codebase, all active CDF files, all active RSF items, and only their resolved library closures.
 
 The Transformation agent:
 
 - Applies each CDF's transformation rules to the units listed in `Affects`.
+- Implements the composed RSF plus adopted-library contract and stops with affected IDs if a reference or conflict remains unresolved.
 - Produces transformed code in the target language, framework, or architecture.
 - Preserves all `(ANN-ID)` values according to these rules:
   - **One-to-one:** transformed unit carries the original `(ANN-ID)` unchanged.
@@ -312,8 +328,8 @@ If the Transformation agent reports uncovered RSF items, run the Generator to sy
 
 From this point, follow the greenfield workflow:
 
-- **Step 8 (Review):** The Reviewer checks all `[ANN]` blocks — those from the Transformation agent, any gaps filled by the Generator, and any blocks carried forward from the Analyzer. The dependency cascade check applies as usual.
-- **Step 9 (Refine):** Resolve violations as directed by the Reviewer's hints.
+- **Step 8 (Review):** The Reviewer checks all `[ANN]` blocks against active RSF and every adopted pinned file. Library conformance failures attach to relevant blocks; `(ORIGIN)` remains specification IDs. The dependency cascade check applies as usual.
+- **Step 9 (Refine):** Resolve violations using the same pinned files; implementation and permitted annotation fields may change, but RSF and library content may not.
 - **Step 10 (Approval Gate):** Approve, amend RSF and re-audit, or reject and re-run the Transformation agent.
 
 The `(ANN-ID)` values established by the Analyzer and preserved by the Transformation agent provide a stable audit trail linking every unit in the transformed codebase back to the original annotated unit — even across a complete language change.

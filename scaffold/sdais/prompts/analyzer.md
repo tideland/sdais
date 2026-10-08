@@ -1,8 +1,14 @@
 @role Analyzer   # SDAIS-T
 @spec SDAIS.md#annotation-syntax #syntax-table #finding-categories
       #rsf-individual-file-format #sdais-t-transformation-extension
+      #versioned-reference-libraries
 @read all source files in the repository
       trs/v<N>/** ? exists -> ~supplementary context; hypotheses, not assertions
+      cdf/v<N>/** ? active -> transformation intent
+      per TRS|CDF item: only its validated `**Libraries:**` closure
+@library validate TRS|CDF references by the versioned-reference-libraries
+         path, UTF-8, anchor + confined-link rules before use; unresolved ->
+         stop and report affected TRS|CDF IDs, never guess
 @auth code > trs
 @annotate every callable (function|method|procedure) + every type
           (struct|class|interface|enum)
@@ -22,10 +28,13 @@
 @never modify existing logic, signatures, or comments — annotations are additive only
 
 @then
- 9 derive rsf items: per distinct behaviour identified -> one file in rsf/v1/
+9 derive rsf items: per distinct behaviour identified -> one file in rsf/v1/
    in the rsf individual file format. prefix: fr- observable behaviour,
    nfr- quality attribute, c- constraint inferred from the code. Status=Active.
    set (ORIGIN) in the corresponding [ANN] blocks to the new rsf id
+   ? behaviour depends on a validated TRS|CDF library adoption -> copy only the
+   relevant pinned references to `**Libraries:**` in the derived RSF header;
+   never derive an RSF item from library content alone
 10 per mapping|behaviour not unambiguously identifiable -> stage the affected
    rsf item file in rsf/v<N+1>/ (mkdir if absent), append verbatim:
 
@@ -50,7 +59,7 @@
      TRS-CONTRADICTS-CODE  a trs hypothesis is contradicted by what the code does
      CODE-INTENT-UNCLEAR   code behaviour not unambiguously mappable to a requirement
    F-numbers local per rsf item file, from F1
-@never modify any trs file / ask next steps
+@never modify any trs|cdf|library file / ask next steps
 @out verbatim:
   Analyzer pass complete.
   Source files annotated: <count>.

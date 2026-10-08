@@ -1,6 +1,6 @@
 # SDAIS — Introduction
 
-**Version:** v0.12.2 | Read `sdais/SDAIS.md` for the full normative specification.
+**Version:** v0.13.0 | Read `sdais/SDAIS.md` for the full normative specification.
 
 ---
 
@@ -32,6 +32,16 @@ The specification consists of five types of items:
 
 Each item is a single Markdown file. Together they form the Requirements Specification (RSF) — versioned, git-tracked, and the single upstream artefact for everything that follows.
 
+Some contracts are clearer and safer when they remain reusable reference
+documents rather than being flattened into requirement prose. SDAIS stores
+these as immutable, project-owned versions under
+`sdais/library/<library-id>/v<N>/`. Human prose or RSF explicitly adopts an
+exact file with `**Libraries:**`; only then is it normative for that item. RSF
+decides adoption and scope, the pinned file supplies contract detail, approved
+architecture explains the solution without weakening either, and generated
+code must satisfy the composed contract. Library existence alone adds no agent
+context and creates no requirement.
+
 ---
 
 ## A Team of Specialists, Not One Generalist
@@ -42,16 +52,16 @@ The paradigm defines a set of specialist agent roles, each with a focused respon
 
 | Prompt | Role | Purpose | Recommended tier |
 |---|---|---|---|
-| `requirements-engineer.md` | RequirementsEngineer | Transforms loose prose in `sdais/gspec/` into formal RSF items through an iterative clarification loop; inserts `[[QN]]` questions for every ambiguity and generates RSF files once the spec is clean | High-reasoning (e.g. Claude Opus) |
-| `semantic-auditor.md` | SemanticAuditor | Validates RSF items before generation: detects ambiguity, incompleteness, contradictions, and untestable acceptance criteria | High-reasoning (e.g. Claude Opus) |
+| `requirements-engineer.md` | RequirementsEngineer | Transforms loose prose in `sdais/gspec/` into formal RSF items; preserves explicit pinned library adoption and asks when its version, file, or scope is unclear | High-reasoning (e.g. Claude Opus) |
+| `semantic-auditor.md` | SemanticAuditor | Validates RSF items and their adopted libraries before generation: resolves references and detects ambiguity, incompleteness, contradictions, and untestable acceptance criteria | High-reasoning (e.g. Claude Opus) |
 | `grounder.md` | Grounder | Verifies that every Environment item describes something that actually exists in your infrastructure | High-reasoning (e.g. Claude Opus or Sonnet) |
-| `architect.md` | Architect | Produces the traceable ADF document set: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs | High-reasoning (e.g. Claude Opus or Sonnet) |
-| `generator.md` | Generator | Synthesises a complete, annotated implementation from cleared RSF items | High-coding (e.g. Claude Sonnet) |
-| `reviewer.md` | Reviewer | Checks every annotation block against the RSF; sets blocks verified or raises findings | High-reasoning or high-coding (e.g. Claude Opus or Sonnet) |
+| `architect.md` | Architect | Produces the traceable ADF set and maps pinned libraries to components, interfaces, integrations, and decisions | High-reasoning (e.g. Claude Opus or Sonnet) |
+| `generator.md` | Generator | Synthesises a complete, annotated implementation from cleared RSF plus adopted libraries | High-coding (e.g. Claude Sonnet) |
+| `reviewer.md` | Reviewer | Checks every annotation block against RSF plus adopted libraries; sets blocks verified or raises findings | High-reasoning or high-coding (e.g. Claude Opus or Sonnet) |
 | `refiner.md` | Refiner | Fixes every violation directed by the Reviewer's hints; marks resolved blocks verified | High-coding (e.g. Claude Sonnet) |
 | `security-auditor.md` | SecurityAuditor | Specialised pass for security constraints, credential handling, input validation, and authorisation | High-reasoning (e.g. Claude Opus) |
-| `test-generator.md` | TestGenerator | Derives test functions from preconditions, postconditions, and acceptance criteria; supports both standard and TDD modes | High-coding (e.g. Claude Sonnet) |
-| `transformation-engineer.md` | TransformationEngineer | Transformation: refines loose prose about the existing system and desired changes into TRS items and draft CDF files through an iterative `[[QN]]/[[AN]]` clarification loop; assigns Confidence levels during output generation | High-reasoning (e.g. Claude Opus) |
+| `test-generator.md` | TestGenerator | Derives tests from preconditions, postconditions, acceptance criteria, and relevant library conformance rules; supports standard and TDD modes | High-coding (e.g. Claude Sonnet) |
+| `transformation-engineer.md` | TransformationEngineer | Transformation: refines loose prose into TRS/CDF, preserving explicit pinned library adoption; assigns Confidence levels during output generation | High-reasoning (e.g. Claude Opus) |
 | `analyzer.md` | Analyzer | Transformation: annotates an existing codebase and derives RSF items from observed behaviour; references confirmed TRS item IDs in `(ORIGIN)` | High-coding (e.g. Claude Sonnet) |
 | `transformation.md` | Transformation | Transformation: applies Change Definition Files to transform the annotated codebase | High-coding (e.g. Claude Sonnet) |
 
@@ -79,12 +89,12 @@ A full SDAIS project moves through a predictable lifecycle, regardless of the sc
 
 0. **Draft** (optional) — write rough prose in `sdais/gspec/v1/`; the RequirementsEngineer refines it into RSF items through an iterative Q&A loop.
 1. **Specify** — write or review RSF items in `sdais/rsf/v1/`.
-2. **Audit** — the SemanticAuditor validates the specification; you resolve findings.
+2. **Audit** — the SemanticAuditor resolves adopted libraries and validates the composed contract; you resolve findings.
 3. **Ground** — the Grounder confirms infrastructure assumptions; you resolve any unresolvable items.
 4. **Architect** (optional) — the Architect produces a human-reviewed architecture document set before any code is written.
-5. **Generate** — the Generator synthesises the implementation with full annotation coverage.
-6. **Review** — the Reviewer checks every block; findings are precise and actionable.
-7. **Refine** — the Refiner fixes violations; verified blocks accumulate.
+5. **Generate** — the Generator synthesises the implementation from RSF plus adopted libraries with full annotation coverage.
+6. **Review** — the Reviewer checks every block against the same pinned contracts; findings are precise and actionable.
+7. **Refine** — the Refiner fixes violations using those same contracts; verified blocks accumulate.
 8. **Approve** — you review the result. Approve, amend the RSF and restart, or reject and regenerate.
 
 Steps 6–7 repeat until the Reviewer reports zero violations. Steps 1–5 repeat whenever requirements change. The RSF version increments; the previous version is never modified.
