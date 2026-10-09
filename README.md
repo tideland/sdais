@@ -155,6 +155,34 @@ If you find it easier to start with free-form prose, write your ideas about the 
 
 ---
 
+## Developer Automation
+
+Repository-maintenance commands live under `scripts/` and are not included in
+the SDAIS distribution archive:
+
+```sh
+make check
+make release VERSION=v0.13.0
+make verify ARCHIVE=dist/sdais-v0.13.0.tgz
+```
+
+`make check` runs shell syntax checks, repository tests, Markdown link and fence
+checks, managed-prompt inventory checks, and `git diff --check`.
+
+`make release` verifies that the requested version matches the specification,
+README, guides, changelog, installer, and updater. It then runs all checks,
+builds the complete archive in temporary staging, installs and updates temporary
+projects from that archive, verifies project-library and custom-agent
+preservation, and writes the result under `dist/` with its SHA-256 checksum. It
+refuses to overwrite an existing archive; use `make release-force` explicitly
+when rebuilding the same version.
+
+The generated `dist/` directory is ignored by git. Release archives contain
+only the user-facing distribution files; `scripts/`, `tests/`, `dist/`, and
+project-specific libraries are excluded.
+
+---
+
 ## Repository Contents
 
 | File / Directory | Purpose |
@@ -163,6 +191,10 @@ If you find it easier to start with free-form prose, write your ideas about the 
 | `install.sh` | Scaffolds a new project |
 | `update.sh` | Upgrades an existing project's scaffold |
 | `sdais.sh` | Launcher — runs any agent role with a chosen tool and model |
+| `Makefile` | Convenience entry points for checks and release automation |
+| `scripts/` | Developer-only checking, release building, and archive verification |
+| `tests/` | Repository regression tests; not included in releases |
+| `dist/` | Ignored output directory for generated release archives |
 | `scaffold/` | Prompt files and templates installed by `install` |
 | `sdais/library/` (installed projects) | Project-owned, immutable versioned reference contracts; never bundled with project-specific content |
 | `sdais-vX.Y.Z.tgz` | Complete distribution archive; unpack before running `install.sh` or `update.sh` |

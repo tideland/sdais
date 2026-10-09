@@ -34,6 +34,11 @@ version will advance to v1.0.0 on first stable release.
   record-format contract, explicitly adopts it from prose, and documents that
   only dependent RSF items receive `Libraries` while the library creates no
   standalone requirements.
+- **Developer release automation.** `make check`, `make release`, and
+  `make verify` drive repository checks, temporary staging, archive creation,
+  installation/update verification, preservation checks, and SHA-256 output.
+  Generated archives are written to the ignored `dist/` directory; developer
+  scripts, tests, and project libraries are excluded from distributions.
 
 ### Changed
 
