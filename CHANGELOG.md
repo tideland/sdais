@@ -8,7 +8,7 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
-## [v0.13.0] — 2026-10-08
+## [v0.13.0] — 2026-11-01
 
 ### Added
 
