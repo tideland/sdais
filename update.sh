@@ -13,7 +13,11 @@
 #   sdais/cdf/v*/  — change definition files
 #   sdais/adf/v*/  — architecture definition files
 #   sdais/library/** — every project-owned reference library and version
-#   All source code outside sdais/
+#   implementation/** — managed implementation root and activation marker
+#   All legacy source code outside sdais/
+#
+# Compatibility: update never creates implementation/.sdais-root in an
+# unmarked legacy project and never moves existing code.
 
 set -euo pipefail
 
@@ -115,5 +119,8 @@ echo "  AGENTS.md regenerated (Custom Agents Extension preserved)"
 echo "  sdais/SDAIS.md updated"
 [ -f "$LOCAL_BIN/sdais" ] && echo "  $LOCAL_BIN/sdais updated"
 echo ""
-echo "Project content (library, gspec, tspec, rsf, rar, trs, cdf, adf, source files) left unchanged."
+echo "Project content (library, gspec, tspec, rsf, rar, trs, cdf, adf, implementation, legacy source) left unchanged."
+if [ ! -f implementation/.sdais-root ]; then
+    echo "Legacy layout remains active; update did not create or migrate implementation/.sdais-root."
+fi
 echo "Review sdais/SDAIS.md for workflow changes introduced in $SDAIS_VERSION."

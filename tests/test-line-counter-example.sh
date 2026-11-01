@@ -25,6 +25,11 @@ cmp "$REPO_ROOT/examples/line-counter/sdais/gspec/v1/idea.md" \
     "$PROJECT/sdais/gspec/v1/idea.md"
 cmp "$REPO_ROOT/examples/line-counter/sdais/library/csv-records/v1/format.md" \
     "$PROJECT/sdais/library/csv-records/v1/format.md"
+[ -d "$PROJECT/implementation" ] || fail "bootstrap did not create implementation root"
+[ -f "$PROJECT/implementation/.sdais-root" ] || fail "bootstrap did not activate managed-root mode"
+[ ! -s "$PROJECT/implementation/.sdais-root" ] || fail "managed-root marker is not zero-byte"
+grep -Fq 'implementation/go.mod' "$REPO_ROOT/examples/line-counter/README.md" ||
+    fail "example does not document language-native managed-root layout"
 
 grep -Fxq 'id,name,email,amount,created_at' < <(head -1 "$PROJECT/data/records.csv") ||
     fail "generated CSV header does not match the adopted library"

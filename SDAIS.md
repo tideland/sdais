@@ -66,17 +66,30 @@ Pin the model version used for each agent in your project's `AGENTS.md` or equiv
 
 ### Agent Output Storage
 
-All agent outputs are files on disk within the `sdais/` tree. No agent output is authoritative unless written to a file and committed to version control. The `sdais/` directory together with git history is the complete audit trail. External execution logs (API transcripts, tool call records) are supplementary and may be stored in `sdais/logs/` if retention is required; they are never read by any agent.
+Specification and workflow outputs are files on disk within the `sdais/` tree.
+Agent-managed product artefacts are files on disk within the active
+implementation root. No agent output is authoritative unless written to a
+file and committed to version control. The `sdais/` tree, the implementation
+workspace, and git history together form the complete audit trail. External
+execution logs (API transcripts, tool call records) are supplementary and may
+be stored in `sdais/logs/` if retention is required; they are never read by any
+agent.
 
 ---
 
 ## Directory Structure
 
-Every SDAIS project places all specification and workflow artefacts under an `sdais/` directory at the project root. The `AGENTS.md` file lives at the project root as usual.
+Every SDAIS project places all specification and workflow artefacts under an
+`sdais/` directory at the project root. The `AGENTS.md` file lives at the
+project root as usual. Fresh projects place the complete agent-managed product
+workspace under `implementation/`.
 
 ```
 <project-root>/
 ├── AGENTS.md
+├── implementation/          ← agent-managed product workspace
+│   ├── .sdais-root          ← zero-byte managed-root activation marker
+│   └── <language-native project tree>
 └── sdais/
     ├── SDAIS.md              ← paradigm specification (distribution file)
     ├── prompts/              ← installed by install; refreshed by update
@@ -157,6 +170,48 @@ Every SDAIS project places all specification and workflow artefacts under an `sd
 - Each `library/<library-id>/v<N>/` directory is a published version of a project-owned reference library. Published version directories are immutable; amendments create `v<N+1>/`. The entire `library/` directory may be absent or empty when no requirement uses it.
 - The distribution is `sdais-vX.Y.Z.tgz`. It contains `SDAIS.md`, `README.md`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `update.sh`, `sdais.sh`, `docs/`, and `scaffold/`, and expands directly into the current directory. Create a project root, copy or download the archive into it, run `tar xzf sdais-vX.Y.Z.tgz`, then run `./install.sh <project-name>` once to scaffold the project. To upgrade, unpack the new archive in the existing project root and run `./update.sh --from <old-version>`. Run `./sdais.sh <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
+
+### Implementation Root
+
+The canonical implementation root is `implementation/` at the project root.
+Managed-root mode is active only when the zero-byte marker
+`implementation/.sdais-root` exists. The root name is fixed in v0.13.0 and is
+not configurable.
+
+In managed-root mode every product artefact written by Generator,
+Transformation, Refiner, or TestGenerator stays under `implementation/`.
+This includes source code, tests, module and package manifests, dependency lock
+files, fixtures, static assets, database migrations, build and deployment
+configuration, and product documentation. Language-native layout begins
+inside the root; for example a Go implementation uses
+`implementation/go.mod`, `implementation/cmd/`, and
+`implementation/internal/`. `generated/` is not used because the committed,
+reviewed implementation is authoritative project content, not disposable
+build output. Agents must not create product artefacts beside `AGENTS.md`, the
+SDAIS distribution files, or `sdais/`.
+
+The marker is an activation sentinel, not configuration. Fresh installation
+creates the directory and marker. Update never creates either for an existing
+unmarked project, never moves code, and never rewrites anything under an
+existing `implementation/`. An unmarked project retains legacy repository-wide
+and in-place behaviour exactly as before. To migrate deliberately, the human
+moves the complete implementation workspace into `implementation/` and creates
+the zero-byte marker last. Directory existence without the marker does not
+activate managed-root mode.
+
+For SDAIS-T in managed-root mode, existing legacy source may remain outside
+`implementation/`. Analyzer may read and add annotations to that source in
+place. Transformation writes the complete transformed target under
+`implementation/` and never deletes the legacy source. If the source already
+lives under `implementation/`, Analyzer and Transformation operate there.
+After a transformed target exists, Generator gap-filling, Reviewer, Refiner,
+SecurityAuditor, and TestGenerator read or write only the managed target.
+
+The implementation-root rule controls repository placement, not runtime file
+paths used by the product. An RSF, adopted library, or ADF decision that
+requires a repository product artefact outside the active managed root
+contradicts this workflow. SemanticAuditor reports `CONTRADICTORY`; synthesis
+and transformation stop rather than silently writing outside the root.
 
 ### Versioned Reference Libraries
 
@@ -250,7 +305,7 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
                   │            │
                   └───►        ▼
                         ┌──────────────────┐
-                        │  AI: Generate    │  synthesises implementation
+                        │  AI: Generate    │  writes implementation/
                         │  (or TDD mode:   │  writes [ANN] blocks immediately
                         │   TestGen first) │
                         └────────┬─────────┘
@@ -277,11 +332,17 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
                          └── waived (needs RSF change) ──► Human amends RSF
 ```
 
-RSF amendments increment the version and restart the loop from the semantic audit. The prior annotated codebase is not discarded — it becomes input context for the next generation pass.
+RSF amendments increment the version and restart the loop from the semantic
+audit. The prior annotated implementation workspace is not discarded — it
+becomes input context for the next generation pass.
 
 Human prose or directly authored RSF may explicitly adopt a pinned file under `sdais/library/`. The RequirementsEngineer preserves the smallest applicable reference set on generated items; the SemanticAuditor resolves each reference and audits the composed contract. Architect, Generator, Reviewer, Refiner, TestGenerator, and—when security claims depend on interface definitions—SecurityAuditor then read those same pinned files. Library existence alone adds no context and produces no requirement.
 
-For SDAIS-T (transformation of existing systems), the lifecycle starts at the SDAIS-T section (see below) and joins the standard SDAIS-G lifecycle at the Generator stage. The annotated existing codebase and the RSF derived by the Analyzer agent are the inputs at that join point.
+For SDAIS-T (transformation of existing systems), the lifecycle starts at the
+SDAIS-T section (see below) and joins the standard SDAIS-G lifecycle at the
+Generator stage. In managed-root mode the annotated legacy source and RSF are
+Transformation inputs; its complete target under `implementation/` is the
+input to Generator gap-filling and the standard review loop.
 
 ---
 
@@ -364,7 +425,12 @@ Before authoring any RSF items, run `install` from the project root to scaffold 
 ./install <project-name>
 ```
 
-This copies `SDAIS.md` to `sdais/SDAIS.md`, installs all prompt files into `sdais/prompts/`, installs all `*-0000-template.md` files, creates an empty project-owned `sdais/library/`, and writes `AGENTS.md` at the project root with the project name substituted. No project-specific library content ships in the scaffold.
+This copies `SDAIS.md` to `sdais/SDAIS.md`, installs all prompt files into
+`sdais/prompts/`, installs all `*-0000-template.md` files, creates an empty
+project-owned `sdais/library/`, creates
+`implementation/.sdais-root` to activate managed-root mode, and writes
+`AGENTS.md` at the project root with the project name substituted. No
+project-specific library content ships in the scaffold.
 
 To launch an agent from the project root, use `./sdais.sh`:
 
@@ -399,7 +465,12 @@ When upgrading to a new SDAIS version, replace `SDAIS.md`, `install`, and `updat
 | | `sdais/cdf/v*/*.md` |
 | | `sdais/adf/v*/*.md` |
 | | `sdais/library/**` (all project-owned versions and files) |
-| | All source code files |
+| | `implementation/**` (including `.sdais-root`) |
+| | All legacy source code outside `implementation/` |
+
+Update does not add `implementation/.sdais-root` to an unmarked legacy project.
+Such a project remains in legacy mode until the human completes the documented
+migration and creates the marker.
 
 ---
 
@@ -551,7 +622,7 @@ The Architect reads all active RSF items plus their resolved library closures an
 | File | Required content |
 |---|---|
 | `adf-01-context-and-goals.md` | Context, goals, stakeholders, scope, quality goals, and constraints. |
-| `adf-02-internal-architecture.md` | Components, responsibilities, owned data, boundary contracts, data flows, pinned libraries realized by components and internal interfaces, and at least one Mermaid component or dependency diagram. |
+| `adf-02-internal-architecture.md` | Components, responsibilities, implementation-root-relative locations, owned data, boundary contracts, data flows, pinned libraries realized by components and internal interfaces, and at least one Mermaid component or dependency diagram. |
 | `adf-03-external-architecture.md` | Actors, external systems, integrations, trust boundaries, failure handling, integration flows, external API/schema/protocol libraries realized, and at least one Mermaid context or integration diagram. |
 | `adf-04-requirement-trace.md` | One row per active RSF item, mapping its ID and exact title to a `Library References` column containing exact pinned paths or `—`, architecture components, external interfaces, decisions, and verification. |
 | `adf-05-glossary.md` | Project, domain, integration, component, data, and acronym terms. |
@@ -596,6 +667,11 @@ Every ADR has the following sections in order:
 
 `Relevant Requirements` and `Verification Tests` are non-empty item lists. Every item has the exact form `- **[<id>]:** <text>`, where `<id>` is a real specification ID and `<text>` is its exact title. The Architect never invents specification IDs. Every active RSF item appears exactly once in the requirement trace, and every active FR maps to at least one internal component and verification. Component names remain identical throughout the set. Mermaid diagrams are added wherever needed to make non-trivial internal flows or integrations unambiguous.
 
+In managed-root mode every component, interface, test location, manifest, and
+deployment path in the ADF is under `implementation/`. The ADF does not direct
+Generator to create product files at the project root. A conflicting path
+decision is returned to semantic audit.
+
 ADF wording links to library definitions rather than duplicating them. UI and
 design-language libraries are reflected in internal interfaces and relevant
 ADRs; external API, schema, and protocol libraries are reflected in external
@@ -617,7 +693,16 @@ The full prompt is in `sdais/prompts/architect.md`.
 
 Provide all active RSF item files and each item's resolved library closure to the Generator. Use the prompt from `sdais/prompts/generator.md`.
 
-The full prompt is in `sdais/prompts/generator.md`. Summary of agent behaviour: reads all active RSF items and only their adopted library closures; reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted; synthesises a complete implementation of the composed contract; writes one `[ANN]` block per callable unit and type with `(ANN-ID)` as the first label; sets `(AGENT)` to `Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every block; outputs a summary of files created and RSF items addressed. It stops and reports affected IDs rather than guessing if a reference cannot resolve or a contract conflict remains.
+The full prompt is in `sdais/prompts/generator.md`. Summary of agent behaviour:
+reads all active RSF items and only their adopted library closures; reads the
+complete `sdais/adf/v<N>/` set as structural context if all core documents are
+Approved and all ADRs are Accepted; synthesises a complete implementation of
+the composed contract under the active implementation root; writes one `[ANN]`
+block per callable unit and type with `(ANN-ID)` as the first label; sets
+`(AGENT)` to `Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every
+block; outputs a summary of files created and RSF items addressed. It stops and
+reports affected IDs rather than guessing if a reference cannot resolve, a
+contract conflict remains, or managed-root placement cannot be honoured.
 
 #### Step 2 — TDD Mode (optional)
 
@@ -627,7 +712,7 @@ TDD mode inverts the normal generation order. The TestGenerator runs before the 
 
 **TDD mode steps:**
 
-1. Run the **TestGenerator** in TDD mode: reads all FR, AC, and NFR items plus their adopted libraries; writes test files with test functions that assert expected behaviour—including relevant boundary, grammar, compatibility, and conformance rules—but have no passing implementation. Each test function receives an `[ANN]` block with `(AGENT) TestGenerator`, `(VERIFIED) false`, `(ROUND) 0`, and `(TEST-MODE) TDD`.
+1. Run the **TestGenerator** in TDD mode: reads all FR, AC, and NFR items plus their adopted libraries; writes test files under the active implementation root with test functions that assert expected behaviour—including relevant boundary, grammar, compatibility, and conformance rules—but have no passing implementation. Each test function receives an `[ANN]` block with `(AGENT) TestGenerator`, `(VERIFIED) false`, `(ROUND) 0`, and `(TEST-MODE) TDD`.
 2. Run the **Generator**: reads all active RSF items, the ADF set (if present and fully approved), and the test files from step 1. Synthesises implementation targeting a 100% pass rate on those tests. Writes `[ANN]` blocks as normal. Does not set `(TEST-MODE)` — that label is exclusive to TestGenerator.
 3. Continue with the standard Review → Refine loop. The Reviewer additionally verifies that all `(TEST-MODE) TDD` blocks pass against the generated implementation.
 
@@ -637,7 +722,13 @@ TDD mode inverts the normal generation order. The TestGenerator runs before the 
 
 Provide the generated, annotated code, all active RSF item files, and their resolved library closures to the Reviewer. Use the prompt from `sdais/prompts/reviewer.md`. Pass the current round number (starts at 1 after the first Generate pass).
 
-The full prompt is in `sdais/prompts/reviewer.md`. Summary of agent behaviour: reads all annotated source files, active RSF items, and their adopted libraries; checks every `[ANN]` block against the composed requirement and implementation; records library conformance failures on the relevant `[ANN]` block; keeps `(ORIGIN)` limited to RSF/TRS IDs rather than filesystem paths; sets `(VERIFIED)` and updates `(AGENT)` and `(ROUND)` on every block; runs a dependency cascade check; outputs a structured summary.
+The full prompt is in `sdais/prompts/reviewer.md`. Summary of agent behaviour:
+in managed mode reads annotated files only under `implementation/`; checks
+every `[ANN]` block against the composed requirement and implementation;
+records library conformance and managed-root placement failures on the
+relevant `[ANN]` block; keeps `(ORIGIN)` limited to RSF/TRS IDs rather than
+filesystem paths; sets `(VERIFIED)` and updates `(AGENT)` and `(ROUND)` on every
+block; runs a dependency cascade check; outputs a structured summary.
 
 **Review-loop tracking:**
 
@@ -661,7 +752,7 @@ After each Refiner pass:
 
 When the Reviewer reports zero violations and all acceptance criteria pass, the human reviews the output. Three outcomes:
 
-- **Approve** — synthesis complete; RSF files and annotated codebase are archived together.
+- **Approve** — synthesis complete; RSF files and the annotated implementation workspace are archived together.
 - **Amend RSF** — increment RSF version, restart loop with existing codebase as context.
 - **Reject** — provide written rationale; restart loop from generation.
 
@@ -679,9 +770,13 @@ When the Reviewer reports zero violations and all acceptance criteria pass, the 
 
 The standard SDAIS lifecycle assumes a greenfield project: the specification precedes the code, and the Generator synthesises from scratch. Transformation inverts this. The existing codebase is the primary artefact; specification must be derived from it. Greenfield agents cannot operate on code that has no RSF, no `[ANN]` blocks, and no verified requirements.
 
-The core inversion is: code + fuzzy prior knowledge → specification → transformed code. Prior knowledge — architecture diagrams, design notes, institutional memory — is captured as TRS items (Transformation Specification). TRS items are hypotheses, not assertions. The code is always authoritative when it contradicts a hypothesis.
+The core inversion is: code + fuzzy prior knowledge → specification → transformed code. Prior knowledge — architecture diagrams, design notes, institutional memory — is captured as TRS items (Transformation Specification). TRS items are hypotheses, not assertions. The code is always authoritative when it contradicts a hypothesis. In managed-root mode legacy source remains an input artefact and the transformed target is a separate complete workspace under `implementation/`.
 
-SDAIS-T produces inputs that feed into the standard SDAIS lifecycle from the Generator stage onwards. The Analyzer agent annotates the existing codebase and derives RSF items; the resulting annotated codebase and RSF replace what the Generator would otherwise produce from scratch. The Transformation agent applies CDF transformations and hands the result to the standard Generator → Reviewer → Refiner loop.
+SDAIS-T produces inputs that feed into the standard SDAIS lifecycle from the
+Generator stage onwards. Analyzer annotates the existing codebase and derives
+RSF items. Transformation applies CDFs and, in managed-root mode, writes the
+complete `implementation/` target that Generator gap-filling, Reviewer, and
+Refiner consume. Legacy mode retains the earlier in-place handoff.
 
 ### SpecificationEngineer Archetype
 
@@ -713,7 +808,7 @@ Cleaned RSF + Annotated existing code
 Human activates CDF(s)
     │
     ▼
-Transformation Agent ──► Contract-conformant code with stable ANN-IDs
+Transformation Agent ──► implementation/ target with stable ANN-IDs
     │
     ▼
 ═══ Transition to Standard SDAIS Lifecycle ═══
@@ -722,7 +817,16 @@ Transformation Agent ──► Contract-conformant code with stable ANN-IDs
 Generator (gaps only) → Reviewer → Refiner → ...
 ```
 
-The Analyzer reads the existing codebase and any available TRS items, adds `[ANN]` blocks to every callable unit and type, derives RSF items from observed behaviour, and appends findings to RSF item files for anything unclear. The resulting artefacts pass through the standard Semantic Audit Loop: the human resolves findings in the staged `rsf/v<N+1>/` copies, amending RSF items until all findings are resolved or waived. The human then activates CDF files defining the desired transformations. The Transformation agent reads the annotated codebase, the active CDF set, and the cleaned RSF, applies each transformation, preserves all `(ANN-ID)` values, and hands the result to the Generator for any RSF items not covered by the transformation. From that point the standard Reviewer → Refiner → Approval loop runs unchanged.
+The Analyzer reads the existing codebase and any available TRS items, adds
+`[ANN]` blocks to every callable unit and type in place, derives RSF items from
+observed behaviour, and appends findings to RSF item files for anything
+unclear. The resulting artefacts pass through the standard Semantic Audit
+Loop. The human then activates CDF files defining the desired transformations.
+In managed-root mode Transformation reads the annotated source without moving
+or deleting it, writes the complete target under `implementation/`, preserves
+all `(ANN-ID)` values, and hands that target to Generator for uncovered RSF
+items. Reviewer, Refiner, SecurityAuditor, and TestGenerator then scope their
+work to `implementation/`. Legacy mode retains the prior in-place flow.
 
 ### SDAIS-T Step −2 — Transformation Engineering (optional)
 
@@ -909,7 +1013,7 @@ The `**Affects:**` field lists either specific `(ANN-ID)` references (comma-sepa
 
 The Analyzer operates in three-output mode:
 
-1. **Annotates the existing codebase additively.** Every callable unit and every type receives an `[ANN]` block with a freshly generated `(ANN-ID)`, reconstructed `(TASK)`, inferred `(PRE)` and `(POST)`, and a `(CONFIDENCE)` label. Existing logic, signatures, and comments are never modified. Where a TRS item ID can be confidently mapped to an annotated unit, the Analyzer sets `(ORIGIN)` to that TRS item ID, establishing a stable traceability link.
+1. **Annotates the existing codebase additively.** Every callable unit and every type receives an `[ANN]` block with a freshly generated `(ANN-ID)`, reconstructed `(TASK)`, inferred `(PRE)` and `(POST)`, and a `(CONFIDENCE)` label. Existing logic, signatures, and comments are never modified. In managed-root mode this is the sole role permitted to write annotations into legacy source outside `implementation/`. Where a TRS item ID maps confidently to a unit, `(ORIGIN)` is set to that TRS item ID.
 
 2. **Derives formal RSF item files** in `sdais/rsf/v1/`. Each distinct observable behaviour, quality attribute, or constraint inferred from the code becomes one RSF item.
 
@@ -923,7 +1027,15 @@ The full prompt is in `sdais/prompts/analyzer.md`.
 
 ### Transformation Agent
 
-The Transformation agent reads the annotated existing codebase, all active CDF files, all active RSF files, and only their resolved library closures. It applies each CDF's transformation rules to the units listed in `Affects:`, implements the composed RSF plus library contract, produces transformed code in the target language or architecture, and preserves all `(ANN-ID)` values according to the split and merge rules below. It stops and reports affected RSF/CDF IDs without guessing when a reference cannot resolve or a conflict remains.
+The Transformation agent reads the annotated existing codebase, all active CDF
+files, all active RSF files, and only their resolved library closures. It
+applies each CDF's transformation rules to the units listed in `Affects:`,
+implements the composed RSF plus library contract, and preserves all
+`(ANN-ID)` values according to the split and merge rules below. In managed-root
+mode it writes a complete transformed target under `implementation/`; it never
+deletes the source or emits target files elsewhere. It stops and reports
+affected RSF/CDF IDs without guessing when a reference cannot resolve, a
+conflict remains, or root placement cannot be honoured.
 
 **`(ANN-ID)` preservation rules:**
 

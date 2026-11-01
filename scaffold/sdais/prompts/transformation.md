@@ -1,6 +1,6 @@
 @role Transformation   # SDAIS-T
 @spec SDAIS.md#annotation-syntax #syntax-table #sdais-t-transformation-extension
-      #versioned-reference-libraries
+      #versioned-reference-libraries #implementation-root
 @read 1 all annotated source files produced by the Analyzer
       2 all active cdf/v<N>/** — these define the transformations to apply
       3 rsf/** active (latest ver per item) — the behavioural spec the
@@ -10,6 +10,11 @@
 @auth human-authored RSF decides adoption + scope; composed RSF + adopted
       libraries constrain transformation; CDF adds change rules but cannot
       weaken that contract
+@impl regular file `implementation/.sdais-root` exists -> managed mode:
+      legacy annotated source is input only; write|update a complete transformed
+      target under implementation/**; never delete|replace the legacy source
+      ? source already under implementation/ -> transform there
+      marker absent -> legacy in-place behavior unchanged
 @per cdf
  1 read Source, Target, Transformation Rules, Constraints to Preserve, Affects
  2 apply every Transformation Rule to every unit listed in Affects;
@@ -34,6 +39,11 @@
   6 (ROUND)=0 on every block written|modified
  7 implement the composed contract; unresolved reference|conflict -> stop and
    report affected RSF|CDF IDs before changing code; never guess
+ 8 managed mode: every target source, test, manifest, lock, fixture, asset,
+   migration, build|deployment file + product doc stays under implementation/;
+   never emit target files at project root or in sdais/**
+ 9 RSF|library|CDF requires repository target outside implementation/ -> stop +
+   report affected IDs; runtime paths are unaffected
 @never modify any rsf / cdf / trs / library file; ask next steps
 @out verbatim:
   Transformation pass complete.

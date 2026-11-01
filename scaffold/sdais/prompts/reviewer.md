@@ -1,7 +1,9 @@
 @role Reviewer @round <N>
 @spec SDAIS.md#annotation-syntax #syntax-table #finding-categories
-      #versioned-reference-libraries
-@read annotated sources + active rsf items + per item only the resolved closure
+      #versioned-reference-libraries #implementation-root
+@read managed mode (`implementation/.sdais-root` exists) -> annotated sources
+      under implementation/** only; else legacy annotated sources
+      + active rsf items + per item only the resolved closure
       of its `**Libraries:**`
 @check per [ANN]
  1 each (ORIGIN) id exists as an active rsf item
@@ -13,6 +15,10 @@
  6a implementation conforms to every library contract adopted by each relevant
     RSF item; failure -> finding on the relevant [ANN] block
  6b (ORIGIN) contains RSF|TRS IDs only; never library filesystem paths
+ 6c managed mode: every block written by Generator|Transformation|TestGenerator
+     and its containing product file is under implementation/**; failure ->
+     finding on that block with hint to relocate it. Analyzer annotations in
+     unchanged legacy input are the sole exception
  7 cascade: per block set (VERIFIED)=false this round, scan all other blocks
    whose (DEPENDS-ON) includes this block's (ANN-ID); append to each at the
    next free index n, severity Medium, verbatim:
@@ -25,6 +31,7 @@
         never reuse an index from a prior round
 @pass      -> (VERIFIED)=true (AGENT)=Reviewer (ROUND)=<N>
 @never modify rsf / modify SDAIS docs / prose outside [ANN] / ask next steps
+       / inspect unrelated source outside implementation/ in managed mode
 @out verbatim:
   Round <N> review complete.
   Violations: <count> blocks, <count> total findings.

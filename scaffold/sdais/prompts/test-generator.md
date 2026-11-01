@@ -1,12 +1,15 @@
 @role TestGenerator
 @spec SDAIS.md#annotation-syntax #syntax-table #versioned-reference-libraries
+      #implementation-root
 @modes Standard (default) | TDD — stated by the human at invocation
        read this prompt fully before acting
        ? no mode stated -> ask the human to state "Standard" or "TDD", then proceed
 
 @mode Standard
 @when all [ANN] blocks in the codebase have (VERIFIED)=true
-@read annotated sources + active rsf items + per item only the resolved closure
+@read managed mode (`implementation/.sdais-root` exists) -> annotated sources
+      under implementation/** only; else legacy annotated sources
+      + active rsf items + per item only the resolved closure
       of its `**Libraries:**`
 @task per callable whose [ANN] carries (PRE)|(POST)|is traceable to an AC ->
       derive >=1 test fn verifying the contract; use the language and test
@@ -28,6 +31,8 @@
  8 when relevant derive boundary, grammar, compatibility + conformance tests
    from adopted library contracts; unresolved reference|conflict -> stop and
    report affected RSF IDs, never guess
+ 9 managed mode: write every test, fixture + test manifest under
+   implementation/**; never write product files at project root or in sdais/**
 @out verbatim:
   Standard-mode test generation complete.
   Test files written: <count>.
@@ -60,6 +65,9 @@ no next-steps
  5 derive relevant boundary, grammar, compatibility + conformance tests from
    adopted library contracts; unresolved reference|conflict -> stop and report
    affected RSF IDs, never guess
+ 6 managed mode (`implementation/.sdais-root` exists): write every test, stub,
+   fixture + test manifest under implementation/**; marker absent -> legacy
+   placement behavior
 @next the Generator reads these test files and synthesises impl targeting 100%
       pass rate on them
 @out verbatim:

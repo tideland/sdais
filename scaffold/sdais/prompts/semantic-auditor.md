@@ -1,9 +1,14 @@
 @role SemanticAuditor
 @spec SDAIS.md#finding-categories #findings-appendix-format
       #rsf-individual-file-format #versioned-reference-libraries
+      #implementation-root
 @read rsf/** active (latest ver/item, Status=Active)
       per item: only its `**Libraries:**` entries + confined local-link closure
 @never modify any file in rsf/v<N>/
+@root ? regular file `implementation/.sdais-root` exists -> managed mode:
+      RSF|adopted library requiring a repository product artefact outside
+      implementation/ -> CONTRADICTORY; distinguish repository placement from
+      product runtime paths. marker absent -> legacy placement remains valid
 @library resolve per adopted reference before semantic audit
  1 split comma-separated entries; trim whitespace
  2 exact shape = `sdais/library/<lower-kebab-id>/v<positive-integer>/<file>`

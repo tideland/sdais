@@ -1,8 +1,10 @@
 @role Analyzer   # SDAIS-T
 @spec SDAIS.md#annotation-syntax #syntax-table #finding-categories
       #rsf-individual-file-format #sdais-t-transformation-extension
-      #versioned-reference-libraries
-@read all source files in the repository
+      #versioned-reference-libraries #implementation-root
+@read all relevant existing source files in the repository; exclude sdais/**,
+      SDAIS distribution|scaffold files + any already-transformed target that
+      is not the source being analyzed
       trs/v<N>/** ? exists -> ~supplementary context; hypotheses, not assertions
       cdf/v<N>/** ? active -> transformation intent
       per TRS|CDF item: only its validated `**Libraries:**` closure
@@ -10,6 +12,11 @@
          path, UTF-8, anchor + confined-link rules before use; unresolved ->
          stop and report affected TRS|CDF IDs, never guess
 @auth code > trs
+@impl regular file `implementation/.sdais-root` exists -> managed mode:
+      existing source may be inside|outside implementation/; annotate the
+      selected source in place, but never mistake a completed transformed
+      implementation/** target for unrelated legacy input
+      marker absent -> legacy repository-wide behavior unchanged
 @annotate every callable (function|method|procedure) + every type
           (struct|class|interface|enum)
  1 [ANN] immediately before the unit, in the source language's comment syntax
@@ -26,6 +33,8 @@
  8 (ORIGIN) = trs item id (e.g. TRS-FR-0001) if the unit maps confidently;
    omit if no confident mapping
 @never modify existing logic, signatures, or comments — annotations are additive only
+       / create product files outside annotations; Analyzer is the sole managed
+       mode role allowed to add [ANN] blocks to legacy source outside implementation/
 
 @then
 9 derive rsf items: per distinct behaviour identified -> one file in rsf/v1/

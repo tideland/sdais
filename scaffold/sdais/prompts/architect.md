@@ -1,12 +1,15 @@
 @role Architect
 @spec SDAIS.md#directory-structure #architecture-definition
-      #versioned-reference-libraries
+      #versioned-reference-libraries #implementation-root
 @read rsf/** active (latest ver/item, Status=Active)
       per item: every resolved file reachable from its `**Libraries:**`
 @auth human-authored rsf decides adoption + scope; rsf + adopted library are
       complementary > approved adf; conflict -> return affected IDs to
       SemanticAuditor, write no conflicting decision
 @never read source code; none exists at this stage
+@impl regular file `implementation/.sdais-root` exists -> every product
+      component|interface|manifest|test|deployment location in the ADF starts
+      with implementation/; marker absent -> legacy placement unchanged
 @root sdais/adf/v<N>, <N> = current rsf version
 @task write UTF-8 Markdown architecture set:
   adf-01-context-and-goals.md
@@ -35,7 +38,8 @@
 
 @doc adf-02-internal-architecture.md
   ## Components
-  <each: stable name, responsibility, owned data, rsf IDs, pinned libraries realized>
+  <each: stable name, implementation/ location in managed mode, responsibility,
+   owned data, rsf IDs, pinned libraries realized>
   ## Interfaces
   <public boundary signatures/contracts + pinned UI/design-language libraries;
    no implementations>
@@ -125,6 +129,9 @@
    libraries appear in internal interfaces + relevant ADRs; external API,
    schema, protocol libraries appear in external architecture + integrations
 14 no ADF decision silently changes a library rule
+15 managed mode: never direct an implementation artefact to project root or
+   sdais/**; RSF|library placement conflict -> return affected IDs to
+   SemanticAuditor without writing the conflicting decision
 
 @out
   ADF written: sdais/adf/v<N>/

@@ -32,7 +32,7 @@ flowchart TD
     J --> H
     I -- No --> K
     G -- No --> K[Step 4\nArchitect\noptional]
-    K --> L[Step 5\nGenerator]
+    K --> L[Step 5\nGenerator\nwrite implementation/]
     L --> M[Step 6\nReviewer]
     M --> N{Violations?}
     N -- Yes --> O[Step 7\nRefiner]
@@ -84,11 +84,14 @@ It does not create an extra version-named directory.
 The installer argument is the human-readable project name written to
 `AGENTS.md`; it does not have to match the directory name.
 
-This creates `AGENTS.md` at the project root and the `sdais/` directory with all prompt files and templates:
+This creates `AGENTS.md`, the managed implementation workspace, and the
+`sdais/` directory with all prompt files and templates:
 
 ```
 <project-root>/
 ├── AGENTS.md
+├── implementation/
+│   └── .sdais-root          # zero-byte managed-root marker
 └── sdais/
     ├── SDAIS.md
     ├── prompts/
@@ -117,6 +120,14 @@ This creates `AGENTS.md` at the project root and the `sdais/` directory with all
 Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
 The installer creates `sdais/library/` empty. Its contents are project-owned;
 SDAIS updates never replace or delete them.
+
+The marker activates managed-root mode. Generator and TestGenerator place the
+entire language-native product tree below `implementation/`, including source,
+tests, package manifests, lockfiles, fixtures, assets, migrations, and
+build/deployment files. For Go this means `implementation/go.mod`,
+`implementation/cmd/`, and `implementation/internal/`, never those paths at the
+project root. The implementation is committed project content; it is not an
+ignored `generated/` directory.
 
 To launch any agent, use `./sdais.sh` from the project root:
 
@@ -305,7 +316,9 @@ Review the complete ADF set and either approve it—set every core document to `
 
 **Prompt:** `sdais/prompts/generator.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
-The Generator reads the cleared RSF and synthesises a complete implementation. It selects data structures, idioms, and implementation strategy within the constraints you specified.
+The Generator reads the cleared RSF and synthesises a complete implementation
+under `implementation/`. It selects the language-native structure, idioms, and
+implementation strategy within the constraints you specified.
 
 ### Standard mode
 
@@ -314,16 +327,16 @@ The Generator:
 - Reads all active RSF items.
 - Reads only the resolved libraries adopted by each active item.
 - Reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted.
-- Synthesises a complete implementation.
+- Synthesises a complete implementation under `implementation/`.
 - Writes one `[ANN]` block per callable unit and type. Every block starts with `(VERIFIED) false` and `(ROUND) 0`.
 
-Do not edit generated code by hand. Any manual change will be overwritten or will conflict with annotation state in the next round.
+Do not edit generated code by hand. Any manual change will be overwritten or will conflict with annotation state in the next round. Generator never writes product artefacts beside `AGENTS.md` or inside `sdais/`.
 
 ### TDD mode
 
 If the RSF contains a Constraint item with `Generation mode: TDD`:
 
-1. Run **TestGenerator** first (`sdais/prompts/test-generator.md`), specifying TDD mode. It writes test stubs with failing assertions derived from `(PRE)`, `(POST)`, and AC items. Every test block carries `(TEST-MODE) TDD`.
+1. Run **TestGenerator** first (`sdais/prompts/test-generator.md`), specifying TDD mode. It writes test stubs and fixtures under `implementation/` with failing assertions derived from `(PRE)`, `(POST)`, and AC items. Every test block carries `(TEST-MODE) TDD`.
 2. Run the **Generator** targeting 100% pass rate on those tests.
 
 TDD mode inverts the order — tests define the target, Generator satisfies them — and gives you an objective completion signal.

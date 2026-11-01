@@ -206,6 +206,7 @@ cat <<EOF
 
 Done.
   project:  $TARGET
+  impl:     implementation/ (managed by .sdais-root)
   prose:    sdais/gspec/v1/idea.md
   library:  sdais/library/csv-records/v1/format.md
   data:     data/records.csv ($DATA_ROWS data rows + 1 header, $CSV_BYTES bytes)

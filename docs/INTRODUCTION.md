@@ -42,6 +42,14 @@ architecture explains the solution without weakening either, and generated
 code must satisfy the composed contract. Library existence alone adds no agent
 context and creates no requirement.
 
+SDAIS also separates those specification artefacts from the product workspace.
+Fresh projects carry a zero-byte `implementation/.sdais-root` marker; while it
+exists, every agent-managed source, test, manifest, asset, migration, and
+build/deployment file stays under `implementation/`. The name describes the
+committed result—unlike `generated/`, it does not imply disposable output.
+Updated projects without the marker retain their earlier in-place layout until
+a human explicitly migrates and activates the root.
+
 ---
 
 ## A Team of Specialists, Not One Generalist
@@ -53,17 +61,17 @@ The paradigm defines a set of specialist agent roles, each with a focused respon
 | Prompt | Role | Purpose | Recommended tier |
 |---|---|---|---|
 | `requirements-engineer.md` | RequirementsEngineer | Transforms loose prose in `sdais/gspec/` into formal RSF items; preserves explicit pinned library adoption and asks when its version, file, or scope is unclear | High-reasoning (e.g. Claude Opus) |
-| `semantic-auditor.md` | SemanticAuditor | Validates RSF items and their adopted libraries before generation: resolves references and detects ambiguity, incompleteness, contradictions, and untestable acceptance criteria | High-reasoning (e.g. Claude Opus) |
+| `semantic-auditor.md` | SemanticAuditor | Validates RSF items, adopted libraries, and managed-root compatibility before generation | High-reasoning (e.g. Claude Opus) |
 | `grounder.md` | Grounder | Verifies that every Environment item describes something that actually exists in your infrastructure | High-reasoning (e.g. Claude Opus or Sonnet) |
 | `architect.md` | Architect | Produces the traceable ADF set and maps pinned libraries to components, interfaces, integrations, and decisions | High-reasoning (e.g. Claude Opus or Sonnet) |
-| `generator.md` | Generator | Synthesises a complete, annotated implementation from cleared RSF plus adopted libraries | High-coding (e.g. Claude Sonnet) |
+| `generator.md` | Generator | Synthesises a complete, annotated implementation under the active implementation root | High-coding (e.g. Claude Sonnet) |
 | `reviewer.md` | Reviewer | Checks every annotation block against RSF plus adopted libraries; sets blocks verified or raises findings | High-reasoning or high-coding (e.g. Claude Opus or Sonnet) |
 | `refiner.md` | Refiner | Fixes every violation directed by the Reviewer's hints; marks resolved blocks verified | High-coding (e.g. Claude Sonnet) |
 | `security-auditor.md` | SecurityAuditor | Specialised pass for security constraints, credential handling, input validation, and authorisation | High-reasoning (e.g. Claude Opus) |
 | `test-generator.md` | TestGenerator | Derives tests from preconditions, postconditions, acceptance criteria, and relevant library conformance rules; supports standard and TDD modes | High-coding (e.g. Claude Sonnet) |
 | `transformation-engineer.md` | TransformationEngineer | Transformation: refines loose prose into TRS/CDF, preserving explicit pinned library adoption; assigns Confidence levels during output generation | High-reasoning (e.g. Claude Opus) |
 | `analyzer.md` | Analyzer | Transformation: annotates an existing codebase and derives RSF items from observed behaviour; references confirmed TRS item IDs in `(ORIGIN)` | High-coding (e.g. Claude Sonnet) |
-| `transformation.md` | Transformation | Transformation: applies Change Definition Files to transform the annotated codebase | High-coding (e.g. Claude Sonnet) |
+| `transformation.md` | Transformation | Transformation: applies CDFs and writes the managed target without deleting legacy source | High-coding (e.g. Claude Sonnet) |
 
 The SemanticAuditor, for example, is primarily a language and logic task — it needs to detect subtle contradictions and vague wording. A model with strong reasoning capabilities does that well. The Generator, on the other hand, needs to produce correct, idiomatic code at scale. That is a different strength. Assigning the right model to each role is not premature optimisation; it is what makes the loop converge reliably.
 
@@ -92,7 +100,7 @@ A full SDAIS project moves through a predictable lifecycle, regardless of the sc
 2. **Audit** — the SemanticAuditor resolves adopted libraries and validates the composed contract; you resolve findings.
 3. **Ground** — the Grounder confirms infrastructure assumptions; you resolve any unresolvable items.
 4. **Architect** (optional) — the Architect produces a human-reviewed architecture document set before any code is written.
-5. **Generate** — the Generator synthesises the implementation from RSF plus adopted libraries with full annotation coverage.
+5. **Generate** — the Generator synthesises the implementation under `implementation/` from RSF plus adopted libraries with full annotation coverage.
 6. **Review** — the Reviewer checks every block against the same pinned contracts; findings are precise and actionable.
 7. **Refine** — the Refiner fixes violations using those same contracts; verified blocks accumulate.
 8. **Approve** — you review the result. Approve, amend the RSF and restart, or reject and regenerate.
@@ -109,7 +117,12 @@ Not every project starts from a blank slate. SDAIS covers both scenarios:
 
 **SDAIS-G (Greenfield)** — the specification is written before any code exists. Specify, audit, generate, review, refine, approve. See [GREENFIELD.md](GREENFIELD.md) for the detailed walkthrough.
 
-**SDAIS-T (Transformation)** — an existing codebase precedes the specification. The Analyzer annotates the existing code, derives RSF items from observed behaviour, and surfaces anything unclear as findings. You then activate Change Definition Files (CDF), and the Transformation agent applies them while preserving all annotation identifiers. From there the standard review loop takes over. See [TRANSFORMATION.md](TRANSFORMATION.md) for the detailed walkthrough.
+**SDAIS-T (Transformation)** — an existing codebase precedes the specification.
+Analyzer annotates it in place, derives RSF items, and surfaces unclear intent.
+Transformation applies active CDFs while preserving annotation identifiers; in
+managed mode it writes a separate complete target under `implementation/` and
+leaves legacy input intact. From there the standard review loop takes over. See
+[TRANSFORMATION.md](TRANSFORMATION.md) for the detailed walkthrough.
 
 ---
 

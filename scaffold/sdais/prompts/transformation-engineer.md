@@ -1,6 +1,6 @@
 @role TransformationEngineer   # SDAIS-T
 @spec SDAIS.md#sdais-t-transformation-extension #directory-structure
-      #versioned-reference-libraries
+      #versioned-reference-libraries #implementation-root
 @task loose unstructured human prose about an existing system and desired
       changes -> formal TRS items + CDF files
 @modes two sequential: A=Clarification, B=Output Generation
@@ -49,6 +49,8 @@ A.2 identify and mark new ambiguities
   - contradicts another passage in any tspec file
   - assumes unstated context about the existing system
   - describes a desired transformation without stating what should be preserved
+  - in managed mode, requests transformed repository output outside
+    implementation/ or leaves source-versus-target placement unclear
   - names|links a library informally, without an exact version + concrete file,
     or without making which hypotheses|transformations adopt it clear
  -> insert a `[[QM]]` marker inline immediately after the ambiguous passage.
@@ -182,6 +184,9 @@ B.3 derive cdf files from all files in tspec/v<N>/, one per distinct
     absent; Source stays tspec provenance
   - Transformation Rules are numbered, concrete, testable statements
   - never invent transformations. derive only what the spec text requests.
+  - managed mode (`implementation/.sdais-root` exists): Target describes a
+    complete implementation/** workspace; legacy source remains input and is
+    not deleted. an explicit conflicting target path -> switch to A and ask
  write one file per cdf to sdais/cdf/v1/
  name: <category>-NNNN-<short-hyphenated-description>.md
  format, verbatim shape:

@@ -32,7 +32,11 @@ them from inside the SDAIS distribution repository.
 The installer argument is a human-readable label substituted into `AGENTS.md`
 — it does not have to match your directory name.
 
-`install.sh` creates `AGENTS.md` and the full `sdais/` scaffold with all prompt files and templates. The repository-local launcher is `./sdais.sh`. The installer also places a convenience copy in `~/.local/bin/sdais`; the canonical invocation used by SDAIS documentation remains `./sdais.sh` from the project root.
+`install.sh` creates `AGENTS.md`, the full `sdais/` scaffold, and the managed
+`implementation/` workspace. The repository-local launcher is `./sdais.sh`.
+The installer also places a convenience copy in `~/.local/bin/sdais`; the
+canonical invocation used by SDAIS documentation remains `./sdais.sh` from the
+project root.
 
 `SDAIS.md` in the project root is the distribution file. `install.sh` copies it into `sdais/SDAIS.md` — the project-local copy that agents read. These are intentionally two separate files at different paths: when you upgrade, you replace the root-level `SDAIS.md` and run `./update.sh`, which refreshes `sdais/SDAIS.md` without touching any project content.
 
@@ -74,6 +78,36 @@ them; Reviewer verifies conformance; Refiner and TestGenerator use the same
 pinned files. To amend a published contract, add `v<N+1>` and update only the
 requirements that adopt it—old requirements keep using their pinned version.
 Update preserves every file under `sdais/library/`.
+
+---
+
+## Managed Implementation Root
+
+Fresh projects keep every agent-managed product artefact under
+`implementation/`. The zero-byte marker `implementation/.sdais-root` activates
+this contract:
+
+```text
+implementation/
+├── .sdais-root
+├── go.mod
+├── cmd/
+├── internal/
+└── tests/
+```
+
+The same rule applies to other languages and to source, tests, package
+manifests, lockfiles, fixtures, assets, migrations, build/deployment files, and
+product documentation. These files are committed project content.
+`generated/` is intentionally not used because the reviewed implementation is
+not disposable build output.
+
+Update does not create the marker or move code in an existing unmarked project;
+that project keeps the legacy in-place behavior. To opt in, move the complete
+implementation workspace into `implementation/`, then create the zero-byte
+marker last. In SDAIS-T, legacy source may remain outside the root: Analyzer
+annotates it in place, Transformation writes the complete target under
+`implementation/`, and downstream agents operate only on that target.
 
 ---
 
@@ -126,7 +160,7 @@ Repeat phases 1–5 until all findings are resolved. That cleared RSF is your co
 
 **Phase 2 — Synthesise**
 
-6. Run the **Generator** — it reads the cleared RSF and synthesises a complete, annotated implementation.
+6. Run the **Generator** — it reads the cleared RSF and synthesises a complete, annotated implementation under `implementation/`.
 7. Run the **Reviewer** — it checks every annotated code unit against the RSF and writes findings for any violations.
 8. Run the **Refiner** — it fixes every violation guided by the Reviewer's hints.
 9. Return to step 7. Repeat until the Reviewer reports zero violations.
@@ -150,7 +184,7 @@ If you find it easier to start with free-form prose, write your ideas about the 
 2. Run the **Analyzer** — it reads the codebase, adds annotation blocks to every unit, derives formal RSF items from observed behaviour, and opens findings for anything unclear.
 3. Resolve findings and refine the derived RSF through the standard semantic audit loop.
 4. Activate one or more Change Definition Files (CDF) describing the transformation you want (language migration, modularisation, new persistence layer, etc.).
-5. Run the **Transformation** agent — it applies the CDFs to the annotated codebase while preserving all annotation identifiers.
+5. Run the **Transformation** agent — it applies the CDFs to the annotated codebase, writes the managed target under `implementation/`, and preserves all annotation identifiers without deleting legacy source.
 6. Continue from step 7 of the greenfield loop above (Review → Refine → Approve).
 
 ---

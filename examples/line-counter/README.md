@@ -34,6 +34,12 @@ synthesised tool to read:
     export SDAIS_DEMO_INPUT=/tmp/lc/data
     ./sdais.sh claude <model> RequirementsEngineer
 
+The bootstrap also creates `implementation/.sdais-root`. When the fixture
+reaches generation, the Go workspace belongs entirely below that root—for
+example `implementation/go.mod`, `implementation/cmd/`, and
+`implementation/internal/`. No module or source directory should be generated
+beside `AGENTS.md` or inside `sdais/`.
+
 Options:
 
     --rows N        data rows to generate (default: 1000)
@@ -72,6 +78,13 @@ Mode B, after answering:
 - only items whose behavior depends on the CSV format carry
   `**Libraries:** sdais/library/csv-records/v1/format.md`
 - no standalone RSF item is derived from the library text itself
+
+Generator:
+
+- `implementation/.sdais-root` remains a zero-byte file
+- all Go sources, `go.mod`, tests, fixtures, and build files are written below
+  `implementation/`
+- no `go.mod`, `cmd/`, `bin/`, or `internal/` is created at the project root
 
 SemanticAuditor:
 

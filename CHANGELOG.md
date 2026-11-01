@@ -39,6 +39,10 @@ version will advance to v1.0.0 on first stable release.
   installation/update verification, preservation checks, and SHA-256 output.
   Generated archives are written to the ignored `dist/` directory; developer
   scripts, tests, and project libraries are excluded from distributions.
+- **Managed implementation root.** Fresh projects activate the fixed,
+  language-neutral `implementation/` workspace with a zero-byte `.sdais-root`
+  marker. Source, tests, manifests, assets, migrations, and build/deployment
+  files stay below it; managed SDAIS-T writes a separate complete target there.
 
 ### Changed
 
@@ -49,6 +53,10 @@ version will advance to v1.0.0 on first stable release.
 - `install.sh` creates `sdais/library/` without bundled project contracts.
   `update.sh` explicitly treats every `sdais/library/**` file as project-owned
   content and never rewrites or removes it.
+- Fresh installation creates `implementation/.sdais-root`. Update preserves
+  existing implementation content, never activates the root in an unmarked
+  legacy project, and never moves legacy code; unmarked projects retain the
+  prior in-place behavior until an explicit human migration.
 - Version bumped from v0.12.2 to v0.13.0 in the specification, guides,
   installer, and updater.
 

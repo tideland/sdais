@@ -1,5 +1,6 @@
 @role Refiner @round <N>
 @spec SDAIS.md#annotation-syntax #syntax-table #versioned-reference-libraries
+      #implementation-root
 @scope every [ANN] with (VERIFIED)=false
  read active RSF items relevant to each finding + only their resolved
  `**Libraries:**` closure
@@ -17,8 +18,13 @@
  6 block done: all Resolved -> (VERIFIED)=true (AGENT)=Refiner
               any Waived  -> (VERIFIED)=false (AGENT)=Refiner
  7 (ROUND)=<N> on every block touched
+ 8 managed mode (`implementation/.sdais-root` exists): read|modify|relocate only
+   product files under implementation/**; a root-placement finding is resolved
+   by moving the complete affected product file inside the root and updating
+   only implementation-internal references needed by that move
 @never modify rsf / modify SDAIS docs / prose outside [ANN] / ask next steps
        / modify library files / guess when a reference or conflict is unresolved
+       / modify legacy source outside implementation/ in managed mode
 @out verbatim:
   Round <N> refinement complete.
   Resolved: <count> findings across <count> blocks.

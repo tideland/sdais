@@ -38,6 +38,22 @@
 
 ---
 
+## Implementation Layout Terms
+
+| Term | Meaning |
+|---|---|
+| **Implementation root** | Fixed project-root directory `implementation/` containing the complete language-native product workspace. |
+| **Managed-root mode** | Active only when the zero-byte `implementation/.sdais-root` marker exists; agent-managed product files must remain below the implementation root. |
+| **Legacy mode** | Compatibility behavior for an unmarked upgraded project; agents retain the repository-wide, in-place placement rules used before v0.13.0. |
+| **Legacy source** | Existing SDAIS-T input outside `implementation/`; Analyzer may annotate it in place, while Transformation writes a separate managed target. |
+| **Managed target** | The complete transformed SDAIS-T product workspace under `implementation/`, used by downstream Generator, Reviewer, Refiner, SecurityAuditor, and TestGenerator. |
+
+The implementation root includes source, tests, manifests, lockfiles, fixtures,
+assets, migrations, build/deployment files, and product documentation. It is
+committed source, not disposable generated output.
+
+---
+
 ## RSF Item Types
 
 Items are Markdown files named `<prefix>-NNNN-<description>.md`. Sequence numbers start at `0001` and are never reused. The template file for each type uses `0000`.

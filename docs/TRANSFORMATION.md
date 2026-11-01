@@ -42,9 +42,9 @@ flowchart TD
     G --> E
     F -- Yes --> H[Step 4\nGrounder\nif E- items exist]
     H --> I[Step 5\nActivate CDF files\nlang · ui · pers · mod · plat · api · obs · i18n]
-    I --> J[Step 6\nTransformation agent\napply CDFs]
+    I --> J[Step 6\nTransformation agent\nwrite implementation/ target]
     J --> K{Uncovered\nRSF items?}
-    K -- Yes --> L[Step 7\nGenerator\nfill gaps]
+    K -- Yes --> L[Step 7\nGenerator\nfill implementation/ gaps]
     L --> M
     K -- No --> M[Step 8\nReviewer]
     M --> N{Violations?}
@@ -85,6 +85,13 @@ Create the project root, copy or download `sdais-v0.13.0.tgz` into it, unpack
 the archive there, and run `./install.sh <project-name>` as described in
 [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold and `./sdais.sh`
 launcher are used for both workflows.
+
+A fresh install activates managed-root mode with the zero-byte marker
+`implementation/.sdais-root`. Existing source may remain elsewhere: it is the
+Analyzer's input, while `implementation/` is the Transformation agent's
+complete target. Update never activates this mode or moves code in an older
+unmarked project; such a project keeps the legacy in-place workflow until the
+human moves its implementation and creates the marker last.
 
 ---
 
@@ -168,6 +175,11 @@ The code is always authoritative. When the Analyzer finds that a hypothesis cont
 **Prompt:** `sdais/prompts/analyzer.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
 Point the Analyzer at the existing codebase and any TRS files you authored in Step 1.
+
+In managed-root mode, Analyzer may annotate legacy source outside
+`implementation/` in place. This is the only exception to the managed-root
+write boundary. It must not confuse a previously completed transformed target
+with unrelated legacy input.
 
 The Analyzer works additively — it never modifies existing logic, signatures, or comments. It only adds:
 
@@ -293,7 +305,8 @@ The Transformation agent:
 
 - Applies each CDF's transformation rules to the units listed in `Affects`.
 - Implements the composed RSF plus adopted-library contract and stops with affected IDs if a reference or conflict remains unresolved.
-- Produces transformed code in the target language, framework, or architecture.
+- In managed mode, produces a complete target below `implementation/`, including source, tests, manifests, lockfiles, assets, migrations, and build/deployment files.
+- Leaves legacy input outside `implementation/` intact; if the source already resides under the managed root, transforms it there.
 - Preserves all `(ANN-ID)` values according to these rules:
   - **One-to-one:** transformed unit carries the original `(ANN-ID)` unchanged.
   - **Split:** when one unit splits into multiple, the original `(ANN-ID)` stays with the unit retaining primary responsibility; new units receive freshly generated IDs.
@@ -320,7 +333,11 @@ RSF items not covered (handed to Generator): 2 — FR-0027, FR-0031.
 
 **Prompt:** `sdais/prompts/generator.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
-If the Transformation agent reports uncovered RSF items, run the Generator to synthesise implementations for those items only. The Generator reads the partially-transformed codebase and the list of uncovered RSF item IDs. It does not touch units already transformed by the Transformation agent.
+If the Transformation agent reports uncovered RSF items, run the Generator to
+synthesise implementations for those items only. In managed mode it reads the
+partially transformed `implementation/` target and writes gaps only within that
+root. It does not touch legacy input or units already transformed by the
+Transformation agent.
 
 ---
 
@@ -328,7 +345,7 @@ If the Transformation agent reports uncovered RSF items, run the Generator to sy
 
 From this point, follow the greenfield workflow:
 
-- **Step 8 (Review):** The Reviewer checks all `[ANN]` blocks against active RSF and every adopted pinned file. Library conformance failures attach to relevant blocks; `(ORIGIN)` remains specification IDs. The dependency cascade check applies as usual.
+- **Step 8 (Review):** The Reviewer checks only the managed target's `[ANN]` blocks against active RSF and every adopted pinned file. Library or root-placement failures attach to relevant blocks; `(ORIGIN)` remains specification IDs.
 - **Step 9 (Refine):** Resolve violations using the same pinned files; implementation and permitted annotation fields may change, but RSF and library content may not.
 - **Step 10 (Approval Gate):** Approve, amend RSF and re-audit, or reject and re-run the Transformation agent.
 
