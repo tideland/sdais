@@ -1,6 +1,6 @@
 # SDAIS — Greenfield Workflow
 
-**Version:** v0.13.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.14.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-G (Greenfield) workflow applies when you are building a new system from a clean slate. The specification precedes the code — nothing is generated until the RSF has been validated and cleared.
 
@@ -73,8 +73,8 @@ unpack the archive there, and run the installer:
 ```sh
 mkdir my-project
 cd my-project
-cp /path/to/sdais-v0.13.0.tgz .
-tar xzf sdais-v0.13.0.tgz
+cp /path/to/sdais-v0.14.0.tgz .
+tar xzf sdais-v0.14.0.tgz
 ./install.sh "My Project"
 ```
 
@@ -132,10 +132,19 @@ ignored `generated/` directory.
 To launch any agent, use `./sdais.sh` from the project root:
 
 ```
-./sdais.sh <tool> <model> <role>
+./sdais.sh                          # interactive menu
+./sdais.sh <tool> <model> <role>    # direct launch
 ```
 
-Example: `./sdais.sh claude claude-opus-4-5 SemanticAuditor`. The role may be CamelCase or kebab-case. Supported tools: `claude`, `ollama`.
+Without arguments, the launcher lists every role with the recommended model per
+tool and asks for a menu code: `C01`–`C12` for Claude, `X01`–`X12` for Codex,
+`G01`–`G12` for Gemini, and `O01`–`O12` for Ollama. `C01` is the Claude
+RequirementsEngineer, the usual first step of SDAIS-G. See the README section
+*Running Agents* for the model table and override variables.
+
+Direct example: `./sdais.sh claude claude-opus-5-5 SemanticAuditor`. The role
+may be CamelCase or kebab-case. Supported tools: `claude`, `codex`, `gemini`,
+`ollama`.
 
 ---
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS update script — v0.13.0
+# SDAIS update script — v0.14.0
 # Usage: update.sh [--from <old-version>]
 #
 # Run from your project root. Replaces scaffold files (prompts, templates,
@@ -21,7 +21,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.13.0"
+SDAIS_VERSION="v0.14.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FROM_VERSION=""
 
@@ -47,7 +47,7 @@ PROJECT=$(head -1 AGENTS.md | sed 's/^# AGENTS — //')
 CUSTOM_BLOCK=$(mktemp)
 awk '/<!-- BEGIN: Custom Agents Extension -->/,/<!-- END: Custom Agents Extension -->/' AGENTS.md > "$CUSTOM_BLOCK"
 
-# Locate scaffold. The v0.13.0 distribution archive expands beside scaffold/,
+# Locate scaffold. The v0.14.0 distribution archive expands beside scaffold/,
 # so the unpacked directory takes precedence over the archive itself.
 TGZ="$SCRIPT_DIR/sdais-$SDAIS_VERSION.tgz"
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# SDAIS install script — v0.13.0
+# SDAIS install script — v0.14.0
 # Usage: install.sh <project-name>
 #
 # Run from your project root. Creates AGENTS.md, the sdais/ scaffold, and the
@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-SDAIS_VERSION="v0.13.0"
+SDAIS_VERSION="v0.14.0"
 if [[ $# -lt 1 ]]; then
     echo "Usage: install.sh <project-name>" >&2
     exit 1
@@ -19,7 +19,7 @@ TODAY="$(date +%Y-%m-%d)"
 
 echo "SDAIS $SDAIS_VERSION — installing scaffold for: $PROJECT"
 
-# Locate scaffold. The v0.13.0 distribution archive expands beside scaffold/,
+# Locate scaffold. The v0.14.0 distribution archive expands beside scaffold/,
 # so the unpacked directory takes precedence over the archive itself.
 TGZ="$SCRIPT_DIR/sdais-$SDAIS_VERSION.tgz"
 
@@ -83,3 +83,4 @@ echo "  Option A (SDAIS-T) — draft transformation prose: create sdais/tspec/v1
 echo "             then run: ./sdais.sh <tool> <model> TransformationEngineer"
 echo "  Option B — author RSF items directly in sdais/rsf/v1/, then run:"
 echo "             ./sdais.sh <tool> <model> SemanticAuditor"
+echo "  Or run ./sdais.sh without arguments to pick role, tool, and model from a menu."

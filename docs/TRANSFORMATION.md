@@ -1,6 +1,6 @@
 # SDAIS — Transformation Workflow
 
-**Version:** v0.13.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
+**Version:** v0.14.0 | See [INTRODUCTION.md](INTRODUCTION.md) for concepts and prerequisites.
 
 The SDAIS-T (Transformation) workflow applies when an existing codebase precedes the specification. Most real-world systems do not start with a clean specification. They start with code — accumulated over years, built by people who are often no longer around, with intent that lives in git history at best and in tribal knowledge at worst. SDAIS-T is the workflow for those systems.
 
@@ -81,7 +81,7 @@ Dark blue = AI agent step. Orange = human decision gate.
 
 ## Step −1 — Install the Scaffold
 
-Create the project root, copy or download `sdais-v0.13.0.tgz` into it, unpack
+Create the project root, copy or download `sdais-v0.14.0.tgz` into it, unpack
 the archive there, and run `./install.sh <project-name>` as described in
 [GREENFIELD.md](GREENFIELD.md) Step −1. The same scaffold and `./sdais.sh`
 launcher are used for both workflows.

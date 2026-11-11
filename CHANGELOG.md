@@ -8,6 +8,30 @@ version will advance to v1.0.0 on first stable release.
 
 ---
 
+## [v0.14.0] — 2026-11-11
+
+### Added
+
+- **Interactive launcher menu.** Running `./sdais.sh` without arguments prints
+  all twelve roles in workflow order with the recommended model for Claude,
+  Codex, Gemini, and Ollama. Each entry carries a menu code (`C01`–`C12`,
+  `X01`–`X12`, `G01`–`G12`, `O01`–`O12`); entering a code at the prompt
+  launches that role, tool, and model. `q` quits; invalid codes re-prompt.
+- **Model tiers per tool.** Reasoning-heavy roles use `claude-opus-5-5`,
+  `gpt-6.1-sol`, `gemini-4-argon`, or `gpt-oss:20b`; synthesis roles use
+  `claude-sonnet-5-5`, `gpt-6-luna`, `gemini-3.8-flash`, or
+  `qwen3-coder:30b`. Each default can be overridden with
+  `SDAIS_<TOOL>_REASONING` / `SDAIS_<TOOL>_CODING`.
+- `./sdais.sh --help` prints the usage summary to stdout.
+
+### Changed
+
+- Launcher help, README, specification, and greenfield guide use current model
+  IDs and list all four supported tools.
+- `install.sh` mentions the interactive menu in its next-step output.
+- Version bumped from v0.13.0 to v0.14.0 in the specification, guides,
+  installer, and updater.
+
 ## [v0.13.0] — 2026-10-08
 
 ### Added

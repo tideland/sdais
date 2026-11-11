@@ -1,6 +1,6 @@
 # SDAIS — Specification-Driven AI Synthesis
 
-**Version:** v0.13.0 | **Status:** Final | **License:** BSD 3-Clause
+**Version:** v0.14.0 | **Status:** Final | **License:** BSD 3-Clause
 
 SDAIS is a software development paradigm in which humans author requirements and adopted reference contracts while AI agents synthesise, review, and refine all implementation code. No human writes implementation code. Human-authored RSF determines intent and adoption scope; pinned libraries supply the adopted contract details.
 
@@ -16,14 +16,14 @@ into it, unpack the archive, and run the installer:
 ```sh
 mkdir my-project
 cd my-project
-cp /path/to/sdais-v0.13.0.tgz .
-tar xzf sdais-v0.13.0.tgz
+cp /path/to/sdais-v0.14.0.tgz .
+tar xzf sdais-v0.14.0.tgz
 ./install.sh "My Project"
 ```
 
 The archive expands directly into the current directory; it does not create an
 extra version-named directory. You can replace the `cp` command with a download
-command that saves the archive as `sdais-v0.13.0.tgz`.
+command that saves the archive as `sdais-v0.14.0.tgz`.
 
 `install.sh` and `update.sh` must be run from this project root — the directory
 that contains `SDAIS.md`, `install.sh`, `update.sh`, and `scaffold/`. Do not run
@@ -44,8 +44,8 @@ To upgrade an existing project, copy or download the new archive into the
 project root, unpack it there, and run:
 
 ```sh
-tar xzf sdais-v0.13.0.tgz
-./update.sh --from v0.12.2
+tar xzf sdais-v0.14.0.tgz
+./update.sh --from v0.13.0
 ```
 
 Unpacking replaces only distribution files and the bundled `scaffold/` tree.
@@ -116,25 +116,66 @@ annotates it in place, Transformation writes the complete target under
 The `./sdais.sh` script launches any agent role against a model of your choice. Run it from the project root—the directory containing `sdais/prompts/`:
 
 ```
-./sdais.sh <tool> <model> <role>
+./sdais.sh                           # interactive menu
+./sdais.sh <tool> <model> <role>     # direct launch
 ```
+
+### Interactive menu
+
+Run `./sdais.sh` without arguments to print every role in workflow order
+together with the recommended model for each tool. Each cell carries a menu
+code: `C` for Claude, `X` for Codex, `G` for Gemini, and `O` for Ollama,
+followed by the role number `01`–`12`. Enter a code at the prompt (for example
+`C01` for the Claude RequirementsEngineer, case-insensitive) to launch that
+combination, or `q` to quit.
+
+```
+Role                    Claude                Codex                 Gemini                Ollama
+RequirementsEngineer    C01 claude-opus-5-5   X01 gpt-6.1-sol       G01 gemini-4-argon    O01 gpt-oss:20b
+...
+Grounder                C05 claude-sonnet-5-5 X05 gpt-6-luna        G05 gemini-3.8-flash  O05 qwen3-coder:30b
+...
+Next step — enter a menu code (e.g. C01, q to quit):
+```
+
+Reasoning-heavy roles (RequirementsEngineer, TransformationEngineer,
+SemanticAuditor, Architect, Reviewer, SecurityAuditor) use each tool's
+high-reasoning model; synthesis roles (Grounder, Analyzer, Generator, Refiner,
+Transformation, TestGenerator) use its high-coding model:
+
+| Tool | Reasoning model | Coding model | Override variables |
+|---|---|---|---|
+| Claude | `claude-opus-5-5` | `claude-sonnet-5-5` | `SDAIS_CLAUDE_REASONING`, `SDAIS_CLAUDE_CODING` |
+| Codex | `gpt-6.1-sol` | `gpt-6-luna` | `SDAIS_CODEX_REASONING`, `SDAIS_CODEX_CODING` |
+| Gemini | `gemini-4-argon` | `gemini-3.8-flash` | `SDAIS_GEMINI_REASONING`, `SDAIS_GEMINI_CODING` |
+| Ollama | `gpt-oss:20b` | `qwen3-coder:30b` | `SDAIS_OLLAMA_REASONING`, `SDAIS_OLLAMA_CODING` |
+
+The defaults reflect the state of November 2026. Set the override variables to
+pin the models your project uses, for example
+`SDAIS_GEMINI_REASONING=gemini-3.1-pro-preview ./sdais.sh` if your Gemini CLI
+does not yet accept `gemini-4-argon`. Choose Ollama models that fit your
+hardware.
+
+### Direct launch
 
 | Argument | Values | Example |
 |---|---|---|
 | `tool` | `claude`, `ollama`, `codex`, `gemini` | `claude` |
-| `model` | Any model ID supported by the tool | `claude-opus-4-5` |
+| `model` | Any model ID supported by the tool | `claude-opus-5-5` |
 | `role` | CamelCase or kebab-case role name | `RequirementsEngineer` or `requirements-engineer` |
 
 Examples:
 
 ```
-./sdais.sh claude  claude-opus-4-5    RequirementsEngineer
-./sdais.sh claude  claude-sonnet-4-5  Generator
-./sdais.sh claude  claude-opus-4-5    SemanticAuditor
-./sdais.sh ollama  gemma4             Reviewer
-./sdais.sh codex   codex-mini         Generator
-./sdais.sh gemini  gemini-2.0-flash   Generator
+./sdais.sh claude  claude-opus-5-5    RequirementsEngineer
+./sdais.sh claude  claude-sonnet-5-5  Generator
+./sdais.sh claude  claude-opus-5-5    SemanticAuditor
+./sdais.sh ollama  qwen3-coder:30b    Generator
+./sdais.sh codex   gpt-6.1-sol        Reviewer
+./sdais.sh gemini  gemini-3.8-flash   Generator
 ```
+
+`./sdais.sh --help` prints the usage summary.
 
 Pin the model per role in your `AGENTS.md` to prevent version drift between rounds.
 
@@ -196,8 +237,8 @@ the SDAIS distribution archive:
 
 ```sh
 make check
-make release VERSION=v0.13.0
-make verify ARCHIVE=dist/sdais-v0.13.0.tgz
+make release VERSION=v0.14.0
+make verify ARCHIVE=dist/sdais-v0.14.0.tgz
 ```
 
 `make check` runs shell syntax checks, repository tests, Markdown link and fence

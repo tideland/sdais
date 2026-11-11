@@ -1,7 +1,7 @@
 # SDAIS — Specification-Driven AI Synthesis
 
 - **Date:** 2026-10-08
-- **Version:** v0.13.0
+- **Version:** v0.14.0
 - **Status:** Draft
 
 ---
@@ -435,10 +435,13 @@ project-specific library content ships in the scaffold.
 To launch an agent from the project root, use `./sdais.sh`:
 
 ```
+./sdais.sh
 ./sdais.sh <tool> <model> <role>
 ```
 
-For example: `./sdais.sh claude claude-opus-4-5 SemanticAuditor`. The launcher accepts the role as CamelCase (`SemanticAuditor`) or kebab-case (`semantic-auditor`). Supported tools: `claude`, `ollama`. Run from the project root.
+Without arguments the launcher prints an interactive menu listing every role with the recommended reasoning or coding model per tool. Each entry has a menu code — `C01`–`C12` (Claude), `X01`–`X12` (Codex), `G01`–`G12` (Gemini), `O01`–`O12` (Ollama), numbered in workflow order starting with RequirementsEngineer — and the user selects the next step by entering that code. Default models can be overridden with `SDAIS_<TOOL>_REASONING` and `SDAIS_<TOOL>_CODING`.
+
+For a direct launch, for example: `./sdais.sh claude claude-opus-5-5 SemanticAuditor`. The launcher accepts the role as CamelCase (`SemanticAuditor`) or kebab-case (`semantic-auditor`). Supported tools: `claude`, `codex`, `gemini`, `ollama`. Run from the project root.
 
 ### Step −1b — Update Scaffolding to a New SDAIS Version
 
