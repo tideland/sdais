@@ -23,6 +23,15 @@ version will advance to v1.0.0 on first stable release.
   `qwen3-coder:30b`. Each default can be overridden with
   `SDAIS_<TOOL>_REASONING` / `SDAIS_<TOOL>_CODING`.
 - `./sdais.sh --help` prints the usage summary to stdout.
+- **RequirementsEngineer answer selection.** Every clarification question in
+  `## Questions` now carries an **Answers** list in the SemanticAuditor's
+  variant style: always exactly three complete answer variants (`V1`
+  recommended, `V2` and `V3` alternatives), a fixed `Own` line, and `{{snake_case}}` placeholders for details only the
+  human can supply. A question is answered when exactly one line is ticked and
+  contains no placeholder; multiple ticks or unfilled placeholders keep it open
+  and are flagged in the agent's output. Optional prose below the list refines
+  the ticked answer. Questions from earlier versions without an Answers list
+  still accept free-prose answers.
 
 ### Changed
 

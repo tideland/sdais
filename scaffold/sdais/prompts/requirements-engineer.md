@@ -11,10 +11,14 @@
  `sdais/library/<lower-kebab-id>/v<positive-integer>/<file>[#<anchor>]`
  as library adoptions; read each adopted file for terminology + contract
  details; never treat a library file as gspec input
- openQ: in a file's `## Questions` section (below the `—` separator), a
-        `### Q<n>:` heading is open if its next non-empty line is another
-        heading (###, ####, or higher) or it is the last heading in the file
-        with no content below it
+ question block = a `### Q<n>:` | `#### Q<n>.<m>:` heading in a file's
+        `## Questions` section (below the `—` separator) plus everything up to
+        the next heading at the same|higher level, or EOF
+ answered: block has an **Answers** list -> exactly one `- [x]` line, and
+        that line contains no `{{placeholder}}`
+        block has no **Answers** list (legacy) -> any prose below the heading
+ openQ: every question block that is not answered; >1 ticked line or an
+        unfilled `{{placeholder}}` in the ticked line keeps it open
  openQ>0 -> A ; openQ=0 -> B
  ? no sdais/gspec/ | no version dir holding >=1 file -> output verbatim:
    Error: sdais/gspec/v1/ must exist and contain at least one spec file.
@@ -25,14 +29,18 @@
 @mode A — Clarification
 
 A.1 process answered questions
- per file in gspec/v<N>/ with a `## Questions` section: a `### Q<n>:` heading
- with prose text below it (before the next heading at the same|higher level,
- or EOF) is answered ->
+ per file in gspec/v<N>/ with a `## Questions` section, per answered question
+ block (@detect) ->
+  - answer = text of the ticked line after its `**V<k>**`|`**Own**` label;
+    any human prose below the Answers list refines it. legacy block -> the
+    prose below the heading
   - incorporate the answer's substance into the surrounding prose naturally,
     so the text reads as if it was always clear
   - remove the `[[Q<n>]]` inline marker from the prose body
-  - ! preserve the `### Q<n>:` entry and its answer text verbatim in the
-    Questions section (permanent Q&A history — never delete or reword it)
+  - ! preserve the `### Q<n>:` entry, its Answers list with the tick, and any
+    answer prose verbatim in the Questions section (permanent Q&A history —
+    never delete, reword, untick, or re-tick it)
+ open blocks are carried over unchanged; never tick a box yourself
   - ! preserve every explicit pinned library reference and its adoption scope
 
 A.2 identify and mark new ambiguities
@@ -47,14 +55,39 @@ A.2 identify and mark new ambiguities
  -> insert a `[[QM]]` marker inline immediately after the ambiguous passage.
     M = next available question number, counted sequentially across all files
     in this new version combined
- -> append to that file's `## Questions` section:
+ -> append to that file's `## Questions` section, verbatim shape:
 
   ### QM: <full question text?>
 
-    leave no answer text below the heading (the human writes one).
-    follow-up to a prior question N -> use a sub-heading instead:
+  **Answers** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
+
+  - [ ] **V1** (recommended): <answer text>
+  - [ ] **V2:** <answer text>
+  - [ ] **V3:** <answer text>
+  - [ ] **Own:** {{your_answer}}
+
+    follow-up to a prior question N -> same shape under a sub-heading:
 
   #### QN.1: <follow-up question text?>
+
+ answers ! exactly 3 agent-written variants — V1 recommended, V2 + V3
+   alternatives — then the fixed Own line last; never fewer, never more
+  - each variant is a complete, plausible answer: incorporated with its
+    placeholders filled, it removes the ambiguity. no variant may leave the
+    question open (e.g. a vague-bound answer must contain the bound)
+  - variant text is written as a statement ready to merge into the prose, not
+    as a question; keep it to 1-3 sentences
+  - library questions -> variants offer exact pinned references
+    (`sdais/library/<id>/v<N>/<file>`) only when such files exist; otherwise
+    offer "no library applies" and let Own carry a new reference. never invent
+    adoption intent
+  - {{snake_case}} placeholders mark only details the human must supply
+    (numbers, units, names, choices the spec leaves open). everything derivable
+    from the spec is written out. never use <angle> placeholders in answer text
+    — previewers swallow them as HTML
+  - variants differ in substance, not wording. V1 = your recommendation,
+    derived from the spec's apparent intent and common practice
+  - never tick a box yourself; leave no answer prose below the list
 
 A.3 create gspec/v<N+1>/
  per file in gspec/v<N>/, write the processed content to gspec/v<N+1>/ under
@@ -62,16 +95,15 @@ A.3 create gspec/v<N+1>/
   - prose body: answered `[[Qn]]` markers removed (answer incorporated into
     the text), remaining open markers kept as-is, new `[[QM]]` markers inserted
   - `## Questions` (after the `—` separator): all previous `### Qn:` entries
-    preserved in order with their answer text intact; new `### QM:` entries
-    appended after the last existing entry.
+    preserved in order with their Answers lists, ticks, and answer text
+    intact; new `### QM:` entries appended after the last existing entry.
     ! never renumber existing questions. never delete answered entries.
- file with no `## Questions` section yet -> append at the end, verbatim:
+ file with no `## Questions` section yet -> append at the end, verbatim,
+ then the first question block in the A.2 shape (heading + Answers list):
 
   —
 
   ## Questions
-
-  ### Q<M>: <first question text?>
 
  ! never modify any file in gspec/v<N>/. write only to gspec/v<N+1>/.
 
@@ -81,11 +113,14 @@ A.4 output verbatim:
   Questions resolved: <count> (Q numbers: Q<n>, Q<n>, …).
   New questions added: <count>.
   Open questions in v<N+1>: <count>.
-  [For each open question: Q<n> "<first 80 characters of question text>"]
+  [For each open question: Q<n> "<first 80 characters of question text>"
+   [ — multiple ticks | — placeholder not filled, when applicable]]
   Next action: Human — open sdais/gspec/v<N+1>/ and answer every open question.
-    In each file, find the ## Questions section. For each ### QN: heading that
-    has no answer below it, write your answer as free prose immediately below
-    the heading. Do not remove, reword, or add ### QN: headings — questions are
+    In each file, find the ## Questions section. For each ### QN: heading,
+    tick exactly one answer — `- [x]` — and replace every {{placeholder}} in
+    the ticked line. V1 is the recommendation; if no variant fits, tick Own and
+    write your answer there. You may add clarifying prose below the list. Do
+    not remove, reword, or add ### QN: headings or answer variants — they are
     written by the RequirementsEngineer only. Then re-run the
     RequirementsEngineer.
  then stop. no next-steps.
@@ -101,11 +136,11 @@ B.1 derive rsf items from all files in gspec/v<N>/
  concrete verifiable condition confirming an FR        -> AC
  rules !
   - every FR has >=1 AC; none derivable from the spec text -> insert a [[QM]]
-    question in the appropriate gspec file, add it to that file's
-    `## Questions`, switch to A and create gspec/v<N+1>/
+    question in the appropriate gspec file, add it with its Answers list (A.2)
+    to that file's `## Questions`, switch to A and create gspec/v<N+1>/
   - every NFR includes a numeric bound; none derivable from the spec text ->
-    insert a [[QM]] question, add it to `## Questions`, switch to A and create
-    gspec/v<N+1>/
+    insert a [[QM]] question, add it with its Answers list (A.2) to
+    `## Questions`, switch to A and create gspec/v<N+1>/
   - never invent requirements. derive only what the spec text states or clearly
     implies. omit everything else.
   - a library file creates no requirement by existing|being referenced. read an

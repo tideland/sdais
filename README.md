@@ -187,7 +187,7 @@ You write specifications. AI writes code. The loop looks like this:
 
 **Phase 0 — Draft (optional)**
 
-If you find it easier to start with free-form prose, write your ideas into `sdais/gspec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field and the smallest applicable `**Libraries:**` set on every adopting item. Skip this phase if you prefer to author RSF items directly.
+If you find it easier to start with free-form prose, write your ideas into `sdais/gspec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers, each with a list of answer variants (its recommendation first) and an `Own` line; you tick exactly one per question, just as you resolve SemanticAuditor findings. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field and the smallest applicable `**Libraries:**` set on every adopting item. Skip this phase if you prefer to author RSF items directly.
 
 **Phase 1 — Specify**
 
@@ -219,7 +219,7 @@ You have an existing codebase. You want to migrate it, modularise it, or bring i
 
 **Phase 0 — Draft (optional)**
 
-If you find it easier to start with free-form prose, write your ideas about the existing system and desired changes into `sdais/tspec/v1/` and run the **TransformationEngineer**. It will ask clarifying questions via `[[QN]]` markers; you answer each with `[[AN answer]]`. The loop repeats until the spec is clean, then the agent generates TRS items in `sdais/trs/v1/` and draft CDF files in `sdais/cdf/v1/`. Skip this phase if you prefer to author TRS items and CDF files directly.
+If you find it easier to start with free-form prose, write your ideas about the existing system and desired changes into `sdais/tspec/v1/` and run the **TransformationEngineer**. It will ask clarifying questions via `[[QN]]` markers, each with a list of answer variants (its recommendation first) and an `Own` line; you tick exactly one per question, just as you resolve SemanticAuditor findings. The loop repeats until the spec is clean, then the agent generates TRS items in `sdais/trs/v1/` and draft CDF files in `sdais/cdf/v1/`. Skip this phase if you prefer to author TRS items and CDF files directly.
 
 1. Write hypothesis files (TRS) capturing what you believe the system does.
 2. Run the **Analyzer** — it reads the codebase, adds annotation blocks to every unit, derives formal RSF items from observed behaviour, and opens findings for anything unclear.

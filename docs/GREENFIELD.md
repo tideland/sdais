@@ -15,7 +15,7 @@ flowchart TD
     B2 -- Yes --> B3[Step 0\nWrite loose prose\nsdais/gspec/v1/]
     B3 --> B4[RequirementsEngineer\nClarification loop]
     B4 --> B5{Open questions?}
-    B5 -- Yes --> B6[Answer questions in\n## Questions section\nof gspec/vN+1/]
+    B5 -- Yes --> B6[Tick one answer per\nquestion in ## Questions\nof gspec/vN+1/]
     B6 --> B4
     B5 -- No --> B7[RequirementsEngineer\nRSF Generation]
     B7 --> C
@@ -161,8 +161,8 @@ Use Step 0 when you have a clear idea of what you want but struggle to express i
 ### How it works
 
 1. Create `sdais/gspec/v1/` and write one or more files describing what the system should do. No filename convention or format constraint applies — bullet points, paragraphs, or any mixture.
-2. Run the **RequirementsEngineer**. It reads every spec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`.
-3. Open the files in `sdais/gspec/v2/` and answer each open question by writing your answer as free prose immediately below the corresponding `### QN:` heading in the `## Questions` section. Do not remove, reword, or add `### QN:` headings — questions are the agent's domain.
+2. Run the **RequirementsEngineer**. It reads every spec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`. Below each question it offers an **Answers** list: exactly three complete answer variants — `V1` is its recommendation, `V2` and `V3` are alternatives — and a fixed `Own` line for your own answer, the same selection mechanism the SemanticAuditor uses for findings.
+3. Open the files in `sdais/gspec/v2/` and answer each open question by ticking exactly one answer — `- [x]` — and replacing every `{{placeholder}}` in the ticked line. If no variant fits, tick `Own` and write your answer there; optional prose below the list refines the ticked answer. A question stays open while no line, or more than one line, is ticked, or the ticked line still contains a placeholder. Do not remove, reword, or add `### QN:` headings or answer variants — they are the agent's domain.
 4. Re-run the RequirementsEngineer. It incorporates answers into the prose, removes answered `[[QN]]` inline markers, and appends any newly discovered questions. Repeat until it reports zero open questions.
 5. With no open questions remaining, the agent switches to RSF Generation mode: it reads the clean spec files and writes one RSF item file per derived requirement into `sdais/rsf/v1/`, each carrying a `**Source:**` field pointing to the spec file it was derived from and, where explicitly adopted, the smallest applicable `**Libraries:**` set.
 6. Review `sdais/rsf/v1/`: amend wording, delete artefacts, and add anything the agent could not derive. The `**Source:**` field traces each item back to the original prose.

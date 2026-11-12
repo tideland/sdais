@@ -161,7 +161,7 @@ workspace under `implementation/`.
 
 **Version directory semantics:**
 
-- Each `gspec/v<N>/` directory is one iteration of the RequirementsEngineer clarification loop. The human writes initial prose into `gspec/v1/`; the agent creates `gspec/v2/` with lightweight `[[Q1]]` inline markers and a `## Questions` section per file; the human answers in `gspec/v2/` by writing free prose below each `### QN:` heading; the agent creates `gspec/v3/` with answers incorporated, and so on. Files are not deleted between versions — each version is an immutable snapshot. The highest version that contains no open questions is the clean spec used for RSF generation.
+- Each `gspec/v<N>/` directory is one iteration of the RequirementsEngineer clarification loop. The human writes initial prose into `gspec/v1/`; the agent creates `gspec/v2/` with lightweight `[[Q1]]` inline markers and a `## Questions` section per file; the human answers in `gspec/v2/` by ticking one answer variant (or `Own`) below each `### QN:` heading; the agent creates `gspec/v3/` with answers incorporated, and so on. Files are not deleted between versions — each version is an immutable snapshot. The highest version that contains no open questions is the clean spec used for RSF generation.
 - Each `tspec/v<N>/` directory is one iteration of the TransformationEngineer clarification loop. Semantics are identical to `gspec/`: immutable snapshots, inline `[[QN]]` markers and per-file `## Questions` sections, highest clean version used for TRS and CDF generation.
 - Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative. Audit findings from the SemanticAuditor or Grounder are appended as `## Findings` sections within the staged copies in `rsf/v<N+1>/`.
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
@@ -254,9 +254,9 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
           └──┬───────────────┬──┘
              │ yes           │ no (spec clean)
              ▼               │
-   Human answers below each  │
-   ### QN: heading in the    │
-   ## Questions section      │
+   Human ticks one answer    │
+   variant per ### QN: in    │
+   the ## Questions section  │
              │               ▼
              └──────►  AI: RequirementsEngineer
                        (RSF Generation mode)
@@ -370,8 +370,31 @@ undefined terms, lack measurable bounds, or are missing acceptance criteria. For
 each such passage it inserts a lightweight `[[Q1]]` marker inline immediately
 after the affected text and appends a `## Questions` section at the bottom of
 the file (after a `—` separator) with the full question text as a `### Q1:`
-heading. The processed files are written to `sdais/gspec/v2/` under the same
-filenames.
+heading. Below each question the agent writes an **Answers** list — the same
+selection mechanism the SemanticAuditor uses for findings: always exactly
+three answer variants, each a complete answer that removes the ambiguity once
+incorporated, followed by a fixed `Own` line. `V1` is the agent's
+recommendation, `V2` and `V3` are alternatives; the agent never ticks a box. The processed files are written to
+`sdais/gspec/v2/` under the same filenames.
+
+```markdown
+—
+
+## Questions
+
+### Q1: How large may an input file be?
+
+**Answers** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
+
+- [ ] **V1** (recommended): Input files are at most {{max_file_size_mb}} MB; larger files are rejected with an error message before processing starts.
+- [ ] **V2:** File size is unbounded; the tool streams input and keeps memory use constant regardless of file size.
+- [ ] **V3:** Input files above {{warn_file_size_mb}} MB are processed, but a warning about expected run time is printed to stderr first.
+- [ ] **Own:** {{your_answer}}
+```
+
+`{{snake_case}}` placeholders mark only details the human must supply; anything
+derivable from the prose is written out. Follow-up questions (`#### QN.1:`) use
+the same shape.
 
 The agent also recognizes explicit pinned references such as
 `sdais/library/tds/v1/tds.md`. It reads a referenced file to understand its
@@ -383,11 +406,18 @@ never treated as another gspec input and never generates requirements by itself.
 #### Step −2.3 — Answer the questions
 
 Open each file in `sdais/gspec/v2/` that has a `## Questions` section.
-For each `### QN:` heading that has no answer below it, write your answer as
-free prose immediately below the heading.
+For each `### QN:` heading, tick exactly one answer — `- [x]` — and replace
+every `{{placeholder}}` in the ticked line. If no variant fits, tick `Own` and
+write your answer there. Optional prose below the Answers list refines the
+ticked answer.
 
-Do not remove, reword, or add `### QN:` headings — questions are written
-exclusively by the RequirementsEngineer, not by humans.
+A question is answered when exactly one line is ticked and that line contains
+no `{{placeholder}}`. More than one tick or an unfilled placeholder keeps it
+open. Questions written before v0.14.0 have no Answers list; for those, free
+prose below the heading remains a valid answer.
+
+Do not remove, reword, or add `### QN:` headings or answer variants — they are
+written exclusively by the RequirementsEngineer, not by humans.
 
 Re-run the RequirementsEngineer. Repeat until the agent reports zero open
 questions.
