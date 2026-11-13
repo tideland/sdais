@@ -133,6 +133,12 @@ workspace under `implementation/`.
     │   │   └── ac-0001-<short-description>.md
     │   └── v2/
     │       └── ...            ← only items new or amended in v2
+    ├── rsp/                    ← RSF Solution Proposals; one dir per audit round
+    │   └── v1/
+    │       ├── audit.md                  ← findings of the round; Result: Cleared | Findings
+    │       ├── rsp-a-<short-slug>.md     ← Recommended proposal
+    │       ├── rsp-b-<short-slug>.md     ← Alternative proposal
+    │       └── rsp-own.md                ← template for the human's own proposal
     ├── adf/                    ← Architecture Definition Files; produced by Architect
     │   └── v1/
     │       ├── adf-01-context-and-goals.md
@@ -163,7 +169,8 @@ workspace under `implementation/`.
 
 - Each `gspec/v<N>/` directory is one iteration of the RequirementsEngineer clarification loop. The human writes initial prose into `gspec/v1/`; the agent creates `gspec/v2/` with lightweight `[[Q1]]` inline markers and a `## Questions` section per file; the human answers in `gspec/v2/` by ticking one answer variant (or `Own`) below each `### QN:` heading; the agent creates `gspec/v3/` with answers incorporated, and so on. Files are not deleted between versions — each version is an immutable snapshot. The highest version that contains no open questions is the clean spec used for RSF generation.
 - Each `tspec/v<N>/` directory is one iteration of the TransformationEngineer clarification loop. Semantics are identical to `gspec/`: immutable snapshots, inline `[[QN]]` markers and per-file `## Questions` sections, highest clean version used for TRS and CDF generation.
-- Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative. Audit findings from the SemanticAuditor or Grounder are appended as `## Findings` sections within the staged copies in `rsf/v<N+1>/`.
+- Each `rsf/v<N>/` directory contains all RSF items that are new or amended in version N. Items unchanged since their introduction remain in their original version directory and are still authoritative. A new RSF version is written by the human, by the RequirementsEngineer, or by the SemanticAuditor when it applies an accepted RSF Solution Proposal. Grounder and Analyzer findings are appended as `## Findings` sections within the staged copies in `rsf/v<N+1>/`.
+- Each `rsp/v<R>/` directory is one SemanticAuditor round: `audit.md` with all findings of the round and, when there are findings, at least three RSF Solution Proposals with status Draft. Rounds are immutable history except for the status changes defined in RSF Solution Proposals.
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
 - Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs under `decisions/`. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
@@ -237,99 +244,43 @@ Earlier versions of SDAIS embedded the authoring date in filenames (e.g. `rsf-my
 
 ## Lifecycle
 
-```
-┌──────────────────────────────────────────────────────┐
-│  Human: loose prose in sdais/gspec/v1/                │
-│  (any filenames, any format — no constraints)        │
-└────────────────────────┬─────────────────────────────┘
-                         │
-                         ▼
-          ┌──────────────────────────┐
-          │ AI: RequirementsEngineer │  inserts [[QN]] markers inline;
-          │ (Clarification mode)     │  collects questions in ## Questions
-          └──────────┬───────────────┘
-                     │
-          ┌──────────┴──────────┐
-          │  open questions?    │
-          └──┬───────────────┬──┘
-             │ yes           │ no (spec clean)
-             ▼               │
-   Human ticks one answer    │
-   variant per ### QN: in    │
-   the ## Questions section  │
-             │               ▼
-             └──────►  AI: RequirementsEngineer
-                       (RSF Generation mode)
-                       writes sdais/rsf/v1/
-                       with **Source:** and applicable
-                       **Libraries:** fields
-                             │
-                             ▼
-                   Human reviews rsf/v1/;
-                   amends, adds, or deletes
-                             │
-                             ▼
-┌──────────────────────────────────────────────────────┐
-│  Human: Requirements Specification (RSF)             │
-│  FR · NFR · Constraints · Environment · Acceptance   │
-└────────────────────────┬─────────────────────────────┘
-                         │
-                         ▼
-               ┌──────────────────┐
-               │ AI: Semantic     │  checks RSF for ambiguity,
-               │ Audit            │  library resolution, ambiguity,
-               │                  │  contradictions, infeasibility
-               └────────┬─────────┘
-                        │
-               ┌────────┴────────┐
-               │  Findings?      │
-               └──┬──────────┬───┘
-                  │ yes      │ no (Cleared)
-                  ▼          │
-        Human amends RSF     │
-        (version increment)  │
-                  │          ▼
-                  │   ┌─────────────────┐
-                  │   │ AI: Grounder    │  verifies E- items against real infrastructure
-                  │   └────────┬────────┘
-                  │            │  ENV-UNRESOLVABLE findings?
-                  │            ├── yes ──► Human amends E- items ──► re-run Grounder
-                  │            │
-                  │            ▼
-                  │   ┌─────────────────┐
-                  │   │ AI: Architect   │  optional; produces ADF set
-                  │   │ (optional)      │
-                  │   └────────┬────────┘
-                  │            │  Human approves ADF?
-                  │            ├── no ──► Architect revises
-                  │            │
-                  └───►        ▼
-                        ┌──────────────────┐
-                        │  AI: Generate    │  writes implementation/
-                        │  (or TDD mode:   │  writes [ANN] blocks immediately
-                        │   TestGen first) │
-                        └────────┬─────────┘
-                                 │
-                        ┌────────▼─────────┐
-                        │  AI: Review      │  validates annotations vs. code
-                        │  (Round N)       │  writes FINDING/SEVERITY/HINT
-                        │                  │  checks RSF acceptance criteria
-                        └────────┬─────────┘
-                                 │
-                        ┌────────┴────────┐
-                        │  violations?    │
-                        └──┬──────────┬───┘
-                           │ yes      │ no
-                           ▼          ▼
-                   ┌────────────┐  ┌──────────────────┐
-                   │ AI: Refine │  │  Human: Approve  │
-                   │  (Round N) │  │  or amend RSF    │
-                   └─────┬──────┘  └──────────────────┘
-                         │
-                         │  all findings resolved?
-                         ├── yes ──► Review (Round N+1)
-                         │
-                         └── waived (needs RSF change) ──► Human amends RSF
+```mermaid
+flowchart TD
+    P["Human: loose prose<br/>sdais/gspec/v1/<br/>any filenames, any format"] --> RE1["AI: RequirementsEngineer<br/>Clarification mode<br/>inserts [[QN]] markers + Answers lists"]
+    RE1 --> Q{"Open questions?"}
+    Q -- yes --> QA["Human ticks one answer<br/>per question in ## Questions"]
+    QA --> RE1
+    Q -- "no (spec clean)" --> RE2["AI: RequirementsEngineer<br/>RSF Generation mode<br/>writes sdais/rsf/v1/ with Source<br/>and applicable Libraries fields"]
+    RE2 --> HR["Human reviews rsf/v1/<br/>amends, adds, or deletes"]
+    HR --> RSF
+    LIB[("sdais/library/id/vN<br/>adopted pinned files")] -.-> RSF
+    RSF["Human: Requirements Specification (RSF)<br/>FR · NFR · C · E · AC"] --> SA["AI: SemanticAuditor<br/>audit round sdais/rsp/vR/<br/>libraries, ambiguity, contradictions, infeasibility"]
+    SA --> F{"Findings?"}
+    F -- yes --> RSP["AI: at least three RSF Solution Proposals<br/>Recommended · Alternative · Own<br/>Status: Draft"]
+    RSP --> ACC["Human accepts exactly one RSP<br/>may edit it or write Notes"]
+    ACC -- "re-run: applies accepted RSP to rsf/vN+1/,<br/>or rejects the round if zero or several accepted" --> SA
+    F -- "no (Cleared)" --> E{"Active E- items?"}
+    E -- yes --> G["AI: Grounder<br/>verifies E- items against real infrastructure"]
+    G --> GU{"ENV-UNRESOLVABLE<br/>findings?"}
+    GU -- yes --> GE["Human amends E- items"]
+    GE --> G
+    GU -- no --> AR{"Architect step?<br/>optional"}
+    E -- no --> AR
+    AR -- yes --> A["AI: Architect<br/>ADF document set + ADRs"]
+    A --> AA{"Human approves ADF?"}
+    AA -- no --> A
+    AA -- yes --> GEN
+    AR -- no --> GEN
+    GEN["AI: Generator<br/>writes implementation/ with ANN blocks<br/>TDD mode: TestGenerator first"] --> REV["AI: Reviewer, round N<br/>validates annotations vs. code<br/>checks RSF acceptance criteria"]
+    REV --> V{"Violations?"}
+    V -- yes --> REF["AI: Refiner, round N"]
+    REF -- "findings resolved" --> REV
+    REF -- "waived: needs RSF change" --> AM
+    V -- no --> APV{"Human approval gate"}
+    APV -- approve --> DONE(["Approved implementation"])
+    APV -- "reject and regenerate" --> GEN
+    APV -- "amend RSF" --> AM["Human amends RSF<br/>new RSF version"]
+    AM --> SA
 ```
 
 RSF amendments increment the version and restart the loop from the semantic
@@ -347,105 +298,6 @@ input to Generator gap-filling and the standard review loop.
 ---
 
 ## Usage Guide
-
-### Step −2 — Requirements Engineering (optional)
-
-This step is optional. If you prefer to author RSF items directly, skip to
-Step −1. Use this step when you have rough ideas but struggle to write formal
-requirements from scratch.
-
-#### Step −2.1 — Write initial specification prose
-
-Create `sdais/gspec/v1/` and write one or more files describing what the system
-should do. No filename convention or structure is required — bullet points,
-paragraphs, conversation fragments, or any other form are all accepted.
-
-#### Step −2.2 — Run the RequirementsEngineer (Clarification mode)
-
-Provide all files in `sdais/gspec/v1/` to the RequirementsEngineer agent. Use
-the prompt from `sdais/prompts/requirements-engineer.md`.
-
-The agent reads every spec file and identifies passages that are ambiguous, use
-undefined terms, lack measurable bounds, or are missing acceptance criteria. For
-each such passage it inserts a lightweight `[[Q1]]` marker inline immediately
-after the affected text and appends a `## Questions` section at the bottom of
-the file (after a `—` separator) with the full question text as a `### Q1:`
-heading. Below each question the agent writes an **Answers** list — the same
-selection mechanism the SemanticAuditor uses for findings: always exactly
-three answer variants, each a complete answer that removes the ambiguity once
-incorporated, followed by a fixed `Own` line. `V1` is the agent's
-recommendation, `V2` and `V3` are alternatives; the agent never ticks a box. The processed files are written to
-`sdais/gspec/v2/` under the same filenames.
-
-```markdown
-—
-
-## Questions
-
-### Q1: How large may an input file be?
-
-**Answers** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
-
-- [ ] **V1** (recommended): Input files are at most {{max_file_size_mb}} MB; larger files are rejected with an error message before processing starts.
-- [ ] **V2:** File size is unbounded; the tool streams input and keeps memory use constant regardless of file size.
-- [ ] **V3:** Input files above {{warn_file_size_mb}} MB are processed, but a warning about expected run time is printed to stderr first.
-- [ ] **Own:** {{your_answer}}
-```
-
-`{{snake_case}}` placeholders mark only details the human must supply; anything
-derivable from the prose is written out. Follow-up questions (`#### QN.1:`) use
-the same shape.
-
-The agent also recognizes explicit pinned references such as
-`sdais/library/tds/v1/tds.md`. It reads a referenced file to understand its
-defined terms, preserves the reference and its scope through later prose
-versions, and asks a clarification question when a library is named informally,
-lacks an exact version or file, or has unclear adoption scope. A library file is
-never treated as another gspec input and never generates requirements by itself.
-
-#### Step −2.3 — Answer the questions
-
-Open each file in `sdais/gspec/v2/` that has a `## Questions` section.
-For each `### QN:` heading, tick exactly one answer — `- [x]` — and replace
-every `{{placeholder}}` in the ticked line. If no variant fits, tick `Own` and
-write your answer there. Optional prose below the Answers list refines the
-ticked answer.
-
-A question is answered when exactly one line is ticked and that line contains
-no `{{placeholder}}`. More than one tick or an unfilled placeholder keeps it
-open. Questions written before v0.14.0 have no Answers list; for those, free
-prose below the heading remains a valid answer.
-
-Do not remove, reword, or add `### QN:` headings or answer variants — they are
-written exclusively by the RequirementsEngineer, not by humans.
-
-Re-run the RequirementsEngineer. Repeat until the agent reports zero open
-questions.
-
-#### Step −2.4 — RSF Generation
-
-When no open questions remain the RequirementsEngineer switches to RSF
-Generation mode automatically. It reads the clean spec files and writes one RSF
-item file per derived requirement into `sdais/rsf/v1/`. Each generated item
-carries a `**Source:**` field listing the spec file(s) it was derived from and,
-when applicable, a `**Libraries:**` field containing only the pinned references
-that govern that item.
-
-#### Step −2.5 — Human review of generated RSF
-
-Review every item in `sdais/rsf/v1/`:
-
-- Amend wording that is technically correct but does not match your intent.
-- Delete items that are artefacts or duplicates.
-- Add items the RequirementsEngineer could not derive (it can only work from
-  what is in the spec prose).
-
-The `**Source:**` field is the audit trail linking each RSF item back to human
-intent. Do not delete it.
-
-When satisfied with `sdais/rsf/v1/`, proceed to Step −1 or directly to Step 0.
-
----
 
 ### Step −1 — Initialise the Project
 
@@ -507,65 +359,101 @@ migration and creates the marker.
 
 ---
 
-### Step 0 — Semantic Audit Loop
+### Step 0 — Requirements Engineering (optional)
 
-Before any code is generated the RSF must pass a semantic audit. The SemanticAuditor does not modify the content of any RSF file in `rsf/v<N>/`; it stages amended copies in `rsf/v<N+1>/` with findings appended.
+This step is optional. If you prefer to author RSF items directly, skip to
+Step 1. Use this step when you have rough ideas but struggle to write formal
+requirements from scratch.
 
-#### Step 0.1 — Run the SemanticAuditor
+#### Step 0.1 — Write initial specification prose
 
-Provide all RSF item files for the current version to the `SemanticAuditor`. Use the prompt from `sdais/prompts/semantic-auditor.md`. The agent copies each RSF item that has at least one finding to `sdais/rsf/v<N+1>/` and appends a `## Findings` section (after a `—` separator) with one `### F<n>:` entry per finding. RSF files with no findings are not copied. The agent outputs a summary of all findings and staged files.
+Create `sdais/gspec/v1/` and write one or more files describing what the system
+should do. No filename convention or structure is required — bullet points,
+paragraphs, conversation fragments, or any other form are all accepted.
 
-Finding categories: `AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | LIBRARY-UNRESOLVABLE`.
+#### Step 0.2 — Run the RequirementsEngineer (Clarification mode)
 
-#### Step 0.2 — Review each finding
+Provide all files in `sdais/gspec/v1/` to the RequirementsEngineer agent. Use
+the prompt from `sdais/prompts/requirements-engineer.md`.
 
-Each `### F<n>:` entry in the staged RSF files ends in a list of solution variants (see Findings Appendix Format). For each finding the human ticks exactly one variant — `- [x]` — replaces every `{{placeholder}}` in the ticked line, and applies it in `rsf/v<N+1>/` according to its action. If no variant fits, the human ticks `Own` and writes the resolution there.
+The agent reads every spec file and identifies passages that are ambiguous, use
+undefined terms, lack measurable bounds, or are missing acceptance criteria. For
+each such passage it inserts a lightweight `[[Q1]]` marker inline immediately
+after the affected text and appends a `## Questions` section at the bottom of
+the file (after a `—` separator) with the full question text as a `### Q1:`
+heading. Below each question the agent writes an **Answers** list: always exactly
+three answer variants, each a complete answer that removes the ambiguity once
+incorporated, followed by a fixed `Own` line. `V1` is the agent's
+recommendation, `V2` and `V3` are alternatives; the agent never ticks a box. The processed files are written to
+`sdais/gspec/v2/` under the same filenames.
 
-| Variant action | When it is offered | What to do in rsf/v<N+1>/ |
-|---|---|---|
-| **Fix** | Item kept; wording corrected or quantified | Replace the `## Requirement` text above the `—` separator with the variant text |
-| **Drop** | Item irrecoverably ambiguous or no longer needed | Delete the file from `rsf/v<N+1>/`; set Status to Dropped in the original |
-| **Supersede** | Replace with a cleaner formulation under a new ID | Create a new item file with the variant text; the ticked variant records the supersession |
-| **Split** | One item covered two distinct concerns | Create one new item file per variant text; the ticked variant records the split |
-| **Waive** | Finding acknowledged; item intentionally unchanged | Leave the requirement text unchanged; the filled `{{rationale}}` records why |
+```markdown
+—
 
-**Rules for RSF item IDs:**
-- IDs are never reused. A dropped or superseded item file remains as a tombstone with `Status: Dropped` or `Status: Superseded`.
-- New items introduced during an amendment use the next available sequential number in their prefix group.
+## Questions
 
-#### Step 0.3 — Re-audit or proceed
+### Q1: How large may an input file be?
 
-- A finding is resolved when exactly one variant is ticked and that line contains no `{{placeholder}}`.
-- If any finding remains unresolved: return to Step 0.1 with the new RSF version.
-- If all findings are resolved: proceed to Step 0.4 if the RSF contains any `E-` items, otherwise proceed to Step 1.
+**Answers** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
 
-An active item with an unresolved `**Libraries:**` entry cannot be Cleared.
-`LIBRARY-UNRESOLVABLE` variants repair or remove only the reference and never
-invent adoption intent. Contradictions between an RSF item and its library,
-between adopted libraries, or between an AC and its library use
-`CONTRADICTORY`, not `LIBRARY-UNRESOLVABLE`.
+- [ ] **V1** (recommended): Input files are at most {{max_file_size_mb}} MB; larger files are rejected with an error message before processing starts.
+- [ ] **V2:** File size is unbounded; the tool streams input and keeps memory use constant regardless of file size.
+- [ ] **V3:** Input files above {{warn_file_size_mb}} MB are processed, but a warning about expected run time is printed to stderr first.
+- [ ] **Own:** {{your_answer}}
+```
 
-#### Step 0.4 — Infrastructure Grounding (mandatory when `E-` items are present)
+`{{snake_case}}` placeholders mark only details the human must supply; anything
+derivable from the prose is written out. Follow-up questions (`#### QN.1:`) use
+the same shape.
 
-Run the Grounder agent when any active `E-` item exists in the cleared RSF. Use the prompt from `sdais/prompts/grounder.md`.
+The agent also recognizes explicit pinned references such as
+`sdais/library/tds/v1/tds.md`. It reads a referenced file to understand its
+defined terms, preserves the reference and its scope through later prose
+versions, and asks a clarification question when a library is named informally,
+lacks an exact version or file, or has unclear adoption scope. A library file is
+never treated as another gspec input and never generates requirements by itself.
 
-The Grounder reads every `E-` item and attempts to confirm that each named infrastructure element (database, service endpoint, message queue, file path, API, etc.) exists and matches the item description. For each confirmed element the Grounder sets `**Verified:** true`. For each element that cannot be confirmed the Grounder appends an `ENV-UNRESOLVABLE` finding to the `E-` item file staged in `sdais/rsf/v<N+1>/`.
+#### Step 0.3 — Answer the questions
 
-Library files are not infrastructure and are never converted to E-items. The
-Grounder may read an adopted contract only when needed to understand an E-item;
-the SemanticAuditor remains responsible for reference validation.
+Open each file in `sdais/gspec/v2/` that has a `## Questions` section.
+For each `### QN:` heading, tick exactly one answer — `- [x]` — and replace
+every `{{placeholder}}` in the ticked line. If no variant fits, tick `Own` and
+write your answer there. Optional prose below the Answers list refines the
+ticked answer.
 
-Resolution paths for `ENV-UNRESOLVABLE` findings:
+A question is answered when exactly one line is ticked and that line contains
+no `{{placeholder}}`. More than one tick or an unfilled placeholder keeps it
+open. Questions written before v0.14.0 have no Answers list; for those, free
+prose below the heading remains a valid answer.
 
-| Action | When to use | Result |
-|---|---|---|
-| **Fix** | Update the `E-` item to match what actually exists | Grounder re-runs; item receives `**Verified:** true` |
-| **Drop** | The named element does not and will not exist | Drop the `E-` item and any dependent FR items |
-| **Waive** | Infrastructure is to be created by this project | Note in `**Resolution:**` that the element will be built as part of this project |
+Do not remove, reword, or add `### QN:` headings or answer variants — they are
+written exclusively by the RequirementsEngineer, not by humans.
 
-After all `ENV-UNRESOLVABLE` findings are resolved or waived: proceed to Step 1.
+Re-run the RequirementsEngineer. Repeat until the agent reports zero open
+questions.
 
-The full prompt is in `sdais/prompts/grounder.md`.
+#### Step 0.4 — RSF Generation
+
+When no open questions remain the RequirementsEngineer switches to RSF
+Generation mode automatically. It reads the clean spec files and writes one RSF
+item file per derived requirement into `sdais/rsf/v1/`. Each generated item
+carries a `**Source:**` field listing the spec file(s) it was derived from and,
+when applicable, a `**Libraries:**` field containing only the pinned references
+that govern that item.
+
+#### Step 0.5 — Human review of generated RSF
+
+Review every item in `sdais/rsf/v1/`:
+
+- Amend wording that is technically correct but does not match your intent.
+- Delete items that are artefacts or duplicates.
+- Add items the RequirementsEngineer could not derive (it can only work from
+  what is in the spec prose).
+
+The `**Source:**` field is the audit trail linking each RSF item back to human
+intent. Do not delete it.
+
+When satisfied with `sdais/rsf/v1/`, proceed to Step 1 to refine the items, or directly to Step 2 to audit them.
 
 ---
 
@@ -605,7 +493,7 @@ Related: [FR-0003], [NFR-0002], [AC-0001]
 The `**Source:**` field records which spec file(s) are the primary reason for
 this item. It is written by the RequirementsEngineer when generating RSF items
 from prose; it may be omitted when a human authors an RSF item directly without
-going through Step −2.
+going through Step 0.
 
 The optional `**Libraries:**` field records exact pinned supporting contracts.
 Multiple references are comma-separated. It immediately follows `Source`, or
@@ -634,19 +522,100 @@ Related: [FR-NNNN]
 `**Verified:**` values: `Pending` (initial, set by human at authoring), `true` (confirmed by Grounder), `false` is not used — an unconfirmed element produces an `ENV-UNRESOLVABLE` finding appended to the item file and the field remains `Pending`.
 
 **Rules:**
-- The `## Requirement` section text is the authoritative, current formulation. When an item is fixed in place the section text is rewritten; the old wording is not preserved above the `—` separator (the `## Findings` section and git history preserve the rationale).
+- The `## Requirement` section text is the authoritative, current formulation. When an item is fixed in place the section text is rewritten; the old wording is not preserved above the `—` separator (the applied RSF Solution Proposal, any `## Findings` section, and git history preserve the rationale).
 - Items that are Dropped or Superseded set `Status:` accordingly and retain their `## Requirement` text as a tombstone.
 - Cross-references use `[FR-NNNN]`, `[NFR-NNNN]`, `[AC-NNNN]`, etc. without version — they resolve to the most recent active version of the referenced item.
 
 ---
 
-### Architecture Definition
+### Step 2 — Semantic Audit Loop
 
-Step 1b is optional and skipped unless either of the following conditions holds:
+Before any code is generated the RSF must pass a semantic audit. The SemanticAuditor never edits an existing RSF version. Each run is one **audit round** written to `sdais/rsp/v<R>/`. Instead of asking the human to resolve every finding separately, which tends to produce ever more detailed follow-up questions, the auditor proposes complete solutions for the RSF as a whole: **RSF Solution Proposals (RSP)**. The human accepts exactly one of them, and the auditor applies it verbatim in the next round.
+
+#### Step 2.1 — Run the SemanticAuditor
+
+Run the `SemanticAuditor` from the project root. Use the prompt from `sdais/prompts/semantic-auditor.md`. In each round the agent:
+
+1. **Settles the previous round.** If the previous round has exactly one proposal with `**Status:** Accepted`, it writes that proposal's changes into `rsf/v<N+1>/`, sets the proposal to `Applied`, and sets all other proposals of that round to `Rejected`. If no proposal or more than one proposal is Accepted, or the accepted proposal is incomplete, all proposals of that round become `Rejected` and the RSF stays unchanged.
+2. **Audits** the active RSF and its adopted libraries.
+3. **Writes round `v<R+1>`**: `audit.md` with every finding of the round and the result (`Cleared` or `Findings`). When there are findings, it also writes at least three proposals, all with status `Draft`:
+   - `rsp-a-<slug>.md`: **Recommended**, the simplest coherent resolution.
+   - `rsp-b-<slug>.md` (and optionally `rsp-c-<slug>.md`): **Alternative**, a solution with a different strategy.
+   - `rsp-own.md`: **Own**, a template in which the human writes their own solution.
+
+Finding categories: `AMBIGUOUS | INCOMPLETE | CONTRADICTORY | INFEASIBLE | UNTESTABLE | UNQUANTIFIED | LIBRARY-UNRESOLVABLE`.
+
+#### Step 2.2 — Choose one proposal
+
+Read `audit.md` and the proposals. Each proposal covers every finding of the round and documents:
+
+- its **Strategy**, the single idea that makes the resulting RSF homogeneous;
+- its **Changes**, the exact new requirement text for each affected item, with the findings each change resolves;
+- its **Impact** on requirements it does not change, such as ACs of changed FRs, NFRs sharing a bound, or items citing a dropped item;
+- its **Compromises**: every weakened bound or acceptance criterion (for example speed, memory, or precision), every dropped requirement, and every waived finding, each with the reason it is acceptable.
+
+Accept exactly one proposal by changing its `**Status:** Draft` to `**Status:** Accepted`. You may edit a proposal before accepting it; the auditor applies it exactly as it then reads. To use your own solution, complete `rsp-own.md`, replacing every `{{placeholder}}`, and accept it. Feedback for the next round may be written under `## Notes` in any proposal.
+
+| Change action | Effect when the proposal is applied to `rsf/v<N+1>/` |
+|---|---|
+| **Fix** | Item kept; requirement text replaced by the change text |
+| **Weaken** | Item kept with a deliberately looser bound or criterion; the reason is listed under Compromises |
+| **New** | New item with the next free number in its prefix group |
+| **Supersede** | New item from the change text; old item kept as a tombstone with `Status: Superseded` |
+| **Split** | One new item per part; old item kept as a tombstone with `Status: Split` |
+| **Drop** | Item kept as a tombstone with `Status: Dropped`; the reason is listed under Compromises |
+| **Waive** | No file change; the finding is acknowledged and the reason is listed under Compromises |
+
+**Rules for RSF item IDs:**
+- IDs are never reused. A dropped, superseded, or split item remains as a tombstone with `Status: Dropped`, `Status: Superseded`, or `Status: Split`.
+- New items introduced during an amendment use the next available sequential number in their prefix group.
+
+#### Step 2.3 — Re-run until Cleared
+
+- Re-run the SemanticAuditor after accepting a proposal. It applies the proposal and audits the new RSF version.
+- If you accept none, or more than one, the next round rejects the whole set and offers new proposals that differ in substance from every proposal rejected since the last applied one, taking your `## Notes` into account.
+- Compromises and waivers in an applied proposal are binding human decisions; later rounds never raise them again as findings unless a later change contradicts them.
+- When a round reports `Result: Cleared`, proceed to Step 3 if the RSF contains any active `E-` items, otherwise to Step 4 (optional) or Step 5.
+
+An active item with an unresolved `**Libraries:**` entry cannot be Cleared.
+`LIBRARY-UNRESOLVABLE` changes repair or remove only the reference and never
+invent adoption intent. Contradictions between an RSF item and its library,
+between adopted libraries, or between an AC and its library use
+`CONTRADICTORY`, not `LIBRARY-UNRESOLVABLE`.
+
+---
+
+### Step 3 — Infrastructure Grounding (mandatory when `E-` items are present)
+
+Run the Grounder agent when any active `E-` item exists in the cleared RSF. Use the prompt from `sdais/prompts/grounder.md`.
+
+The Grounder reads every `E-` item and attempts to confirm that each named infrastructure element (database, service endpoint, message queue, file path, API, etc.) exists and matches the item description. For each confirmed element the Grounder sets `**Verified:** true`. For each element that cannot be confirmed the Grounder appends an `ENV-UNRESOLVABLE` finding to the `E-` item file staged in `sdais/rsf/v<N+1>/`.
+
+Library files are not infrastructure and are never converted to E-items. The
+Grounder may read an adopted contract only when needed to understand an E-item;
+the SemanticAuditor remains responsible for reference validation.
+
+Resolution paths for `ENV-UNRESOLVABLE` findings:
+
+| Action | When to use | Result |
+|---|---|---|
+| **Fix** | Update the `E-` item to match what actually exists | Grounder re-runs; item receives `**Verified:** true` |
+| **Drop** | The named element does not and will not exist | Drop the `E-` item and any dependent FR items |
+| **Waive** | Infrastructure is to be created by this project | Note in `**Resolution:**` that the element will be built as part of this project |
+
+After all `ENV-UNRESOLVABLE` findings are resolved or waived: proceed to Step 4 (optional) or Step 5.
+
+The full prompt is in `sdais/prompts/grounder.md`.
+
+---
+
+### Step 4 — Architecture Definition (optional)
+
+Step 4 is optional and skipped unless either of the following conditions holds:
 - The cleared RSF contains at least one `C-` item that explicitly requires design approval (i.e., its text calls for architectural sign-off before code is generated).
 - The human explicitly invokes the Architect.
 
-When Step 1b runs, provide all cleared RSF items and the library files reachable from their `**Libraries:**` fields to the Architect agent. Use the prompt from `sdais/prompts/architect.md`.
+When Step 4 runs, provide all cleared RSF items and the library files reachable from their `**Libraries:**` fields to the Architect agent. Use the prompt from `sdais/prompts/architect.md`.
 
 The Architect reads all active RSF items plus their resolved library closures and produces an Architecture Definition File set (ADF) under `sdais/adf/v<N>/`. The set separates concerns so that architecture can be reviewed, linked, and evolved without rewriting one monolithic document. The Architect does not read or write source code and does not write `[ANN]` blocks.
 
@@ -713,7 +682,7 @@ the pinned libraries it realizes. An ADF decision may not silently change a
 library-defined rule; any conflict returns to semantic audit.
 
 **Human review gate:** the human reads the complete ADF set and either:
-- **Approves** — sets all five core document statuses to `Approved` and every ADR status to `Accepted`; proceed to Step 2.
+- **Approves** — sets all five core document statuses to `Approved` and every ADR status to `Accepted`; proceed to Step 5.
 - **Rejects** — provides written feedback; the Architect revises the set and the human reviews again.
 
 **Generator reads the ADF:** if `sdais/adf/v<N>/` exists, all five core documents have `**Status:** Approved`, and every ADR has `**Status:** Accepted`, the Generator reads the complete set as structural context before synthesising. An incomplete or partly approved set is not used. Human-authored RSF determines adoption and scope; RSF plus adopted libraries are the implementation contract, and ADF is subordinate structural guidance.
@@ -722,7 +691,7 @@ The full prompt is in `sdais/prompts/architect.md`.
 
 ---
 
-### Step 2 — Instruct the Generator Agent
+### Step 5 — Instruct the Generator Agent
 
 Provide all active RSF item files and each item's resolved library closure to the Generator. Use the prompt from `sdais/prompts/generator.md`.
 
@@ -737,7 +706,7 @@ block; outputs a summary of files created and RSF items addressed. It stops and
 reports affected IDs rather than guessing if a reference cannot resolve, a
 contract conflict remains, or managed-root placement cannot be honoured.
 
-#### Step 2 — TDD Mode (optional)
+#### Step 5 — TDD Mode (optional)
 
 TDD mode inverts the normal generation order. The TestGenerator runs before the Generator and produces test files with failing assertions. The Generator then synthesises implementation targeting those tests.
 
@@ -751,7 +720,7 @@ TDD mode inverts the normal generation order. The TestGenerator runs before the 
 
 ---
 
-### Step 3 — Run the Review Agent
+### Step 6 — Run the Review Agent
 
 Provide the generated, annotated code, all active RSF item files, and their resolved library closures to the Reviewer. Use the prompt from `sdais/prompts/reviewer.md`. Pass the current round number (starts at 1 after the first Generate pass).
 
@@ -769,7 +738,7 @@ Each review pass increments the round number. The `(ROUND)` label in every `[ANN
 
 ---
 
-### Step 4 — Run the Refiner Agent (if violations exist)
+### Step 7 — Run the Refiner Agent (if violations exist)
 
 Provide the reviewed, annotated code, its active RSF origins, and the same pinned library files to the Refiner. Use the prompt from `sdais/prompts/refiner.md`. Pass the same round number used in the Review pass.
 
@@ -777,11 +746,11 @@ The full prompt is in `sdais/prompts/refiner.md`. Summary of agent behaviour: re
 
 After each Refiner pass:
 - If any blocks remain `(VERIFIED) false` due to Resolved findings (not Waived): run the Reviewer again at round N+1.
-- If all remaining `(VERIFIED) false` blocks have only Waived findings: the human amends the RSF (new version), then returns to Step 0.
+- If all remaining `(VERIFIED) false` blocks have only Waived findings: the human amends the RSF (new version), then returns to Step 2.
 
 ---
 
-### Step 5 — Human Approval Gate
+### Step 8 — Human Approval Gate
 
 When the Reviewer reports zero violations and all acceptance criteria pass, the human reviews the output. Three outcomes:
 
@@ -824,30 +793,18 @@ adoption triggers a clarification question.
 
 ### Extended Lifecycle Diagram
 
-```
-TRS (fuzzy prior knowledge + transformation intent)
-    │  adopts exact files from sdais/library/<id>/v<N>/ when applicable
-    │
-    ▼
-Analyzer Agent ──► Annotated existing code + RSF v1 (with library refs/findings)
-    │
-    ▼
-Semantic Audit Loop (resolves libraries; audits composed contract)
-    │
-    ▼
-Cleaned RSF + Annotated existing code
-    │
-    ▼
-Human activates CDF(s)
-    │
-    ▼
-Transformation Agent ──► implementation/ target with stable ANN-IDs
-    │
-    ▼
-═══ Transition to Standard SDAIS Lifecycle ═══
-    │
-    ▼
-Generator (gaps only) → Reviewer → Refiner → ...
+```mermaid
+flowchart TD
+    TS["Human: TRS<br/>fuzzy prior knowledge + transformation intent<br/>optional TransformationEngineer loop on tspec/"] --> AN["AI: Analyzer<br/>annotates existing code in place<br/>derives RSF v1, appends findings"]
+    LIB[("sdais/library/id/vN<br/>adopted pinned files")] -.-> TS
+    AN --> SA["Semantic Audit Loop<br/>audit rounds + RSF Solution Proposals<br/>resolves libraries; audits composed contract"]
+    SA --> CL["Cleared RSF + annotated existing code"]
+    CL --> CDF["Human activates CDF(s)"]
+    CDF --> TR["AI: Transformation<br/>writes implementation/ target<br/>stable ANN-IDs; legacy source untouched"]
+    TR --> J(["Transition to the standard SDAIS lifecycle"])
+    J --> GEN["Generator (gaps only)"]
+    GEN --> REV["Reviewer"]
+    REV --> REF["Refiner …"]
 ```
 
 The Analyzer reads the existing codebase and any available TRS items, adds
@@ -861,21 +818,21 @@ all `(ANN-ID)` values, and hands that target to Generator for uncovered RSF
 items. Reviewer, Refiner, SecurityAuditor, and TestGenerator then scope their
 work to `implementation/`. Legacy mode retains the prior in-place flow.
 
-### SDAIS-T Step −2 — Transformation Engineering (optional)
+### SDAIS-T Step 0 — Transformation Engineering (optional)
 
-This step is optional. If you prefer to author TRS items and CDF files directly, skip to Step −1. Use this step when you have rough ideas about the existing system and desired changes but struggle to express them in formal TRS and CDF format.
+This step is optional. If you prefer to author TRS items and CDF files directly, skip to authoring TRS items (see TRS — Transformation Specification below). Use this step when you have rough ideas about the existing system and desired changes but struggle to express them in formal TRS and CDF format.
 
-#### Step −2.1 — Write initial transformation prose
+#### Step 0.1 — Write initial transformation prose
 
 Create `sdais/tspec/v1/` and write one or more files describing the existing system and the transformations you want to apply. No filename convention or structure is required.
 
-#### Step −2.2 — Run the TransformationEngineer (Clarification mode)
+#### Step 0.2 — Run the TransformationEngineer (Clarification mode)
 
 Provide all files in `sdais/tspec/v1/` to the TransformationEngineer agent. Use the prompt from `sdais/prompts/transformation-engineer.md`.
 
 The agent identifies passages that are ambiguous, use undefined terms, make tacit assumptions about legacy system behaviour, or state transformation goals without measurable targets. For each such passage it inserts a lightweight `[[Q1]]` marker inline and appends a `## Questions` section at the bottom of the file with the full question text as a `### Q1:` heading. The processed files are written to `sdais/tspec/v2/`.
 
-#### Step −2.3 — Answer the questions
+#### Step 0.3 — Answer the questions
 
 Open each file in `sdais/tspec/v2/` that has a `## Questions` section. For each `### QN:` heading that has no answer below it, write your answer as free prose immediately below the heading.
 
@@ -883,11 +840,11 @@ Do not remove, reword, or add `### QN:` headings — questions are written exclu
 
 Re-run the TransformationEngineer. Repeat until the agent reports zero open questions.
 
-#### Step −2.4 — Output Generation
+#### Step 0.4 — Output Generation
 
 When no open questions remain the TransformationEngineer switches to Output Generation mode automatically. It writes TRS item files to `sdais/trs/v1/` and CDF files to `sdais/cdf/v1/`. Each TRS item carries a `**Confidence:**` field and a `**Source:**` field. TRS and CDF headers carry `**Libraries:**` immediately after `Source` when they adopt a library. Each CDF carries `**Status:** Draft` — the human must change this to `Active` before running the Transformation agent.
 
-#### Step −2.5 — Human review of generated TRS and CDF files
+#### Step 0.5 — Human review of generated TRS and CDF files
 
 Review every item in `sdais/trs/v1/` and every file in `sdais/cdf/v1/`:
 
@@ -937,7 +894,7 @@ authentication error.
 - Are group memberships retrieved and mapped to application roles?
 ```
 
-The `**Source:**` field records which tspec file(s) are the primary reason for this item. It is written by the TransformationEngineer when generating TRS items from prose; it may be omitted when a human authors a TRS item directly without going through Step −2.
+The `**Source:**` field records which tspec file(s) are the primary reason for this item. It is written by the TransformationEngineer when generating TRS items from prose; it may be omitted when a human authors a TRS item directly without going through Step 0.
 
 The optional `**Libraries:**` field has the same pinned-reference syntax as
 RSF. It immediately follows `Source`, or `Confidence` when `Source` is absent.
@@ -1350,7 +1307,7 @@ Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any u
 | `Refiner`         | Corrects violations directed by `(HINT:n)`; writes `(FINDING:n:STATUS)`        |
 | `SecurityAuditor` | Specialised pass for `(CONSTRAINT:SEC)` compliance; may write finding labels   |
 | `TestGenerator`   | Derives tests from `(PRE)`, `(POST)`, and acceptance criteria; in TDD mode, produces pre-implementation test stubs |
-| `SemanticAuditor` | RSF-level semantic validation before generation; appends findings to RSF files |
+| `SemanticAuditor` | RSF-level semantic validation before generation; writes audit rounds with RSF Solution Proposals and applies the accepted one |
 | `Analyzer`        | Transformation: annotates existing codebase; derives RSF items; appends findings to RSF files |
 | `Transformation`  | Transformation: applies CDF transformations; preserves `(ANN-ID)` values       |
 | `Architect`       | Produces the ADF document set from cleared RSF; runs between infrastructure grounding and generation |
@@ -1369,7 +1326,7 @@ Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any u
 
 ## Finding Categories
 
-Findings are appended to RSF item files in `## Findings` sections. The SemanticAuditor, Grounder, and Analyzer agents each assign one of the following categories:
+SemanticAuditor findings are recorded per round in `sdais/rsp/v<R>/audit.md` and resolved through RSF Solution Proposals. Grounder and Analyzer findings are appended to RSF item files in `## Findings` sections. Each finding has exactly one of the following categories:
 
 | Category | Written by | Description |
 |---|---|---|
@@ -1395,7 +1352,7 @@ Findings are appended to RSF item files in `## Findings` sections. The SemanticA
 - **Status:** Active | Dropped | Superseded | Split
 - **Introduced:** v<N> (<YYYY-MM-DD>)
 - **Last modified:** v<N> (<YYYY-MM-DD>)
-- **Source:** sdais/gspec/v<N>/filename.md  ← omit when item was authored directly without Step −2
+- **Source:** sdais/gspec/v<N>/filename.md  ← omit when item was authored directly without Step 0
 - **Libraries:** sdais/library/<library-id>/v<N>/<file>[#<anchor>]  ← optional; comma-separated
 - **Verified:** Pending | true    ← Environment items only; omitted for all other types
 
@@ -1409,7 +1366,7 @@ Related: [FR-NNNN], [NFR-NNNN], [AC-NNNN]
 
 ## Findings
 
-(appended by SemanticAuditor, Grounder, or Analyzer when this item has findings)
+(appended by Grounder or Analyzer when this item has findings)
 
 ### F1: <Short title of finding>
 
@@ -1419,8 +1376,7 @@ Related: [FR-NNNN], [NFR-NNNN], [AC-NNNN]
 
 <Precise description of the problem.>
 
-<Resolution block: Variants (SemanticAuditor) or Hint + Resolution (Grounder,
-Analyzer) — see Findings Appendix Format.>
+<Resolution block: Hint + Resolution — see Findings Appendix Format.>
 ```
 
 Header fields (and the Category/Severity/References block of each finding) are
@@ -1436,16 +1392,19 @@ without the field remain valid.
 
 ---
 
-## Findings Appendix Format
+## RSF Solution Proposals
 
-Findings are appended to RSF item files by the SemanticAuditor, Grounder, and Analyzer agents. They appear after a `—` separator as a `## Findings` section within the staged copy of the RSF file in `sdais/rsf/v<N+1>/`. Finding numbers are local to each RSF item file, starting at 1 and incrementing across audit rounds.
+RSF Solution Proposals (RSP) are written by the SemanticAuditor, one set per audit round, under `sdais/rsp/v<R>/`. Rounds are numbered from 1 and increase with every SemanticAuditor run.
 
-Every finding opens the same way — title, field list, description — and closes with a resolution block whose form depends on the agent.
-
-**SemanticAuditor findings** close with solution variants. The agent writes two to four variants, each a complete resolution that clears the finding once applied; a fixed `Own` line follows for anything the variants miss. The human ticks exactly one box and replaces every `{{placeholder}}` in the ticked line.
+### Audit report — `audit.md`
 
 ```markdown
-—
+# Audit Round v3
+
+- **Date:** 2026-11-13
+- **Audited RSF:** v2
+- **Previous round:** v2: Applied RSP-2-A
+- **Result:** Findings
 
 ## Findings
 
@@ -1457,18 +1416,88 @@ Every finding opens the same way — title, field list, description — and clos
 
 NFR-0001 bounds processing time per row but states neither the hardware nor
 what is timed, so AC-0010 cannot be checked reproducibly.
-
-**Variants** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
-
-- [ ] **V1 — Fix** (recommended): The system must process a {{file_size_mb}} MB CSV file in at most {{max_seconds}} s wall-clock time, measured end to end from process start to exit on {{reference_hardware}}.
-- [ ] **V2 — Fix:** The system must sustain a throughput of at least {{min_rows_per_second}} rows per second, measured over a file of at least 1,000,000 rows on {{reference_hardware}}, excluding process startup.
-- [ ] **V3 — Drop:** Performance is not a requirement for this tool; remove NFR-0001 and AC-0010.
-- [ ] **Own:** {{your_resolution}}
 ```
 
-- Variant actions are `Fix`, `Drop`, `Supersede`, `Split`, and `Waive`, as in Step 0.2. For `Fix`, `Supersede`, and `Split` the variant text is the exact replacement `## Requirement` text, ready to paste.
-- `{{snake_case}}` placeholders mark only details the human must supply: numbers, units, names, and choices the specification leaves open. Anything derivable from the RSF is written out. Double braces, not angle brackets: Markdown previewers treat `<rationale>` as an unknown HTML tag and render nothing.
-- `V1` is the auditor's recommendation. The agent never ticks a box.
+`Previous round` is `v<R>: Applied RSP-<R>-<X>`, `v<R>: Rejected (<reason>)`, or `none`. Finding numbers are local to the round. A `Cleared` round lists `None.` under `## Findings` and contains no proposals.
+
+### Proposal files
+
+| File | Kind | ID |
+|---|---|---|
+| `rsp-a-<slug>.md` | Recommended | `RSP-<R>-A` |
+| `rsp-b-<slug>.md` | Alternative | `RSP-<R>-B` |
+| `rsp-c-<slug>.md` | Alternative (optional, only for a substantially different third strategy) | `RSP-<R>-C` |
+| `rsp-own.md` | Own: template for the human's solution | `RSP-<R>-OWN` |
+
+```markdown
+# RSP-3-A: One End-to-End Time Bound on Reference Hardware
+
+- **Kind:** Recommended
+- **Status:** Draft
+- **Round:** v3 (2026-11-13)
+- **Audited RSF:** v2
+- **Covers:** F1, F2
+
+## Strategy
+
+Replace the per-row bound with a single end-to-end bound measured on a named
+reference machine, so NFR-0001 and AC-0010 share one reproducible measurement.
+Assumption: a 2024 laptop-class CPU is representative of the target users.
+
+## Changes
+
+### NFR-0001 — Weaken
+
+- **Resolves:** F1
+
+The system must process a 100 MB CSV file in at most 10 s wall-clock time,
+measured from process start to exit on a 4-core 2024 laptop-class CPU with
+16 GB RAM.
+
+Related: [AC-0010]
+
+### AC-0010 — Fix
+
+- **Resolves:** F1, F2
+
+A benchmark run on the reference machine processing the 100 MB fixture file
+completes in at most 10 s.
+
+Related: [NFR-0001], [FR-0002]
+
+## Impact
+
+- [FR-0002] — unchanged; its AC-0010 now measures end to end instead of per row.
+
+## Compromises
+
+- **Weakened:** [NFR-0001] — per-row latency of at most 1 ms -> end-to-end 10 s
+  for 100 MB; individual slow rows are no longer bounded, which is acceptable
+  for a batch tool.
+```
+
+**Status values:** `Draft` (written by the agent), `Accepted` (set by the human on exactly one proposal), `Applied` (set by the agent after writing the changes into `rsf/v<N+1>/`), and `Rejected` (set by the agent on every other proposal of the round, or on all of them when the acceptance was missing, ambiguous, or incomplete).
+
+**Rules:**
+
+- **Complete coverage.** `Covers` lists every finding of the round. Every agent-written proposal resolves every finding through at least one change; `Waive` counts.
+- **Homogeneous.** All changes within one proposal are mutually consistent; applied together they leave no contradiction with each other, with unchanged items, or with adopted libraries.
+- **Impact.** Every unchanged item whose meaning, verification, or references are affected is listed under `## Impact`.
+- **Compromises.** Every weakened bound or acceptance criterion, every dropped requirement, and every waived finding is listed with its reason; a proposal that gives nothing up states `None.`.
+- **Complete text.** Agent-written proposals contain no `{{placeholder}}`. The auditor chooses concrete values from the RSF's apparent intent and states values the RSF did not imply as assumptions under `## Strategy`. The human may edit any value before accepting.
+- **Recommended** is the simplest coherent resolution: fewest changed items, no scope beyond what the findings require. **Alternatives** differ in strategy, not wording.
+- **Own.** `rsp-own.md` carries the same sections with `{{snake_case}}` placeholders and one change stub per finding. It is valid for acceptance only when no placeholder remains.
+- **Exactly one acceptance.** Zero or multiple `Accepted` proposals reject the whole round; the next round's proposals must differ in substance from every proposal rejected since the last applied one and honour the human `## Notes`.
+- **Binding compromises.** Compromises and waivers of an applied proposal are not raised again as findings unless a later change contradicts them.
+- Placeholders use double braces, never angle brackets: Markdown previewers treat `<value>` as an unknown HTML tag and render nothing.
+
+---
+
+## Findings Appendix Format
+
+Findings are appended to RSF item files by the Grounder and Analyzer agents. They appear after a `—` separator as a `## Findings` section within the staged copy of the RSF file in `sdais/rsf/v<N+1>/`. Finding numbers are local to each RSF item file, starting at 1 and incrementing across rounds. SemanticAuditor findings are not appended to RSF files; see RSF Solution Proposals.
+
+Every finding opens with a title, a field list (Category, Severity, References), and a description.
 
 **Grounder and Analyzer findings** close with a hint and a resolution field:
 

@@ -9,6 +9,7 @@
 # Project content left untouched:
 #   sdais/rsf/v*/  — items with sequence number 0001 or higher
 #   sdais/rar/v*/  — findings with sequence number 0001 or higher
+#   sdais/rsp/v*/  — audit rounds and RSF Solution Proposals
 #   sdais/trs/v*/  — transformation hypotheses
 #   sdais/cdf/v*/  — change definition files
 #   sdais/adf/v*/  — architecture definition files
@@ -119,7 +120,7 @@ echo "  AGENTS.md regenerated (Custom Agents Extension preserved)"
 echo "  sdais/SDAIS.md updated"
 [ -f "$LOCAL_BIN/sdais" ] && echo "  $LOCAL_BIN/sdais updated"
 echo ""
-echo "Project content (library, gspec, tspec, rsf, rar, trs, cdf, adf, implementation, legacy source) left unchanged."
+echo "Project content (library, gspec, tspec, rsf, rsp, rar, trs, cdf, adf, implementation, legacy source) left unchanged."
 if [ ! -f implementation/.sdais-root ]; then
     echo "Legacy layout remains active; update did not create or migrate implementation/.sdais-root."
 fi

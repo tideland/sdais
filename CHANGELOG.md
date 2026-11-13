@@ -24,16 +24,52 @@ version will advance to v1.0.0 on first stable release.
   `SDAIS_<TOOL>_REASONING` / `SDAIS_<TOOL>_CODING`.
 - `./sdais.sh --help` prints the usage summary to stdout.
 - **RequirementsEngineer answer selection.** Every clarification question in
-  `## Questions` now carries an **Answers** list in the SemanticAuditor's
-  variant style: always exactly three complete answer variants (`V1`
-  recommended, `V2` and `V3` alternatives), a fixed `Own` line, and `{{snake_case}}` placeholders for details only the
+  `## Questions` now carries an **Answers** list: always exactly three
+  complete answer variants (`V1` recommended, `V2` and `V3` alternatives), a
+  fixed `Own` line, and `{{snake_case}}` placeholders for details only the
   human can supply. A question is answered when exactly one line is ticked and
   contains no placeholder; multiple ticks or unfilled placeholders keep it open
   and are flagged in the agent's output. Optional prose below the list refines
   the ticked answer. Questions from earlier versions without an Answers list
   still accept free-prose answers.
+- **RSF Solution Proposals (RSP).** The SemanticAuditor no longer appends
+  per-finding variants to individual RSF items. Each run is an audit round in
+  `sdais/rsp/v<R>/`: `audit.md` lists all findings and the result
+  (`Cleared` | `Findings`), and with findings the auditor writes at least three
+  proposals with status `Draft` — Recommended (`rsp-a-*`), Alternative
+  (`rsp-b-*`, optional `rsp-c-*`), and Own (`rsp-own.md`, a template for the
+  human's solution). Every proposal covers all findings and documents its
+  strategy, exact changes per item (Fix, Weaken, New, Supersede, Split, Drop,
+  Waive), impact on unchanged items, and compromises such as weakened bounds
+  or ACs, dropped requirements, and waived findings with their reasons.
+- **Single acceptance, automatic application.** The human sets exactly one
+  proposal to `Accepted`. The next SemanticAuditor run applies it verbatim
+  into `rsf/v<N+1>/` (tombstones for dropped, superseded, and split items),
+  marks it `Applied` and the others `Rejected`, and re-audits. Zero or
+  multiple acceptances reject the whole round and produce substantially
+  different alternatives that honour the human's `## Notes`. Compromises of an
+  applied proposal are binding and are not raised again as findings.
 
 ### Changed
+
+- **Lifecycle diagrams in Mermaid.** The SDAIS-G lifecycle and the SDAIS-T
+  extended lifecycle in the specification are Mermaid flowcharts instead of
+  ASCII art. They show the RSF Solution Proposal loop, the approval gate's
+  reject-and-regenerate path, and adopted libraries as inputs.
+- **Usage guide steps in workflow order.** The specification's steps now run
+  in execution order and match the greenfield guide: −1 Initialise, −1b
+  Update, 0 Requirements Engineering (was −2), 1 RSF, 2 Semantic Audit (was 0),
+  3 Infrastructure Grounding (was 0.4), 4 Architecture Definition (was the
+  unnumbered Step 1b), 5 Generator, 6 Review, 7 Refine, 8 Approval (were
+  2–5). SDAIS-T Transformation Engineering is Step 0 (was −2), matching the
+  transformation guide.
+- **SemanticAuditor workflow.** Step 0 of the specification, the greenfield
+  and transformation guides, README, introduction, glossary, and `AGENTS.md`
+  describe the RSP loop. Grounder and Analyzer findings keep the per-item
+  `## Findings` format with Hint and Resolution. `update.sh` treats
+  `sdais/rsp/**` as project content. Pending old-style SemanticAuditor findings
+  in `rsf/v<N+1>/` should be resolved before upgrading; the new auditor reads
+  only requirement text and ignores `## Findings` sections.
 
 - Launcher help, README, specification, and greenfield guide use current model
   IDs and list all four supported tools.

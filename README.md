@@ -187,13 +187,13 @@ You write specifications. AI writes code. The loop looks like this:
 
 **Phase 0 — Draft (optional)**
 
-If you find it easier to start with free-form prose, write your ideas into `sdais/gspec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers, each with a list of answer variants (its recommendation first) and an `Own` line; you tick exactly one per question, just as you resolve SemanticAuditor findings. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field and the smallest applicable `**Libraries:**` set on every adopting item. Skip this phase if you prefer to author RSF items directly.
+If you find it easier to start with free-form prose, write your ideas into `sdais/gspec/v1/` (any filename, any format) and run the **RequirementsEngineer**. It will ask clarifying questions via `[[QN]]` markers, each with a list of answer variants (its recommendation first) and an `Own` line; you tick exactly one per question. The loop repeats until the spec is clean, then the agent generates `sdais/rsf/v1/` for you with a `**Source:**` traceability field and the smallest applicable `**Libraries:**` set on every adopting item. Skip this phase if you prefer to author RSF items directly.
 
 **Phase 1 — Specify**
 
 1. Author or review requirement files (FR, NFR, C, E, AC) in `sdais/rsf/v1/` using the installed templates.
-2. Run the **SemanticAuditor** — it reads your requirements and writes findings for anything ambiguous, incomplete, or contradictory.
-3. Resolve each finding: fix the requirement in place, drop it, split it, or waive the finding with a rationale.
+2. Run the **SemanticAuditor** — it reads your requirements, records findings for anything ambiguous, incomplete, or contradictory in `sdais/rsp/v<R>/audit.md`, and writes at least three **RSF Solution Proposals**: one recommended, one alternative, and one for your own solution. Each proposal resolves all findings coherently and documents its impact and compromises (weakened bounds, dropped requirements).
+3. Accept exactly one proposal (`**Status:** Accepted`) and re-run the SemanticAuditor; it applies the proposal as a new RSF version and audits again. Accepting none or several yields new alternatives.
 4. If you have environment items (`E-`), run the **Grounder** to verify they exist in your infrastructure.
 5. Optionally run the **Architect** to produce the architecture document set and ADRs before any code is written.
 
@@ -219,7 +219,7 @@ You have an existing codebase. You want to migrate it, modularise it, or bring i
 
 **Phase 0 — Draft (optional)**
 
-If you find it easier to start with free-form prose, write your ideas about the existing system and desired changes into `sdais/tspec/v1/` and run the **TransformationEngineer**. It will ask clarifying questions via `[[QN]]` markers, each with a list of answer variants (its recommendation first) and an `Own` line; you tick exactly one per question, just as you resolve SemanticAuditor findings. The loop repeats until the spec is clean, then the agent generates TRS items in `sdais/trs/v1/` and draft CDF files in `sdais/cdf/v1/`. Skip this phase if you prefer to author TRS items and CDF files directly.
+If you find it easier to start with free-form prose, write your ideas about the existing system and desired changes into `sdais/tspec/v1/` and run the **TransformationEngineer**. It will ask clarifying questions via `[[QN]]` markers, each with a list of answer variants (its recommendation first) and an `Own` line; you tick exactly one per question. The loop repeats until the spec is clean, then the agent generates TRS items in `sdais/trs/v1/` and draft CDF files in `sdais/cdf/v1/`. Skip this phase if you prefer to author TRS items and CDF files directly.
 
 1. Write hypothesis files (TRS) capturing what you believe the system does.
 2. Run the **Analyzer** — it reads the codebase, adds annotation blocks to every unit, derives formal RSF items from observed behaviour, and opens findings for anything unclear.

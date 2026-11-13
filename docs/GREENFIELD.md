@@ -23,8 +23,8 @@ flowchart TD
     LIB[(Adopted pinned files\nsdais/library/id/vN)] --> C
     C[Step 1\nAuthor / review RSF items\nFR · NFR · C · E · AC] --> D[Step 2\nSemanticAuditor]
     D --> E{Findings?}
-    E -- Yes --> F[Resolve findings\nFix · Drop · Supersede · Split · Waive]
-    F --> C
+    E -- Yes --> F[Accept exactly one\nRSF Solution Proposal\nsdais/rsp/vR/]
+    F --> D
     E -- No: Cleared --> G{E- items?}
     G -- Yes --> H[Step 3\nGrounder]
     H --> I{ENV-UNRESOLVABLE\nfindings?}
@@ -115,6 +115,7 @@ This creates `AGENTS.md`, the managed implementation workspace, and the
     │       ├── c-0000-template.md
     │       ├── e-0000-template.md
     │       └── ac-0000-template.md
+    └── rsp/                  # created by the SemanticAuditor, one dir per audit round
 ```
 
 Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
@@ -161,7 +162,7 @@ Use Step 0 when you have a clear idea of what you want but struggle to express i
 ### How it works
 
 1. Create `sdais/gspec/v1/` and write one or more files describing what the system should do. No filename convention or format constraint applies — bullet points, paragraphs, or any mixture.
-2. Run the **RequirementsEngineer**. It reads every spec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`. Below each question it offers an **Answers** list: exactly three complete answer variants — `V1` is its recommendation, `V2` and `V3` are alternatives — and a fixed `Own` line for your own answer, the same selection mechanism the SemanticAuditor uses for findings.
+2. Run the **RequirementsEngineer**. It reads every spec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`. Below each question it offers an **Answers** list: exactly three complete answer variants — `V1` is its recommendation, `V2` and `V3` are alternatives — and a fixed `Own` line for your own answer.
 3. Open the files in `sdais/gspec/v2/` and answer each open question by ticking exactly one answer — `- [x]` — and replacing every `{{placeholder}}` in the ticked line. If no variant fits, tick `Own` and write your answer there; optional prose below the list refines the ticked answer. A question stays open while no line, or more than one line, is ticked, or the ticked line still contains a placeholder. Do not remove, reword, or add `### QN:` headings or answer variants — they are the agent's domain.
 4. Re-run the RequirementsEngineer. It incorporates answers into the prose, removes answered `[[QN]]` inline markers, and appends any newly discovered questions. Repeat until it reports zero open questions.
 5. With no open questions remaining, the agent switches to RSF Generation mode: it reads the clean spec files and writes one RSF item file per derived requirement into `sdais/rsf/v1/`, each carrying a `**Source:**` field pointing to the spec file it was derived from and, where explicitly adopted, the smallest applicable `**Libraries:**` set.
@@ -256,19 +257,15 @@ changes their `**Libraries:**` field. `update.sh` preserves both versions.
 
 Before any code is generated, the RSF must pass a semantic audit. This is the quality gate that catches problems in the specification itself — ambiguity, gaps, contradictions, NFRs without numeric bounds, and unresolvable library references — before they propagate into code that is hard to fix.
 
-1. Run the **SemanticAuditor**, providing all RSF item files for the current version.
-2. The agent copies each affected RSF item to `sdais/rsf/v<N+1>/` and appends a `## Findings` section (below a `—` separator) with one `### F<n>:` entry per finding. Each entry contains the category, severity, references, a precise description, and two to four **solution variants** — complete resolutions to choose from, with `{{placeholders}}` for the details only you can supply — followed by an `Own` option. RSF files with no findings are not copied.
-3. For each finding in `sdais/rsf/v<N+1>/`, tick exactly one variant (`- [x]`), replace every `{{placeholder}}` in it, and apply it according to its action. `V1` is the auditor's recommendation; if none fits, tick `Own` and write your own resolution:
+Rather than asking you to resolve every finding on its own, which tends to produce ever more detailed questions without converging, the auditor proposes complete solutions for the whole RSF.
 
-| Action | When it is offered | What to do |
-|---|---|---|
-| **Fix** | Item kept; wording corrected or quantified | Replace the requirement text above the `—` separator with the variant text |
-| **Drop** | Item irrecoverably ambiguous or no longer needed | Delete the file from `rsf/v<N+1>/` |
-| **Supersede** | Replace with a cleaner formulation under a new ID | Create a new item file with the variant text |
-| **Split** | One item covered two distinct concerns | Create one new item file per variant text |
-| **Waive** | Finding acknowledged; item intentionally unchanged | Leave the requirement text unchanged; the filled `{{rationale}}` records why |
-
-4. Re-run the SemanticAuditor on the amended `rsf/v<N+1>/`. Repeat until no new findings are produced — the RSF is now **Cleared**.
+1. Run the **SemanticAuditor**. Each run is one audit round written to `sdais/rsp/v<R>/`:
+   - `audit.md` lists every finding of the round (category, severity, references, description) and the result, `Cleared` or `Findings`.
+   - With findings, at least three **RSF Solution Proposals (RSP)**, all with `**Status:** Draft`: `rsp-a-*` is the **Recommended** solution, `rsp-b-*` (optionally `rsp-c-*`) an **Alternative** with a different strategy, and `rsp-own.md` a template for **your own** solution.
+2. Each proposal covers every finding and documents its **Strategy**, the exact **Changes** per RSF item (Fix, Weaken, New, Supersede, Split, Drop, Waive) with the findings each change resolves, the **Impact** on items it leaves unchanged, and its **Compromises**: weakened bounds or ACs (e.g. speed or resources), dropped requirements, and waived findings, each with its reason.
+3. Accept **exactly one** proposal by setting its status to `**Status:** Accepted`. You may edit it first. To use your own solution, complete `rsp-own.md`, replacing every `{{placeholder}}`, and accept it. Optional feedback goes under `## Notes`.
+4. Re-run the SemanticAuditor. It applies the accepted proposal verbatim into `sdais/rsf/v<N+1>/` (dropped, superseded, and split items become tombstones), marks it `Applied` and the others `Rejected`, and audits the new version. If you accepted none or more than one, it rejects the whole set and offers new proposals that differ in substance, taking your notes into account.
+5. Repeat until a round reports `Result: Cleared`. Compromises you accepted are binding and are not raised again.
 
 For each `**Libraries:**` entry the auditor validates the pinned path, UTF-8
 file, optional heading anchor, and confined local links, then audits the RSF

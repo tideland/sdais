@@ -208,7 +208,7 @@ The `(ANN-ID)` values assigned here are permanent. They will be preserved throug
 
 **Prompt:** `sdais/prompts/semantic-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
 
-Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly — findings are appended as `## Findings` sections within the affected RSF files staged in `rsf/v<N+1>/`. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`, `LIBRARY-UNRESOLVABLE`) before continuing.
+Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly — each round writes its findings and RSF Solution Proposals to `sdais/rsp/v<R>/`, and you accept exactly one proposal per round. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`, `LIBRARY-UNRESOLVABLE`) before continuing.
 
 Additionally resolve any transformation-specific findings:
 

@@ -30,7 +30,7 @@ Role — prompt file — when to invoke:
 
 - RequirementsEngineer — `sdais/prompts/requirements-engineer.md` — before RSF authoring; refines loose prose and preserves adopted library references
 - TransformationEngineer — `sdais/prompts/transformation-engineer.md` — T: before authoring TRS/CDF; refines transformation prose, libraries, and target placement
-- SemanticAuditor — `sdais/prompts/semantic-auditor.md` — before each generation pass; resolves libraries and managed-root conflicts
+- SemanticAuditor — `sdais/prompts/semantic-auditor.md` — before each generation pass; resolves libraries and managed-root conflicts; writes RSF Solution Proposals per round and applies the one the human accepted
 - Grounder — `sdais/prompts/grounder.md` — after audit Cleared; when E- items exist
 - Architect — `sdais/prompts/architect.md` — optional; after Grounder, before Generator; traces libraries and implementation locations
 - Generator — `sdais/prompts/generator.md` — after RSF is Cleared; implements the composed contract under the active implementation root
@@ -74,6 +74,8 @@ are never deleted.
     │   └── v1/           ← prose about existing system + desired changes
     ├── rsf/              ← requirements; one file per item; versioned
     │   └── v1/
+    ├── rsp/              ← RSF Solution Proposals; one dir per audit round
+    │   └── v1/           ← audit.md + Recommended, Alternative, Own proposals
     ├── adf/              ← architecture definition files
     │   └── v1/
     ├── trs/              ← transformation hypotheses

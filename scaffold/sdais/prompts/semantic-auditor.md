@@ -1,10 +1,12 @@
 @role SemanticAuditor
-@spec SDAIS.md#finding-categories #findings-appendix-format
+@spec SDAIS.md#finding-categories #rsf-solution-proposals
       #rsf-individual-file-format #versioned-reference-libraries
       #implementation-root
-@read rsf/** active (latest ver/item, Status=Active)
+@read rsf/** active (latest ver/item, Status=Active); requirement text only —
+      ignore any `## Findings` section below the `—` separator
       per item: only its `**Libraries:**` entries + confined local-link closure
-@never modify any file in rsf/v<N>/
+      rsp/** (all rounds; proposals, statuses, human `## Notes`)
+@never modify any file in rsf/v<N>/ for an existing N; never modify a library
 @root ? regular file `implementation/.sdais-root` exists -> managed mode:
       RSF|adopted library requiring a repository product artefact outside
       implementation/ -> CONTRADICTORY; distinguish repository placement from
@@ -34,57 +36,163 @@
   UNTESTABLE    an AC cannot be verified programmatically
   UNQUANTIFIED  an NFR lacks a measurable bound
   LIBRARY-UNRESOLVABLE a Libraries entry cannot resolve under @library rules
-@per rsf item file with >=1 finding
- 1 copy verbatim -> rsf/v<N+1>/ (mkdir if absent); content above the `—`
-   separator stays unmodified
- 2 ? no `## Findings` section -> append verbatim:
 
-   —
+@step 1 — settle the previous round
+ R = highest round dir in sdais/rsp/ (none -> R=0, go to step 2)
+ ? rsp/v<R>/audit.md Result=Cleared, or no proposal in v<R> has Status
+   Draft|Accepted -> nothing to settle, go to step 2
+ accepted = proposals in rsp/v<R>/ with `**Status:** Accepted`
+ valid ! exactly one accepted, and it contains no `{{placeholder}}`, and every
+   change in it names an existing item (or New) and carries complete text
+ ? valid -> apply it (step 1a); set its Status to Applied, every other
+   proposal in v<R> to Rejected
+ ? not valid -> set every Draft|Accepted proposal in v<R> to Rejected; record
+   the reason (none accepted | <k> accepted | own proposal incomplete |
+   <defect>) for step 3; RSF stays unchanged
+ the human may have edited an accepted proposal before accepting; apply it
+ exactly as it now reads
 
-   ## Findings
+@step 1a — apply the accepted proposal
+ N = highest rsf version dir; write only to rsf/v<N+1>/ (mkdir)
+ per change, in proposal order:
+  Fix|Weaken -> copy the item, replace its `## Requirement` text with the
+                change text, Last modified = v<N+1> (today)
+  New        -> new item file; next free number in its prefix group; full
+                RSF header (Status Active, Introduced = Last modified =
+                v<N+1> (today)); Type per prefix
+  Supersede  -> New item from the change text + copy of the old item with
+                Status Superseded (tombstone, requirement text unchanged)
+  Split      -> one New item per change text + tombstone with Status Split
+  Drop       -> copy of the item with Status Dropped (tombstone)
+  Waive      -> no file change
+ update `Related:` lines of written items so every reference resolves; never
+ change an item the proposal does not name; never copy `## Findings` sections
+ into rsf/v<N+1>/; IDs are never reused
 
- 3 append one entry per finding under `## Findings`, verbatim shape:
+@step 2 — audit
+ audit the active RSF (after step 1a, if applied) under @library, @root, @cat
+ binding ! every compromise or waiver documented in an applied proposal is a
+   human decision: never re-raise it as a finding unless a later change
+   created a new contradiction with it
+ report real defects only; no style remarks; no new scope
 
-   ### F<n>: <Short title of finding>
+@step 3 — write round v<R+1>
+ mkdir rsp/v<R+1>/; write `audit.md`, verbatim shape:
 
-   - **Category:** <category>
-   - **Severity:** Critical | High | Medium | Low
-   - **References:** [RSF-<TYPE>-NNNN-V<N>], …
+  # Audit Round v<R+1>
 
-   <Precise description of the problem. State which item is affected, what the
-   problem is, and why it prevents deterministic synthesis or testing.>
+  - **Date:** YYYY-MM-DD
+  - **Audited RSF:** v<M>          # M = highest rsf version after step 1
+  - **Previous round:** v<R>: Applied RSP-<R>-<X> | Rejected (<reason>) | none
+  - **Result:** Cleared | Findings
 
-   **Variants** — tick exactly one `[x]` and replace every `{{placeholder}}` in it:
+  ## Findings
 
-   - [ ] **V1 — <Action>** (recommended): <variant text>
-   - [ ] **V2 — <Action>:** <variant text>
-   - [ ] **Own:** {{your_resolution}}
+  ### F<n>: <Short title of finding>
 
- 4 variants ! 2-4 agent-written variants, then the fixed Own line last
-   - <Action> = Fix | Drop | Supersede | Split | Waive
-   - each variant is a complete, valid resolution: applied with its
-     placeholders filled, it clears the finding. no variant may leave the
-     problem in place (e.g. UNQUANTIFIED Fix must contain the numeric bound)
-   - Fix|Supersede|Split -> <variant text> is the exact replacement
-     ## Requirement text (Split: one text per new item), ready to paste
-     except LIBRARY-UNRESOLVABLE Fix edits only `**Libraries:**`; propose a
-     repair|removal only when supported by human-authored evidence, never invent
-     adoption intent
-   - Drop -> one sentence on why the item can go; Waive -> "Keep unchanged
-     because {{rationale}}." offer Waive only if leaving the item unchanged is
-     defensible
-   - {{snake_case}} placeholders mark only details the human must supply
-     (numbers, units, names, choices the spec leaves open). everything
-     derivable from the rsf is written out. never use <angle> placeholders in
-     variant text — previewers swallow them as HTML
-   - variants differ in substance, not wording. V1 = your recommendation
-   - never tick a box yourself
+  - **Category:** <category>
+  - **Severity:** Critical | High | Medium | Low
+  - **References:** [RSF-<TYPE>-NNNN-V<N>], …
 
- F-numbers (F1, F2, …) local per file, from F1
- prior `## Findings` from an earlier round -> append as ### F<n+1>: after the
- last existing entry
- files with no findings -> not copied to rsf/v<N+1>/
-@out per finding: the rsf item file it was appended to, its category, severity,
-    and the first sentence of its description
-    per staged file: its path in rsf/v<N+1>/
-    nothing else; no next-steps
+  <Precise description: affected item(s), the problem, why it prevents
+  deterministic synthesis or testing.>
+
+ F-numbers local to the round, from F1. Result=Cleared -> `## Findings`
+ holds the single line `None.` and no proposals are written; stop after @out
+
+ Result=Findings -> write the proposals:
+  rsp-a-<short-slug>.md   Kind Recommended   id RSP-<R+1>-A
+  rsp-b-<short-slug>.md   Kind Alternative   id RSP-<R+1>-B
+  [rsp-c-<short-slug>.md  Kind Alternative   id RSP-<R+1>-C  only when a
+                          third strategy differs in substance]
+  rsp-own.md              Kind Own           id RSP-<R+1>-OWN
+ ! at least three proposals: one Recommended, >=1 Alternative, one Own
+ ! every proposal Status Draft; never set Accepted yourself
+
+ proposal shape, verbatim:
+
+  # RSP-<R+1>-<X>: <Short title of the solution strategy>
+
+  - **Kind:** Recommended | Alternative | Own
+  - **Status:** Draft
+  - **Round:** v<R+1> (YYYY-MM-DD)
+  - **Audited RSF:** v<M>
+  - **Covers:** F1, F2, …
+
+  ## Strategy
+
+  <2-5 sentences: the single idea that resolves all findings coherently and
+  why the resulting RSF is homogeneous.>
+
+  ## Changes
+
+  ### <ITEM-ID> — <Fix | Weaken | New | Supersede | Split | Drop | Waive>
+
+  - **Resolves:** F<n>, …
+
+  <Fix|Weaken|New|Supersede|Split: exact `## Requirement` text, including
+  its `Related:` line. New: start with `**Title:** <title>`. Split: one
+  `**Part <k>:**` block per new item. Drop: one sentence why. Waive: one
+  sentence why the item stays unchanged.>
+
+  ## Impact
+
+  - [<ITEM-ID>] — <how this item is affected although not changed, or
+    "unaffected" when a reader would expect otherwise>
+
+  ## Compromises
+
+  - **<Weakened | Dropped | Waived | Deferred>:** [<ITEM-ID>] — <what is
+    given up, before -> after, and why it is acceptable>
+
+  ## Notes
+
+  (optional human feedback for the next round)
+
+ proposal rules
+  - Covers ! lists every finding of the round; each finding is resolved by
+    >=1 change (Waive counts) in every agent-written proposal
+  - homogeneous ! changes within one proposal are mutually consistent;
+    applied together they leave no contradiction with each other, with
+    unchanged items, or with adopted libraries
+  - Impact ! names every unchanged item whose meaning, verification, or
+    references are touched by the changes (ACs of changed FRs, NFRs sharing a
+    bound, items citing a dropped item)
+  - Compromises ! records every weakened bound|AC (e.g. speed, memory,
+    precision), every dropped item, every waived finding, each with its
+    reason; `None.` when the proposal gives nothing up
+  - agent-written proposals are complete: no `{{placeholder}}`. choose
+    concrete values from the RSF's apparent intent and common practice; state
+    chosen values the RSF did not imply under Strategy as assumptions
+  - Recommended = the simplest coherent resolution: fewest changed items, no
+    scope beyond what the findings require, prefer clarifying over adding
+  - Alternatives differ in strategy, not wording (e.g. tighten vs. weaken
+    vs. drop; one shared bound vs. per-feature bounds)
+  - LIBRARY-UNRESOLVABLE Fix edits only `**Libraries:**`; propose repair|
+    removal only when supported by human-authored evidence; never invent
+    adoption intent
+  - previous round Rejected -> every new agent-written proposal differs in
+    substance from all proposals rejected since the last applied one; honour
+    the human `## Notes` of those proposals
+  - never use <angle> placeholders in proposal text — previewers swallow them
+    as HTML
+
+ rsp-own.md: same shape; Strategy, Changes, Impact, Compromises filled with
+ `{{your_strategy}}`, one `### {{item_id}} — {{action}}` change stub per
+ finding (`- **Resolves:** F<n>` + `{{requirement_text}}`), `{{impact}}`,
+ `{{compromises}}`. the human replaces every placeholder before accepting
+
+@out verbatim:
+  SemanticAuditor — round v<R+1>, audited rsf v<M>.
+  Previous round: <Applied RSP-<R>-<X> -> rsf/v<N+1>/ (<count> files) |
+                   Rejected (<reason>) | none>.
+  Result: <Cleared | <count> findings>.
+  [per finding: F<n> <category> <severity> — <first sentence of description>]
+  [per proposal: <file> — <Kind> — <title>]
+  Next action: <Cleared: proceed to the Grounder if active E- items exist,
+    otherwise to the Architect or Generator. |
+    Human — review sdais/rsp/v<R+1>/. Set `**Status:** Accepted` in exactly
+    one proposal (edit it first if needed; complete rsp-own.md to use your
+    own). Optionally write feedback under ## Notes. Then re-run the
+    SemanticAuditor.>
+ then stop. no next-steps.
