@@ -218,7 +218,7 @@ real to confirm:
   export SDAIS_DEMO_INPUT="$TARGET/data"
   ./sdais.sh claude <model> RequirementsEngineer
 
-A correct first run lands in Mode A and writes sdais/gspec/v2/ with open
-questions. Answer them there, re-run, and the second pass should reach Mode B
+A correct first run writes a proposal round to sdais/props/gspec/v1/. Accept
+one proposal, re-run, and the second pass should apply it to sdais/gspec/v2/
 and write sdais/rsf/v1/. See README.md for what to check on each pass.
 EOF

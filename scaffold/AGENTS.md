@@ -24,6 +24,12 @@ Prompt files use a compact notation instead of prose. Read it as:
 Text under `@out verbatim:` and inside fenced blocks is literal — emit or write
 it exactly as given, substituting only `<placeholders>`.
 
+`<placeholder>` marks what an agent fills in. `{{placeholder}}` marks what a
+human must supply — values, units, names, texts — in templates, own proposals,
+resolutions, and records. Agents never write `{{…}}` except in `prop-own.md`
+templates, and treat a remaining `{{…}}` in a human-authored artefact as
+incomplete.
+
 ## Agent Roles
 
 Role — prompt file — when to invoke:
@@ -31,7 +37,7 @@ Role — prompt file — when to invoke:
 - RequirementsEngineer — `sdais/prompts/requirements-engineer.md` — before RSF authoring; refines loose prose and preserves adopted library references
 - TransformationEngineer — `sdais/prompts/transformation-engineer.md` — T: before authoring TRS/CDF; refines transformation prose, libraries, and target placement
 - SemanticAuditor — `sdais/prompts/semantic-auditor.md` — before each generation pass; resolves libraries and managed-root conflicts; writes RSF Solution Proposals per round and applies the one the human accepted
-- Grounder — `sdais/prompts/grounder.md` — after audit Cleared; when E- items exist
+- Grounder — `sdais/prompts/grounder.md` — after audit Cleared; when E- items exist; writes environment Solution Proposals for unconfirmed elements
 - Architect — `sdais/prompts/architect.md` — optional; after Grounder, before Generator; traces libraries and implementation locations
 - Generator — `sdais/prompts/generator.md` — after RSF is Cleared; implements the composed contract under the active implementation root
 - Reviewer — `sdais/prompts/reviewer.md` — after each Generate or Refine pass; verifies contract and root conformance
@@ -49,11 +55,16 @@ through an iterative clarification loop, and produces formal SDAIS artefacts.
 RequirementsEngineer produces RSF items (greenfield); TransformationEngineer
 produces TRS items and CDF files (transformation).
 
-The clarification loop uses lightweight inline markers (`[[Q1]]`, `[[Q2]]`, …)
-at each ambiguous point in the prose, with the full question text and human
-answers collected in a `## Questions` section at the end of the same file
-(below a `—` separator). Questions accumulate across versions; answered entries
-are never deleted.
+## Solution Proposals
+
+RequirementsEngineer, TransformationEngineer, SemanticAuditor, and Grounder
+work in rounds under `sdais/props/<gspec|tspec|rsf|env>/v<R>/`. Each round
+holds a `report.md` with all open questions or findings and, when there are
+any, at least three proposals with status Draft: Recommended, Alternative, and
+Own. Each proposal resolves everything in the round coherently and documents
+its impact and compromises. The human accepts exactly one; the next run of the
+same agent applies it, or rejects the round when zero or several are accepted.
+Spec files stay pure prose.
 
 ## Directory Layout
 
@@ -74,8 +85,11 @@ are never deleted.
     │   └── v1/           ← prose about existing system + desired changes
     ├── rsf/              ← requirements; one file per item; versioned
     │   └── v1/
-    ├── rsp/              ← RSF Solution Proposals; one dir per audit round
-    │   └── v1/           ← audit.md + Recommended, Alternative, Own proposals
+    ├── props/            ← Solution Proposals; one dir per agent domain and round
+    │   ├── gspec/v<R>/   ← RequirementsEngineer
+    │   ├── tspec/v<R>/   ← TransformationEngineer
+    │   ├── rsf/v<R>/     ← SemanticAuditor
+    │   └── env/v<R>/     ← Grounder
     ├── adf/              ← architecture definition files
     │   └── v1/
     ├── trs/              ← transformation hypotheses

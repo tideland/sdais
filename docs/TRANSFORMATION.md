@@ -26,9 +26,9 @@ flowchart TD
     A([Start: existing codebase]) --> B[Step −1\nInstall scaffold]
     B --> B2{Draft prose?}
     B2 -- Yes --> B3[Step 0\nWrite loose prose\nsdais/tspec/v1/]
-    B3 --> B4[TransformationEngineer\nClarification loop]
+    B3 --> B4[TransformationEngineer\nround sdais/props/tspec/vR/]
     B4 --> B5{Open questions?}
-    B5 -- Yes --> B6[Answer questions in\n## Questions section\nof tspec/vN+1/]
+    B5 -- Yes --> B6[Accept exactly one\ntspec Solution Proposal\nre-run applies it]
     B6 --> B4
     B5 -- No --> B7[TransformationEngineer\nOutput Generation]
     B7 --> B8[Review TRS items\nPromote CDFs to Active]
@@ -36,11 +36,11 @@ flowchart TD
     B2 -- No: author directly --> C
     LIB[(Adopted pinned files\nsdais/library/id/vN)] --> C
     C[Step 1\nAuthor / review TRS items\nTRS-FR · TRS-NFR · TRS-C] --> D[Step 2\nAnalyzer\nannotate + derive RSF]
-    D --> E[Step 3\nSemantic Audit Loop\nResolve findings in RSF]
-    E --> F{Findings\nresolved?}
-    F -- No --> G[Resolve:\nFix · Drop · Supersede · Waive]
+    D --> E[Step 3\nSemantic Audit Loop\nrounds in sdais/props/rsf/vR/]
+    E --> F{Cleared?}
+    F -- No --> G[Accept exactly one\nRSF Solution Proposal]
     G --> E
-    F -- Yes --> H[Step 4\nGrounder\nif E- items exist]
+    F -- Yes --> H[Step 4\nGrounder\nif E- items exist\nrounds in sdais/props/env/vR/]
     H --> I[Step 5\nActivate CDF files\nlang · ui · pers · mod · plat · api · obs · i18n]
     I --> J[Step 6\nTransformation agent\nwrite implementation/ target]
     J --> K{Uncovered\nRSF items?}
@@ -108,14 +108,14 @@ Use Step 0 when the existing system is complex, poorly documented, or when the d
 ### How it works
 
 1. Create `sdais/tspec/v1/` and write one or more files describing: (a) what you believe the existing system does, and (b) what transformations you want applied. No filename convention or format constraint applies.
-2. Run the **TransformationEngineer**. It reads every tspec file, inserts a lightweight `[[Q1]]` marker inline at each ambiguous point, and appends a `## Questions` section at the bottom of each file (below a `—` separator) with the full question text as `### Q1: question text?`.
-3. Open the files in `sdais/tspec/v2/` and answer each open question by writing your answer as free prose immediately below the corresponding `### QN:` heading in the `## Questions` section. Do not remove, reword, or add `### QN:` headings — questions are the agent's domain.
-4. Re-run the TransformationEngineer. It incorporates answers into the prose, removes answered `[[QN]]` inline markers, and appends any newly discovered questions. Repeat until it reports zero open questions.
-5. With no open questions remaining, the agent switches to Output Generation mode: it writes TRS item files to `sdais/trs/v1/` (each carrying `**Confidence:**` and `**Source:**` fields) and CDF files to `sdais/cdf/v1/` (each carrying `**Status:** Draft`). When prose explicitly adopts a pinned library, the smallest applicable reference set is preserved in `**Libraries:**` immediately after `Source`.
+2. Run the **TransformationEngineer**. Each run is one round in `sdais/props/tspec/v<R>/`: `report.md` lists every question that blocks TRS and CDF generation, each with the quoted passage it concerns, and at least three **tspec Solution Proposals (TSP)** answer all questions at once — `prop-a-*` **Recommended**, `prop-b-*` (optionally `prop-c-*`) **Alternative**, and `prop-own.md` for **your own** answers. Each proposal states its strategy, one answer per question with its evidence, the exact prose changes, the impact, and its compromises. Your tspec files stay pure prose.
+3. Set `**Status:** Accepted` in exactly one proposal, optionally after editing it, or complete and accept `prop-own.md`.
+4. Re-run the TransformationEngineer. It applies the accepted proposal to a new snapshot `sdais/tspec/v<N+1>/` and analyses again. Accepting none or more than one yields new alternatives. Repeat until a round reports `Result: Cleared`.
+5. In the run that reports `Cleared`, the agent generates its output: it writes TRS item files to `sdais/trs/v1/` (each carrying `**Confidence:**` and `**Source:**` fields) and CDF files to `sdais/cdf/v1/` (each carrying `**Status:** Draft`). When prose explicitly adopts a pinned library, the smallest applicable reference set is preserved in `**Libraries:**` immediately after `Source`.
 6. Review `sdais/trs/v1/`: amend wording, delete artefacts, and add anything the agent could not derive.
 7. Review `sdais/cdf/v1/`: for each CDF you intend to apply, change `**Status:**` from `Draft` to `Active`.
 
-**A note on Confidence:** answers that cite concrete code paths, configuration keys, or documentation yield High-confidence TRS items. Vague answers stated from memory yield Low-confidence items — the Analyzer will perform deep analysis on these before accepting them.
+**A note on Confidence:** accepted answers that cite concrete code paths, configuration keys, or documentation yield High-confidence TRS items. Vague answers stated from memory yield Low-confidence items — the Analyzer will perform deep analysis on these before accepting them.
 
 Library adoption follows the same rules as greenfield prose. Use an exact path
 such as `sdais/library/legacy-api/v1/openapi.yaml`; an informal name, omitted
@@ -140,22 +140,22 @@ File naming mirrors the RSF convention: `trs-fr-NNNN-<description>.md`, `trs-nfr
 
 - **Type:** Functional Requirement
 - **Status:** Hypothesis
-- **Introduced:** v1 (YYYY-MM-DD)
-- **Confidence:** Low | Medium | High
+- **Introduced:** v1 ({{yyyy_mm_dd}})
+- **Confidence:** {{confidence}}
 - **Source:** sdais/tspec/v2/system.md
 - **Libraries:** sdais/library/legacy-api/v1/openapi.yaml
 
 ## Hypothesis
 
-[What you believe this part of the system does. Imprecision is fine here.]
+{{hypothesis}}
 
 ## Evidence
 
-[Optional. Code references, comments, documentation that support the hypothesis.]
+{{evidence}}
 
 ## Open Questions
 
-[What you are unsure about.]
+{{open_questions}}
 ```
 
 **Confidence** governs Analyzer behaviour:
@@ -208,7 +208,7 @@ The `(ANN-ID)` values assigned here are permanent. They will be preserved throug
 
 **Prompt:** `sdais/prompts/semantic-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
 
-Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly — each round writes its findings and RSF Solution Proposals to `sdais/rsp/v<R>/`, and you accept exactly one proposal per round. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`, `LIBRARY-UNRESOLVABLE`) before continuing.
+Run the standard semantic audit on the RSF items derived by the Analyzer. Follow the same procedure as [GREENFIELD.md](GREENFIELD.md) Step 2 exactly — each round writes its findings and RSF Solution Proposals to `sdais/props/rsf/v<R>/`, and you accept exactly one proposal per round. Resolve all standard findings (`AMBIGUOUS`, `INCOMPLETE`, `CONTRADICTORY`, `INFEASIBLE`, `UNTESTABLE`, `UNQUANTIFIED`, `LIBRARY-UNRESOLVABLE`) before continuing.
 
 Additionally resolve any transformation-specific findings:
 
@@ -223,7 +223,7 @@ These findings require human judgement. The Analyzer surfaces them; you resolve 
 
 **Prompt:** `sdais/prompts/grounder.md` | **Recommended model:** High-reasoning (e.g. Claude Opus or Sonnet)
 
-Run the Grounder as described in [GREENFIELD.md](GREENFIELD.md) Step 3. This step is especially important in transformation scenarios: `E-` items typically describe infrastructure that already exists and must be confirmed accurately before any transformation touches it.
+Run the Grounder as described in [GREENFIELD.md](GREENFIELD.md) Step 3: each round writes its findings and environment Solution Proposals to `sdais/props/env/v<R>/`, and you accept exactly one proposal per round. This step is especially important in transformation scenarios: `E-` items typically describe infrastructure that already exists and must be confirmed accurately before any transformation touches it.
 
 ---
 

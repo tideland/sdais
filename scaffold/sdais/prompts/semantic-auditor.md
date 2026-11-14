@@ -1,11 +1,12 @@
 @role SemanticAuditor
-@spec SDAIS.md#finding-categories #rsf-solution-proposals
+@spec SDAIS.md#finding-categories #solution-proposals
       #rsf-individual-file-format #versioned-reference-libraries
       #implementation-root
 @read rsf/** active (latest ver/item, Status=Active); requirement text only —
       ignore any `## Findings` section below the `—` separator
       per item: only its `**Libraries:**` entries + confined local-link closure
-      rsp/** (all rounds; proposals, statuses, human `## Notes`)
+      props/rsf/** + props/env/** (all rounds; proposals, statuses, human
+      `## Notes`)
 @never modify any file in rsf/v<N>/ for an existing N; never modify a library
 @root ? regular file `implementation/.sdais-root` exists -> managed mode:
       RSF|adopted library requiring a repository product artefact outside
@@ -30,7 +31,8 @@
    copy large library sections into findings, or modify any library file
 @cat exactly one per problem
   AMBIGUOUS     not precise enough for deterministic synthesis
-  INCOMPLETE    an FR has no AC, or an AC does not verify its FR
+  INCOMPLETE    an FR has no AC, an AC does not verify its FR, or an item
+                still contains a human `{{placeholder}}`
   CONTRADICTORY rsf items|adopted contracts are mutually exclusive
   INFEASIBLE    a constraint makes >=1 FR impossible to satisfy
   UNTESTABLE    an AC cannot be verified programmatically
@@ -38,10 +40,10 @@
   LIBRARY-UNRESOLVABLE a Libraries entry cannot resolve under @library rules
 
 @step 1 — settle the previous round
- R = highest round dir in sdais/rsp/ (none -> R=0, go to step 2)
- ? rsp/v<R>/audit.md Result=Cleared, or no proposal in v<R> has Status
+ R = highest round dir in sdais/props/rsf/ (none -> R=0, go to step 2)
+ ? props/rsf/v<R>/report.md Result=Cleared, or no proposal in v<R> has Status
    Draft|Accepted -> nothing to settle, go to step 2
- accepted = proposals in rsp/v<R>/ with `**Status:** Accepted`
+ accepted = proposals in props/rsf/v<R>/ with `**Status:** Accepted`
  valid ! exactly one accepted, and it contains no `{{placeholder}}`, and every
    change in it names an existing item (or New) and carries complete text
  ? valid -> apply it (step 1a); set its Status to Applied, every other
@@ -71,15 +73,15 @@
 
 @step 2 — audit
  audit the active RSF (after step 1a, if applied) under @library, @root, @cat
- binding ! every compromise or waiver documented in an applied proposal is a
-   human decision: never re-raise it as a finding unless a later change
+ binding ! every compromise or waiver documented in an applied proposal
+   (props/rsf or props/env) is a human decision: never re-raise it as a finding unless a later change
    created a new contradiction with it
  report real defects only; no style remarks; no new scope
 
 @step 3 — write round v<R+1>
- mkdir rsp/v<R+1>/; write `audit.md`, verbatim shape:
+ mkdir props/rsf/v<R+1>/; write `report.md`, verbatim shape:
 
-  # Audit Round v<R+1>
+  # SemanticAuditor Round v<R+1>
 
   - **Date:** YYYY-MM-DD
   - **Audited RSF:** v<M>          # M = highest rsf version after step 1
@@ -101,11 +103,11 @@
  holds the single line `None.` and no proposals are written; stop after @out
 
  Result=Findings -> write the proposals:
-  rsp-a-<short-slug>.md   Kind Recommended   id RSP-<R+1>-A
-  rsp-b-<short-slug>.md   Kind Alternative   id RSP-<R+1>-B
-  [rsp-c-<short-slug>.md  Kind Alternative   id RSP-<R+1>-C  only when a
+  prop-a-<short-slug>.md  Kind Recommended   id RSP-<R+1>-A
+  prop-b-<short-slug>.md  Kind Alternative   id RSP-<R+1>-B
+  [prop-c-<short-slug>.md Kind Alternative   id RSP-<R+1>-C  only when a
                           third strategy differs in substance]
-  rsp-own.md              Kind Own           id RSP-<R+1>-OWN
+  prop-own.md             Kind Own           id RSP-<R+1>-OWN
  ! at least three proposals: one Recommended, >=1 Alternative, one Own
  ! every proposal Status Draft; never set Accepted yourself
 
@@ -177,7 +179,7 @@
   - never use <angle> placeholders in proposal text — previewers swallow them
     as HTML
 
- rsp-own.md: same shape; Strategy, Changes, Impact, Compromises filled with
+ prop-own.md: same shape; Strategy, Changes, Impact, Compromises filled with
  `{{your_strategy}}`, one `### {{item_id}} — {{action}}` change stub per
  finding (`- **Resolves:** F<n>` + `{{requirement_text}}`), `{{impact}}`,
  `{{compromises}}`. the human replaces every placeholder before accepting
@@ -191,8 +193,8 @@
   [per proposal: <file> — <Kind> — <title>]
   Next action: <Cleared: proceed to the Grounder if active E- items exist,
     otherwise to the Architect or Generator. |
-    Human — review sdais/rsp/v<R+1>/. Set `**Status:** Accepted` in exactly
-    one proposal (edit it first if needed; complete rsp-own.md to use your
+    Human — review sdais/props/rsf/v<R+1>/. Set `**Status:** Accepted` in exactly
+    one proposal (edit it first if needed; complete prop-own.md to use your
     own). Optionally write feedback under ## Notes. Then re-run the
     SemanticAuditor.>
  then stop. no next-steps.

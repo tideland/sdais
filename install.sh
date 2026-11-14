@@ -15,7 +15,6 @@ if [[ $# -lt 1 ]]; then
 fi
 PROJECT="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TODAY="$(date +%Y-%m-%d)"
 
 echo "SDAIS $SDAIS_VERSION — installing scaffold for: $PROJECT"
 
@@ -55,12 +54,6 @@ fi
 # Substitute placeholders in AGENTS.md
 tmp=$(mktemp)
 sed "s/<Project Name>/$PROJECT/g" AGENTS.md > "$tmp" && mv "$tmp" AGENTS.md
-
-# Substitute today's date in template files
-find sdais/rsf -name "*-template.md" | while read -r f; do
-    tmp=$(mktemp)
-    sed "s/YYYY-MM-DD/$TODAY/g" "$f" > "$tmp" && mv "$tmp" "$f"
-done
 
 echo "Done."
 echo "  AGENTS.md"

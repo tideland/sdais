@@ -17,10 +17,10 @@ in `sdais/library/csv-records/v1/format.md`:
 | "handled gracefully"                     | no success criterion, must ask       |
 | "our usual CLI conventions"              | context absent from the spec, must ask |
 
-So a correct first run lands in **Mode A**, not Mode B: three or more `[[QN]]`
-markers, `gspec/v2/` written, `gspec/v1/` untouched. Answer the questions in
-`gspec/v2/`, re-run, and the second pass should reach **Mode B** and write
-`rsf/v1/`.
+So a correct first run opens a proposal round instead of generating RSF: three
+or more questions in `props/gspec/v1/report.md`, at least three proposals, and
+`gspec/v1/` untouched. Accept one proposal, re-run, and the second pass should
+apply it to `gspec/v2/`, report `Cleared`, and write `rsf/v1/`.
 
 ## Running it
 
@@ -61,15 +61,19 @@ fixture; it refuses to delete anything else.
 
 ## What to check
 
-Mode A:
+First run (proposal round):
 
-- `gspec/v1/` is byte-for-byte unchanged
+- `gspec/v1/` is byte-for-byte unchanged and no `gspec/v2/` exists yet
 - `library/csv-records/v1/format.md` is byte-for-byte unchanged
-- `gspec/v2/` exists, one file per source file, same filename
-- each `[[QN]]` in the prose has a matching `### QN:` under `## Questions`
-- the summary matches the `A.4 output verbatim` block in the prompt, line for line
+- `props/gspec/v1/report.md` lists each question with a quoted `Passage`
+- `prop-a-*`, `prop-b-*`, and `prop-own.md` exist, all `**Status:** Draft`;
+  every agent-written proposal covers every question and has no `{{…}}`
+- the summary matches the `@out A verbatim` block in the prompt, line for line
 
-Mode B, after answering:
+Second run, after accepting one proposal:
+
+- `gspec/v2/` exists, one file per source file, prose only, with the accepted
+  changes applied; the proposal is `Applied`, the others `Rejected`
 
 - every FR file has at least one AC referencing it
 - every NFR carries a numeric bound
@@ -95,8 +99,9 @@ SemanticAuditor:
 Grounder, with `SDAIS_DEMO_INPUT` exported as above:
 
 - the `e-` item flips to `**Verified:** true` and `**Last modified:**` moves to
-  today; unset the variable and re-run and it should instead stage an
-  `ENV-UNRESOLVABLE` finding in `rsf/v2/` and leave the original at `Pending`
+  today, and `props/env/v1/report.md` reports `Cleared`; unset the variable and
+  re-run and it should instead report an `ENV-UNRESOLVABLE` finding with
+  proposals in `props/env/v2/` and leave the item at `Pending`
 
 ## Notation regression check
 

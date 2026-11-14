@@ -23,32 +23,35 @@ version will advance to v1.0.0 on first stable release.
   `qwen3-coder:30b`. Each default can be overridden with
   `SDAIS_<TOOL>_REASONING` / `SDAIS_<TOOL>_CODING`.
 - `./sdais.sh --help` prints the usage summary to stdout.
-- **RequirementsEngineer answer selection.** Every clarification question in
-  `## Questions` now carries an **Answers** list: always exactly three
-  complete answer variants (`V1` recommended, `V2` and `V3` alternatives), a
-  fixed `Own` line, and `{{snake_case}}` placeholders for details only the
-  human can supply. A question is answered when exactly one line is ticked and
-  contains no placeholder; multiple ticks or unfilled placeholders keep it open
-  and are flagged in the agent's output. Optional prose below the list refines
-  the ticked answer. Questions from earlier versions without an Answers list
-  still accept free-prose answers.
-- **RSF Solution Proposals (RSP).** The SemanticAuditor no longer appends
-  per-finding variants to individual RSF items. Each run is an audit round in
-  `sdais/rsp/v<R>/`: `audit.md` lists all findings and the result
-  (`Cleared` | `Findings`), and with findings the auditor writes at least three
-  proposals with status `Draft` — Recommended (`rsp-a-*`), Alternative
-  (`rsp-b-*`, optional `rsp-c-*`), and Own (`rsp-own.md`, a template for the
-  human's solution). Every proposal covers all findings and documents its
-  strategy, exact changes per item (Fix, Weaken, New, Supersede, Split, Drop,
-  Waive), impact on unchanged items, and compromises such as weakened bounds
-  or ACs, dropped requirements, and waived findings with their reasons.
+- **Solution Proposals for four agents.** RequirementsEngineer,
+  TransformationEngineer, SemanticAuditor, and Grounder no longer resolve
+  questions or findings one by one. Each run is a round under
+  `sdais/props/<gspec|tspec|rsf|env>/v<R>/` with a `report.md` (all open
+  questions or findings and the result, `Cleared` | `Findings`) and at least
+  three proposals with status `Draft`: Recommended (`prop-a-*`), Alternative
+  (`prop-b-*`, optional `prop-c-*`), and Own (`prop-own.md`, a template for the
+  human's solution). IDs are `GSP-`, `TSP-`, `RSP-`, and `ESP-<R>-<X>`.
+- **Homogeneous, documented proposals.** Every proposal resolves everything in
+  its round with one strategy and documents its changes (prose edits for
+  gspec/tspec; Fix, Weaken, New, Supersede, Split, Drop, Waive, or Provision
+  for RSF items), its impact on unchanged items or passages, and its
+  compromises — weakened bounds or ACs (e.g. speed or resources), dropped
+  requirements, narrowed scope, waivers, provisions, and assumptions, each
+  with its reason.
 - **Single acceptance, automatic application.** The human sets exactly one
-  proposal to `Accepted`. The next SemanticAuditor run applies it verbatim
-  into `rsf/v<N+1>/` (tombstones for dropped, superseded, and split items),
-  marks it `Applied` and the others `Rejected`, and re-audits. Zero or
-  multiple acceptances reject the whole round and produce substantially
-  different alternatives that honour the human's `## Notes`. Compromises of an
-  applied proposal are binding and are not raised again as findings.
+  proposal to `Accepted`, optionally after editing it. The next run of the
+  same agent applies it — to a new prose snapshot `gspec|tspec/v<N+1>/`, or to
+  `rsf/v<N+1>/` with tombstones for dropped, superseded, and split items —
+  marks it `Applied` and the others `Rejected`, and analyses again. Zero or
+  multiple acceptances reject the round and produce substantially different
+  alternatives that honour the human's `## Notes`. Answers, compromises,
+  waivers, and provisions of an applied proposal are binding and not raised
+  again.
+- **Grounder proposals.** Unconfirmed `E-` elements become `ENV-UNRESOLVABLE`
+  findings with what was observed instead, resolved by environment proposals.
+  `Provision` records an element that this project creates; it is not verified
+  again. A proposal that changes non-`E-` items requires a SemanticAuditor
+  re-run before grounding continues.
 
 ### Changed
 
@@ -63,14 +66,26 @@ version will advance to v1.0.0 on first stable release.
   unnumbered Step 1b), 5 Generator, 6 Review, 7 Refine, 8 Approval (were
   2–5). SDAIS-T Transformation Engineering is Step 0 (was −2), matching the
   transformation guide.
-- **SemanticAuditor workflow.** Step 0 of the specification, the greenfield
-  and transformation guides, README, introduction, glossary, and `AGENTS.md`
-  describe the RSP loop. Grounder and Analyzer findings keep the per-item
-  `## Findings` format with Hint and Resolution. `update.sh` treats
-  `sdais/rsp/**` as project content. Pending old-style SemanticAuditor findings
-  in `rsf/v<N+1>/` should be resolved before upgrading; the new auditor reads
-  only requirement text and ignores `## Findings` sections.
-
+- **Common `{{placeholder}}` notation.** Every value a human must supply —
+  in RSF and TRS templates, `prop-own.md`, Analyzer finding resolutions,
+  custom agent entries, and the approval record — uses `{{snake_case}}`.
+  Template guidance moved from `[bracketed text]` into HTML comments; dates are
+  `{{yyyy_mm_dd}}`. `<angle>` placeholders remain for agent-filled shapes. An
+  active RSF item that still contains a `{{placeholder}}` is `INCOMPLETE`.
+  `install.sh` no longer stamps the install date into templates.
+- **Pure prose specs.** gspec and tspec files no longer receive `[[QN]]`
+  markers or `## Questions` sections; questions and answers live in
+  `sdais/props/`. Files from earlier versions with markers or question
+  sections are still accepted: answered entries count as spec text, open ones
+  become questions of the next round.
+- **Findings placement.** Only the Analyzer still appends per-item
+  `## Findings` with Hint and Resolution. The specification's generic
+  "Solution Proposals" section, Steps 0, 2, and 3, the SDAIS-T steps, the
+  greenfield and transformation guides, README, introduction, glossary,
+  `AGENTS.md`, and the line-counter example describe the new rounds.
+  `update.sh` treats `sdais/props/**` as project content. Pending old-style
+  SemanticAuditor or Grounder findings in `rsf/v<N+1>/` should be resolved
+  before upgrading; the new agents read only requirement text.
 - Launcher help, README, specification, and greenfield guide use current model
   IDs and list all four supported tools.
 - `install.sh` mentions the interactive menu in its next-step output.

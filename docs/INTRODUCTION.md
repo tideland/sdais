@@ -95,10 +95,10 @@ This is how SDAIS maintains coherence across multiple agents, multiple rounds, a
 
 A full SDAIS project moves through a predictable lifecycle, regardless of the scale of the system:
 
-0. **Draft** (optional) — write rough prose in `sdais/gspec/v1/`; the RequirementsEngineer refines it into RSF items through an iterative Q&A loop.
+0. **Draft** (optional) — write rough prose in `sdais/gspec/v1/`; the RequirementsEngineer refines it into RSF items through rounds of Solution Proposals, of which you accept one each time.
 1. **Specify** — write or review RSF items in `sdais/rsf/v1/`.
 2. **Audit** — the SemanticAuditor resolves adopted libraries, validates the composed contract, and writes complete RSF Solution Proposals; you accept exactly one per round.
-3. **Ground** — the Grounder confirms infrastructure assumptions; you resolve any unresolvable items.
+3. **Ground** — the Grounder confirms infrastructure assumptions and proposes solutions for unresolvable items; you accept one.
 4. **Architect** (optional) — the Architect produces a human-reviewed architecture document set before any code is written.
 5. **Generate** — the Generator synthesises the implementation under `implementation/` from RSF plus adopted libraries with full annotation coverage.
 6. **Review** — the Reviewer checks every block against the same pinned contracts; findings are precise and actionable.

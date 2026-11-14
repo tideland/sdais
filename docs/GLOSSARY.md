@@ -19,8 +19,8 @@
 | Acronym | Full Name | Location | Purpose |
 |---|---|---|---|
 | **RSF** | Requirements Specification File | `sdais/rsf/v<N>/` | Normative requirements defining what the system must do or be. |
-| **RSP** | RSF Solution Proposal | `sdais/rsp/v<R>/` | One complete, homogeneous resolution of all SemanticAuditor findings of an audit round, with changes, impact, and compromises. Kinds: Recommended, Alternative, Own. Status: `Draft`, `Accepted`, `Applied`, `Rejected`. The human accepts exactly one per round. |
-| **RAR** | *(deprecated)* Requirements Audit Report | — | Previously used for separate finding files; SemanticAuditor findings now live in `sdais/rsp/v<R>/audit.md`, Grounder and Analyzer findings in `## Findings` sections within RSF item files. |
+| **GSP / TSP / RSP / ESP** | Solution Proposal for gspec, tspec, RSF, or environment | `sdais/props/<gspec\|tspec\|rsf\|env>/v<R>/` | One complete, homogeneous resolution of all questions or findings of a round — written by the RequirementsEngineer, TransformationEngineer, SemanticAuditor, or Grounder — with answers or changes, impact, and compromises. Kinds: Recommended, Alternative, Own. Status: `Draft`, `Accepted`, `Applied`, `Rejected`. The human accepts exactly one per round; the next run applies it. |
+| **RAR** | *(deprecated)* Requirements Audit Report | — | Previously used for separate finding files; SemanticAuditor and Grounder findings now live in `report.md` of their rounds under `sdais/props/`, Analyzer findings in `## Findings` sections within RSF item files. |
 | **TRS** | Transformation Specification | `sdais/trs/v<N>/` | Hypotheses about the behaviour and structure of an existing codebase (SDAIS-T only). |
 | **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-T only). |
 | **ADF** | Architecture Definition Files | `sdais/adf/v<N>/` | UTF-8 Markdown set containing context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs produced by the Architect. |
@@ -55,6 +55,13 @@ committed source, not disposable generated output.
 
 ---
 
+## Placeholder Notation
+
+| Notation | Filled in by | Used in |
+|---|---|---|
+| `{{snake_case}}` | Human | Templates, `prop-own.md`, finding resolutions, custom agent entries, approval records — every value, unit, name, date, path, or text a human must supply. A remaining `{{…}}` makes an RSF item `INCOMPLETE` and an accepted proposal invalid. |
+| `<placeholder>` | Agent | Format descriptions in `SDAIS.md` and output shapes in prompts. |
+
 ## RSF Item Types
 
 Items are Markdown files named `<prefix>-NNNN-<description>.md`. Sequence numbers start at `0001` and are never reused. The template file for each type uses `0000`.
@@ -71,7 +78,7 @@ Items are Markdown files named `<prefix>-NNNN-<description>.md`. Sequence number
 
 ## RAR Finding Types
 
-SemanticAuditor findings are listed per audit round in `sdais/rsp/v<R>/audit.md`; Grounder and Analyzer findings are appended to RSF item files.
+SemanticAuditor and Grounder findings are listed per round in `report.md` under `sdais/props/rsf/` and `sdais/props/env/`; Analyzer findings are appended to RSF item files.
 
 | Category | Meaning |
 |---|---|

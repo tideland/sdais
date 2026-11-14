@@ -61,8 +61,7 @@
 
       **Hint:** <Concrete instruction for the human to resolve this finding.>
 
-      **Resolution:**
-      (filled in by human after review)
+      **Resolution:** {{your_resolution}}
 
    assign exactly one category:
      TRS-CONTRADICTS-CODE  a trs hypothesis is contradicted by what the code does
