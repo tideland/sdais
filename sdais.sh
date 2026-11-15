@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # sdais.sh — launch an SDAIS agent role with a specific tool and model
 # Run from the project root (the directory that contains sdais/prompts/).
+#
+# Interactive mode loops: after each agent session ends the menu is shown
+# again so you can pick the next workflow step without re-running the script.
 
 set -euo pipefail
 
 usage() {
     cat <<'EOF'
-Usage: ./sdais.sh                          interactive menu
+Usage: ./sdais.sh                          interactive menu (loops until quit)
        ./sdais.sh <tool> <model> <role>   direct launch
        ./sdais.sh -h | --help             this help
 
@@ -137,26 +140,9 @@ select_from_menu() {
     done
 }
 
-if [[ $# -eq 0 ]]; then
-    select_from_menu
-elif [[ $# -eq 3 ]]; then
-    TOOL="$1"
-    MODEL="$2"
-    ROLE="$3"
-elif [[ $# -eq 1 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
-    usage
-    exit 0
-else
-    usage >&2
-    exit 1
-fi
+# --- Helpers -----------------------------------------------------------------
 
 PROMPTS_DIR="sdais/prompts"
-
-if [[ ! -d "$PROMPTS_DIR" ]]; then
-    echo "error: sdais/prompts/ not found — run ./sdais.sh from the project root." >&2
-    exit 1
-fi
 
 # Convert CamelCase role name to lowercase-hyphenated prompt filename.
 #   RequirementsEngineer → requirements-engineer
@@ -168,7 +154,6 @@ camel_to_kebab() {
 # Quote a value as a TOML basic string for Codex's --config option.
 toml_string() {
     local value="$1"
-
     value="${value//\\/\\\\}"
     value="${value//\"/\\\"}"
     value="${value//$'\b'/\\b}"
@@ -176,51 +161,84 @@ toml_string() {
     value="${value//$'\t'/\\t}"
     value="${value//$'\r'/\\r}"
     value="${value//$'\n'/\\n}"
-
     printf '"%s"' "$value"
 }
 
-# Accept CamelCase (RequirementsEngineer) or kebab-case (requirements-engineer)
-PROMPT_FILE="$PROMPTS_DIR/$(camel_to_kebab "$ROLE").md"
-if [[ ! -f "$PROMPT_FILE" ]]; then
-    PROMPT_FILE="$PROMPTS_DIR/$ROLE.md"
-fi
+# resolve_prompt <role> — prints the prompt file path or exits with an error.
+resolve_prompt() {
+    local role="$1"
+    local prompt_file="$PROMPTS_DIR/$(camel_to_kebab "$role").md"
+    if [[ ! -f "$prompt_file" ]]; then
+        prompt_file="$PROMPTS_DIR/$role.md"
+    fi
+    if [[ ! -f "$prompt_file" ]]; then
+        echo "error: no prompt found for role '$role'" >&2
+        echo "" >&2
+        echo "Available roles:" >&2
+        for f in "$PROMPTS_DIR"/*.md; do
+            printf "  %s\n" "$(basename "$f" .md)"
+        done >&2
+        exit 1
+    fi
+    echo "$prompt_file"
+}
 
-if [[ ! -f "$PROMPT_FILE" ]]; then
-    echo "error: no prompt found for role '$ROLE'" >&2
-    echo "" >&2
-    echo "Available roles:" >&2
-    for f in "$PROMPTS_DIR"/*.md; do
-        printf "  %s\n" "$(basename "$f" .md)"
-    done >&2
+# launch_agent <tool> <model> <role> — runs the agent and returns when done.
+launch_agent() {
+    local tool="$1" model="$2" role="$3"
+    local prompt_file system_prompt
+
+    prompt_file="$(resolve_prompt "$role")"
+    system_prompt="$(cat "$prompt_file")"
+
+    case "$tool" in
+        claude)
+            claude --model "$model" --append-system-prompt "$system_prompt" "Please begin."
+            ;;
+        ollama)
+            ollama run "$model" --system "$system_prompt"
+            ;;
+        codex)
+            # Codex has no --system-prompt flag. Supply the role as additional
+            # developer instructions while retaining Codex's built-in instructions.
+            codex --model "$model" \
+                --config "developer_instructions=$(toml_string "$system_prompt")" \
+                "Please begin."
+            ;;
+        gemini)
+            # Verify --system-instruction is the correct flag for your Gemini CLI version.
+            gemini --model "$model" --system-instruction "$system_prompt"
+            ;;
+        *)
+            echo "error: unsupported tool '$tool'" >&2
+            echo "" >&2
+            echo "Supported tools: claude, ollama, codex, gemini" >&2
+            echo "To add a tool, edit the 'case' block in this script." >&2
+            exit 1
+            ;;
+    esac
+}
+
+# --- Entry point -------------------------------------------------------------
+
+if [[ ! -d "$PROMPTS_DIR" ]]; then
+    echo "error: sdais/prompts/ not found — run ./sdais.sh from the project root." >&2
     exit 1
 fi
 
-SYSTEM_PROMPT="$(cat "$PROMPT_FILE")"
-
-case "$TOOL" in
-    claude)
-        exec claude --model "$MODEL" --append-system-prompt "$SYSTEM_PROMPT" "Please begin."
-        ;;
-    ollama)
-        exec ollama run "$MODEL" --system "$SYSTEM_PROMPT"
-        ;;
-    codex)
-        # Codex has no --system-prompt flag. Supply the role as additional
-        # developer instructions while retaining Codex's built-in instructions.
-        exec codex --model "$MODEL" \
-            --config "developer_instructions=$(toml_string "$SYSTEM_PROMPT")" \
-            "Please begin."
-        ;;
-    gemini)
-        # Verify --system-instruction is the correct flag for your Gemini CLI version.
-        exec gemini --model "$MODEL" --system-instruction "$SYSTEM_PROMPT"
-        ;;
-    *)
-        echo "error: unsupported tool '$TOOL'" >&2
-        echo "" >&2
-        echo "Supported tools: claude, ollama, codex, gemini" >&2
-        echo "To add a tool, edit the 'case' block in this script." >&2
-        exit 1
-        ;;
-esac
+if [[ $# -eq 0 ]]; then
+    # Interactive loop: show menu → run agent → repeat until 'q'.
+    while true; do
+        select_from_menu
+        launch_agent "$TOOL" "$MODEL" "$ROLE" || true
+        printf '\nAgent session ended. Returning to menu…\n'
+    done
+elif [[ $# -eq 3 ]]; then
+    launch_agent "$1" "$2" "$3"
+elif [[ $# -eq 1 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
+    usage
+    exit 0
+else
+    usage >&2
+    exit 1
+fi
