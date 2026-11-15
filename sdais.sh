@@ -196,7 +196,20 @@ launch_agent() {
             claude --model "$model" --append-system-prompt "$system_prompt" "Please begin."
             ;;
         ollama)
-            ollama run "$model" --system "$system_prompt"
+            # 'ollama run' has no --system flag; build a temporary named model
+            # from a Modelfile with the SYSTEM instruction, then delete it.
+            local tmp_model="sdais-$$"
+            local tmp_file
+            tmp_file="$(mktemp)"
+            {
+                printf 'FROM %s\n' "$model"
+                printf 'SYSTEM """\n%s\n"""\n' "$system_prompt"
+            } > "$tmp_file"
+            printf 'Creating temporary Ollama model "%s"…\n' "$tmp_model" >&2
+            ollama create "$tmp_model" -f "$tmp_file" > /dev/null
+            rm -f "$tmp_file"
+            ollama run "$tmp_model" || true
+            ollama rm "$tmp_model" > /dev/null 2>&1 || true
             ;;
         codex)
             # Codex has no --system-prompt flag. Supply the role as additional
