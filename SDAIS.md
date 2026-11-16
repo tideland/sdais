@@ -137,20 +137,23 @@ workspace under `implementation/`.
     │   ├── gspec/v<R>/           ← RequirementsEngineer rounds (GSP)
     │   ├── tspec/v<R>/           ← TransformationEngineer rounds (TSP)
     │   ├── rsf/v<R>/             ← SemanticAuditor rounds (RSP)
-    │   └── env/v<R>/             ← Grounder rounds (ESP)
-    │       ├── report.md                 ← questions|findings; Result: Cleared | Findings
+    │   ├── env/v<R>/             ← Grounder rounds (ESP)
+    │   └── adf/v<R>/             ← Architect rounds (ADP)
+    │       ├── report.md                 ← context; Result: Proposed | Applied
     │       ├── prop-a-<short-slug>.md    ← Recommended proposal
     │       ├── prop-b-<short-slug>.md    ← Alternative proposal
     │       └── prop-own.md               ← template for the human's own proposal
     ├── adf/                    ← Architecture Definition Files; produced by Architect
-    │   └── v1/
-    │       ├── adf-01-context-and-goals.md
-    │       ├── adf-02-internal-architecture.md
-    │       ├── adf-03-external-architecture.md
-    │       ├── adf-04-requirement-trace.md
-    │       ├── adf-05-glossary.md
-    │       └── decisions/
-    │           └── adr-0001-<short-title>.md
+    │   ├── v1/                 ← ADF set for round 1 (all Approved+Accepted)
+    │   │   ├── adf-01-context-and-goals.md
+    │   │   ├── adf-02-internal-architecture.md
+    │   │   ├── adf-03-external-architecture.md
+    │   │   ├── adf-04-requirement-trace.md
+    │   │   ├── adf-05-glossary.md
+    │   │   └── decisions/
+    │   │       └── adr-0001-<short-title>.md
+    │   └── v2/                 ← ADF set for round 2 (round 1 preserved as history)
+    │       └── ...
     ├── trs/
     │   ├── v1/
     │   │   ├── trs-fr-0000-template.md   ← template; copy to start a new TRS-FR
@@ -176,7 +179,8 @@ workspace under `implementation/`.
 - Each `props/<domain>/v<R>/` directory is one round of the agent owning that domain: `report.md` with all questions or findings of the round and, when there are any, at least three Solution Proposals with status Draft. Rounds are immutable history except for the status changes defined in Solution Proposals.
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
-- Each `adf/v<N>/` directory contains the Architecture Definition Files produced by the Architect for version N: context and goals, internal architecture, external architecture, requirement trace, glossary, and ADRs under `decisions/`. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
+- Each `props/adf/v<R>/` directory is one Architect round: `report.md` with the architectural context and Result (`Proposed` when proposals are written; `Applied` after the accepted proposal has been applied), plus ADP proposal files following the same conventions as other agent proposals.
+- Each `adf/v<R>/` directory is the applied ADF set for round R: five core documents (all Status=Approved) and ADRs (all Status=Accepted) under `decisions/`. R matches the `props/adf/v<R>/` round whose accepted proposal was applied; previous rounds are preserved as history. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
 - Each `library/<library-id>/v<N>/` directory is a published version of a project-owned reference library. Published version directories are immutable; amendments create `v<N+1>/`. The entire `library/` directory may be absent or empty when no requirement uses it.
 - The distribution is `sdais-vX.Y.Z.tgz`. It contains `SDAIS.md`, `README.md`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `update.sh`, `sdais.sh`, `docs/`, and `scaffold/`, and expands directly into the current directory. Create a project root, copy or download the archive into it, run `tar xzf sdais-vX.Y.Z.tgz`, then run `./install.sh <project-name>` once to scaffold the project. To upgrade, unpack the new archive in the existing project root and run `./update.sh --from <old-version>`. Run `./sdais.sh <tool> <model> <role>` to launch any agent.
 - The `prompts/` directory is installed by `install` and refreshed by `update`.
@@ -269,10 +273,11 @@ flowchart TD
     GE --> G
     GU -- no --> AR{"Architect step?<br/>optional"}
     E -- no --> AR
-    AR -- yes --> A["AI: Architect<br/>ADF document set + ADRs"]
-    A --> AA{"Human approves ADF?"}
-    AA -- no --> A
-    AA -- yes --> GEN
+    AR -- yes --> A["AI: Architect (propose)<br/>writes props/adf/v<R>/ ADP proposals"]
+    A --> AA{"Human accepts<br/>one ADP proposal"}
+    AA -- "set Status=Accepted, re-run" --> AFIN["AI: Architect (apply)<br/>writes adf/v<R>/ all Approved+Accepted"]
+    AFIN --> GEN
+    AFIN -- "ADF needs revision<br/>re-run → propose v<R+1>" --> A
     AR -- no --> GEN
     GEN["AI: Generator<br/>writes implementation/ with ANN blocks<br/>TDD mode: TestGenerator first"] --> REV["AI: Reviewer, round N<br/>validates annotations vs. code<br/>checks RSF acceptance criteria"]
     REV --> V{"Violations?"}
@@ -612,7 +617,9 @@ Step 4 is optional and skipped unless either of the following conditions holds:
 
 When Step 4 runs, provide all cleared RSF items and the library files reachable from their `**Libraries:**` fields to the Architect agent. Use the prompt from `sdais/prompts/architect.md`.
 
-The Architect reads all active RSF items plus their resolved library closures and produces an Architecture Definition File set (ADF) under `sdais/adf/v<N>/`. The set separates concerns so that architecture can be reviewed, linked, and evolved without rewriting one monolithic document. The Architect does not read or write source code and does not write `[ANN]` blocks.
+The Architect uses the standard **Solution Proposal** mechanism shared with RequirementsEngineer, SemanticAuditor, and Grounder: it writes architecture proposals to `sdais/props/adf/v<R>/` and, when the human accepts one, applies it by writing the full ADF set to `sdais/adf/v<R>/`.
+
+The Architect reads all active RSF items plus their resolved library closures and produces an Architecture Definition File set (ADF) under `sdais/adf/v<R>/`. The set separates concerns so that architecture can be reviewed, linked, and evolved without rewriting one monolithic document. The Architect does not read or write source code and does not write `[ANN]` blocks.
 
 **ADF document set:**
 
@@ -628,11 +635,12 @@ The Architect reads all active RSF items plus their resolved library closures an
 All ADF documents are UTF-8 Markdown. Each of the five core documents starts with:
 
 ```markdown
-# <Document Title> — <project> v<N>
+# <Document Title> — <project>
 
-- **RSF Version:** v<N>
-- **Status:** Draft | Approved | Superseded
-- **Architect:** <agent run date>
+- **RSF Version:** v<RSF-N>
+- **ADF Version:** v<ADF-N>
+- **Status:** Approved
+- **Architect:** <YYYY-MM-DD>
 ```
 
 Every ADR has the following sections in order:
@@ -640,8 +648,8 @@ Every ADR has the following sections in order:
 ```markdown
 # ADR-NNNN: <Decision Title>
 
-- **Status:** Proposed | Accepted | Rejected | Superseded
-- **Date:** <agent run date>
+- **Status:** Accepted
+- **Date:** <YYYY-MM-DD>
 
 ## Context
 
@@ -676,11 +684,11 @@ architecture and integration contracts. Every component and interface names
 the pinned libraries it realizes. An ADF decision may not silently change a
 library-defined rule; any conflict returns to semantic audit.
 
-**Human review gate:** the human reads the complete ADF set and either:
-- **Approves** — sets all five core document statuses to `Approved` and every ADR status to `Accepted`; proceed to Step 5.
-- **Rejects** — provides written feedback; the Architect revises the set and the human reviews again.
+**Human review gate:** the Architect writes ADP proposals to `sdais/props/adf/v<R>/` (Status=Draft). The human reads them and either:
+- **Accepts** — sets Status=Accepted on exactly one ADP proposal and re-runs the Architect; the Architect (apply mode) writes `sdais/adf/v<R>/` with all core documents Approved and all ADRs Accepted, then proceed to Step 5. If the ADF needs a revision, re-run the Architect again — it starts a new proposal round automatically (v<R+1>).
+- **Wants a different direction** — fills in `prop-own.md` with the desired approach, sets its Status to Accepted, and re-runs; the Architect applies it as a custom direction. Previous rounds are preserved as history (v1, v2, v3, …).
 
-**Generator reads the ADF:** if `sdais/adf/v<N>/` exists, all five core documents have `**Status:** Approved`, and every ADR has `**Status:** Accepted`, the Generator reads the complete set as structural context before synthesising. An incomplete or partly approved set is not used. Human-authored RSF determines adoption and scope; RSF plus adopted libraries are the implementation contract, and ADF is subordinate structural guidance.
+**Generator reads the ADF:** if the latest `sdais/adf/v<R>/` has all five core documents with `**Status:** Approved` and every ADR with `**Status:** Accepted`, the Generator reads that complete set as structural context before synthesising. An incomplete or unapproved set is not used. Human-authored RSF determines adoption and scope; RSF plus adopted libraries are the implementation contract, and ADF is subordinate structural guidance.
 
 The full prompt is in `sdais/prompts/architect.md`.
 
@@ -1383,7 +1391,7 @@ without the field remain valid.
 
 ## Solution Proposals
 
-Four agents resolve what they find through **Solution Proposals** instead of isolated per-item answers: each proposal resolves *all* questions or findings of a round with one coherent strategy, so the result stays homogeneous and the loop converges. All proposals live under `sdais/props/`, one directory per round.
+Five agents resolve what they find through **Solution Proposals** instead of isolated per-item answers: each proposal resolves *all* questions or findings of a round with one coherent strategy, so the result stays homogeneous and the loop converges. All proposals live under `sdais/props/`, one directory per round.
 
 | Domain | Agent | Round directory | Proposal ID | Resolves | Applied to |
 |---|---|---|---|---|---|
@@ -1391,6 +1399,7 @@ Four agents resolve what they find through **Solution Proposals** instead of iso
 | tspec | TransformationEngineer | `props/tspec/v<R>/` | `TSP-<R>-<X>` | Questions `Q<n>` about the prose | `tspec/v<N+1>/` (full snapshot) |
 | rsf | SemanticAuditor | `props/rsf/v<R>/` | `RSP-<R>-<X>` | Findings `F<n>` | `rsf/v<N+1>/` (changed items only) |
 | env | Grounder | `props/env/v<R>/` | `ESP-<R>-<X>` | `ENV-UNRESOLVABLE` findings `F<n>` | `rsf/v<N+1>/` (changed items only) |
+| adf | Architect | `props/adf/v<R>/` | `ADP-<R>-<X>` | Architecture concept (all active RSF items) | `adf/v<R>/` (full ADF set, all Approved+Accepted) |
 
 Rounds are numbered from 1 per domain and increase with every run of the owning agent. Each run first settles the previous round, then analyses, then writes the next round.
 

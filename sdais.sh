@@ -10,7 +10,7 @@ set -euo pipefail
 usage() {
     cat <<'EOF'
 Usage: ./sdais.sh                          interactive menu (loops until quit)
-       ./sdais.sh <tool> <model> <role>   direct launch
+       ./sdais.sh <tool> <model> <role> [msg]  direct launch (msg defaults to "Please begin.")
        ./sdais.sh -h | --help             this help
 
 Interactive menu (no arguments):
@@ -183,9 +183,9 @@ resolve_prompt() {
     echo "$prompt_file"
 }
 
-# launch_agent <tool> <model> <role> — runs the agent and returns when done.
+# launch_agent <tool> <model> <role> [initial_message] — runs the agent and returns when done.
 launch_agent() {
-    local tool="$1" model="$2" role="$3"
+    local tool="$1" model="$2" role="$3" initial_message="${4:-Please begin.}"
     local prompt_file system_prompt
 
     prompt_file="$(resolve_prompt "$role")"
@@ -193,7 +193,7 @@ launch_agent() {
 
     case "$tool" in
         claude)
-            claude --model "$model" --append-system-prompt "$system_prompt" "Please begin."
+            claude --model "$model" --append-system-prompt "$system_prompt" "$initial_message"
             ;;
         ollama)
             # 'ollama run' has no --system flag; build a temporary named model
@@ -216,7 +216,7 @@ launch_agent() {
             # developer instructions while retaining Codex's built-in instructions.
             codex --model "$model" \
                 --config "developer_instructions=$(toml_string "$system_prompt")" \
-                "Please begin."
+                "$initial_message"
             ;;
         gemini)
             # Verify --system-instruction is the correct flag for your Gemini CLI version.
@@ -239,15 +239,34 @@ if [[ ! -d "$PROMPTS_DIR" ]]; then
     exit 1
 fi
 
+# ask_initial_message — prompts for an optional opening message.
+# Prints the message; defaults to "Please begin." on empty input.
+ask_initial_message() {
+    local msg
+    printf 'Initial message (Enter for "Please begin.", or type a rework instruction): '
+    if ! read -r msg; then
+        echo >&2
+        exit 1
+    fi
+    if [[ -z "$msg" ]]; then
+        echo "Please begin."
+    else
+        echo "$msg"
+    fi
+}
+
 if [[ $# -eq 0 ]]; then
     # Interactive loop: show menu → run agent → repeat until 'q'.
     while true; do
         select_from_menu
-        launch_agent "$TOOL" "$MODEL" "$ROLE" || true
+        INITIAL_MSG="$(ask_initial_message)"
+        launch_agent "$TOOL" "$MODEL" "$ROLE" "$INITIAL_MSG" || true
         printf '\nAgent session ended. Returning to menu…\n'
     done
 elif [[ $# -eq 3 ]]; then
     launch_agent "$1" "$2" "$3"
+elif [[ $# -eq 4 ]]; then
+    launch_agent "$1" "$2" "$3" "$4"
 elif [[ $# -eq 1 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
     usage
     exit 0

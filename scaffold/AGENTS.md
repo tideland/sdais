@@ -57,14 +57,14 @@ produces TRS items and CDF files (transformation).
 
 ## Solution Proposals
 
-RequirementsEngineer, TransformationEngineer, SemanticAuditor, and Grounder
-work in rounds under `sdais/props/<gspec|tspec|rsf|env>/v<R>/`. Each round
-holds a `report.md` with all open questions or findings and, when there are
-any, at least three proposals with status Draft: Recommended, Alternative, and
-Own. Each proposal resolves everything in the round coherently and documents
-its impact and compromises. The human accepts exactly one; the next run of the
-same agent applies it, or rejects the round when zero or several are accepted.
-Spec files stay pure prose.
+RequirementsEngineer, TransformationEngineer, SemanticAuditor, Grounder, and
+Architect work in rounds under `sdais/props/<domain>/v<R>/`. Each round holds
+a `report.md` and, when there are open items, at least two agent-written
+proposals (Recommended, Alternative) plus an Own template, all Status=Draft.
+Each proposal resolves everything in the round coherently and documents its
+compromises. The human accepts exactly one; the next run of the same agent
+applies it, or reports an error when zero or several are accepted.
+Spec files (gspec, tspec) stay pure prose.
 
 ## Directory Layout
 
@@ -89,9 +89,11 @@ Spec files stay pure prose.
     │   ├── gspec/v<R>/   ← RequirementsEngineer
     │   ├── tspec/v<R>/   ← TransformationEngineer
     │   ├── rsf/v<R>/     ← SemanticAuditor
-    │   └── env/v<R>/     ← Grounder
-    ├── adf/              ← architecture definition files
-    │   └── v1/
+    │   ├── env/v<R>/     ← Grounder
+    │   └── adf/v<R>/     ← Architect
+    ├── adf/              ← architecture definition files; one v<R>/ per accepted ADP
+    │   ├── v1/           ← round 1 ADF set (all Approved+Accepted)
+    │   └── v2/ …        ← round 2+ (previous rounds preserved as history)
     ├── trs/              ← transformation hypotheses
     │   └── v1/
     └── cdf/              ← change definition files
