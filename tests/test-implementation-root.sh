@@ -83,8 +83,7 @@ LEGACY_CORE=$(checksum "$LEGACY/internal/core/core.go")
     fail "update changed legacy internal source"
 
 for prompt in transformation-engineer semantic-auditor architect generator \
-              reviewer refiner analyzer transformation security-auditor \
-              test-generator; do
+              reviewer refiner analyzer transformation; do
     grep -Fq '#implementation-root' "$REPO_ROOT/scaffold/sdais/prompts/$prompt.md" ||
         fail "$prompt prompt does not consume implementation-root contract"
 done
@@ -98,6 +97,14 @@ grep -Fq 'complete transformed target under `implementation/`' "$REPO_ROOT/SDAIS
 grep -Fq 'never delete|replace the legacy source' \
     "$REPO_ROOT/scaffold/sdais/prompts/transformation.md" ||
     fail "Transformation prompt does not preserve external legacy source"
+for prompt in security-auditor test-generator; do
+    [ ! -e "$REPO_ROOT/scaffold/sdais/prompts/$prompt.md" ] ||
+        fail "$prompt prompt was merged into Generator/Reviewer and must not ship"
+done
+grep -Fq 'rm -f sdais/prompts/security-auditor.md sdais/prompts/test-generator.md' \
+    "$REPO_ROOT/update.sh" ||
+    fail "update does not remove the merged SecurityAuditor/TestGenerator prompts"
+
 grep -Fq 'implementation/go.mod' "$REPO_ROOT/docs/GREENFIELD.md" ||
     fail "greenfield guide lacks concrete managed-root example"
 

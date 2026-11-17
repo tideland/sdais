@@ -86,6 +86,10 @@ fi
 # upgraded projects expose only current roles; project-authored files are untouched.
 rm -f sdais/prompts/designer.md
 
+# TestGenerator was merged into Generator and SecurityAuditor into
+# Reviewer. Remove their obsolete managed prompts the same way.
+rm -f sdais/prompts/security-auditor.md sdais/prompts/test-generator.md
+
 # Update sdais/SDAIS.md
 cp "$SCRIPT_DIR/SDAIS.md" sdais/SDAIS.md
 

@@ -74,7 +74,7 @@ The mechanism is generic: an API requirement can instead adopt
 `sdais/library/example-api/v2/openapi.yaml#paths`. Libraries are normative only
 where human prose or RSF explicitly adopts them. The SemanticAuditor resolves
 and checks them; Architect traces them; Generator and Transformation implement
-them; Reviewer verifies conformance; Refiner and TestGenerator use the same
+them; Reviewer verifies conformance and tests it; Refiner uses the same
 pinned files. To amend a published contract, add `v<N+1>` and update only the
 requirements that adopt it—old requirements keep using their pinned version.
 Update preserves every file under `sdais/library/`.
@@ -125,7 +125,7 @@ The `./sdais.sh` script launches any agent role against a model of your choice. 
 Run `./sdais.sh` without arguments to print every role in workflow order
 together with the recommended model for each tool. Each cell carries a menu
 code: `C` for Claude, `X` for Codex, `G` for Gemini, and `O` for Ollama,
-followed by the role number `01`–`12`. Enter a code at the prompt (for example
+followed by the role number `01`–`10`. Enter a code at the prompt (for example
 `C01` for the Claude RequirementsEngineer, case-insensitive) to launch that
 combination, or `q` to quit.
 
@@ -139,9 +139,10 @@ Next step — enter a menu code (e.g. C01, q to quit):
 ```
 
 Reasoning-heavy roles (RequirementsEngineer, TransformationEngineer,
-SemanticAuditor, Architect, Reviewer, SecurityAuditor) use each tool's
-high-reasoning model; synthesis roles (Grounder, Analyzer, Generator, Refiner,
-Transformation, TestGenerator) use its high-coding model:
+SemanticAuditor, Architect, Reviewer) use each tool's high-reasoning model;
+synthesis roles (Grounder, Analyzer, Generator, Refiner, Transformation) use
+its high-coding model. The Reviewer builds and runs the tests, so use a tool
+that can execute shell commands for it:
 
 | Tool | Reasoning model | Coding model | Override variables |
 |---|---|---|---|
@@ -201,15 +202,14 @@ Repeat phases 1–5 until all findings are resolved. That cleared RSF is your co
 
 **Phase 2 — Synthesise**
 
-6. Run the **Generator** — it reads the cleared RSF and synthesises a complete, annotated implementation under `implementation/`.
-7. Run the **Reviewer** — it checks every annotated code unit against the RSF and writes findings for any violations.
-8. Run the **Refiner** — it fixes every violation guided by the Reviewer's hints.
-9. Return to step 7. Repeat until the Reviewer reports zero violations.
+6. Run the **Generator** — it reads the cleared RSF and synthesises a complete, annotated implementation and its test suite under `implementation/`.
+7. Run the **Reviewer** — it builds the code, runs all tests, checks every annotated unit against the RSF, checks test coverage, and performs the security audit. Findings go to `sdais/props/impl/v<R>/report.md` together with at least four **implementation Solution Proposals**: one recommended, two alternatives, and one for your own solution. Each proposal resolves all findings coherently and documents its impact and compromises.
+8. Accept exactly one proposal (`**Status:** Accepted`) and run the **Refiner** — it applies the proposal to code and tests.
+9. Return to step 7. Repeat until the Reviewer reports `Cleared`. Findings that need a requirement change are escalated back to the RSF.
 
 **Phase 3 — Approve**
 
 10. Review the result. Approve, amend the RSF and restart, or reject and regenerate.
-11. Optionally run the **SecurityAuditor** and **TestGenerator** at any point after generation.
 
 ---
 
@@ -226,7 +226,7 @@ If you find it easier to start with free-form prose, write your ideas about the 
 3. Resolve findings and refine the derived RSF through the standard semantic audit loop.
 4. Activate one or more Change Definition Files (CDF) describing the transformation you want (language migration, modularisation, new persistence layer, etc.).
 5. Run the **Transformation** agent — it applies the CDFs to the annotated codebase, writes the managed target under `implementation/`, and preserves all annotation identifiers without deleting legacy source.
-6. Continue from step 7 of the greenfield loop above (Review → Refine → Approve).
+6. Continue from step 7 of the greenfield loop above (Review → Accept → Refine → Approve).
 
 ---
 

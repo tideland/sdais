@@ -20,6 +20,7 @@
 |---|---|---|---|
 | **RSF** | Requirements Specification File | `sdais/rsf/v<N>/` | Normative requirements defining what the system must do or be. |
 | **GSP / TSP / RSP / ESP** | Solution Proposal for gspec, tspec, RSF, or environment | `sdais/props/<gspec\|tspec\|rsf\|env>/v<R>/` | One complete, homogeneous resolution of all questions or findings of a round — written by the RequirementsEngineer, TransformationEngineer, SemanticAuditor, or Grounder — with answers or changes, impact, and compromises. Kinds: Recommended, Alternative, Own. Status: `Draft`, `Accepted`, `Applied`, `Rejected`. The human accepts exactly one per round; the next run applies it. |
+| **IMP** | Implementation Solution Proposal | `sdais/props/impl/v<R>/` | One complete, homogeneous resolution of all findings of a Reviewer round, as changes to code and tests (`Fix`, `Rewrite`, `Add`, `Remove`, `Move`, `Test`, `Escalate`) with impact and compromises. Kinds: Recommended, two Alternatives, Own. The human accepts exactly one; the Refiner applies it; the next Reviewer round verifies. |
 | **RAR** | *(deprecated)* Requirements Audit Report | — | Previously used for separate finding files; SemanticAuditor and Grounder findings now live in `report.md` of their rounds under `sdais/props/`, Analyzer findings in `## Findings` sections within RSF item files. |
 | **TRS** | Transformation Specification | `sdais/trs/v<N>/` | Hypotheses about the behaviour and structure of an existing codebase (SDAIS-T only). |
 | **CDF** | Change Definition File | `sdais/cdf/v<N>/` | Specifies a single transformation dimension to apply to an existing codebase (SDAIS-T only). |
@@ -47,7 +48,7 @@
 | **Managed-root mode** | Active only when the zero-byte `implementation/.sdais-root` marker exists; agent-managed product files must remain below the implementation root. |
 | **Legacy mode** | Compatibility behavior for an unmarked upgraded project; agents retain the repository-wide, in-place placement rules used before v0.13.0. |
 | **Legacy source** | Existing SDAIS-T input outside `implementation/`; Analyzer may annotate it in place, while Transformation writes a separate managed target. |
-| **Managed target** | The complete transformed SDAIS-T product workspace under `implementation/`, used by downstream Generator, Reviewer, Refiner, SecurityAuditor, and TestGenerator. |
+| **Managed target** | The complete transformed SDAIS-T product workspace under `implementation/`, used by downstream Generator, Reviewer, and Refiner. |
 
 The implementation root includes source, tests, manifests, lockfiles, fixtures,
 assets, migrations, build/deployment files, and product documentation. It is
@@ -92,6 +93,21 @@ SemanticAuditor and Grounder findings are listed per round in `report.md` under 
 | `ENV-UNRESOLVABLE` | A named infrastructure element cannot be confirmed in the target environment (Grounder finding). |
 | `TRS-CONTRADICTS-CODE` | A TRS hypothesis is contradicted by actual code behaviour (SDAIS-T only). |
 | `CODE-INTENT-UNCLEAR` | Code behaviour cannot be mapped to any requirement (SDAIS-T only). |
+
+## Review Finding Types
+
+Reviewer findings are listed per round in `report.md` under `sdais/props/impl/`.
+
+| Category | Meaning |
+|---|---|
+| `BUILD-FAILURE` | The build or the standard static check fails. |
+| `TEST-FAILURE` | A test fails. |
+| `SPEC-VIOLATION` | Behaviour contradicts an active RSF item, or an FR or AC is not addressed. |
+| `CONTRACT-MISMATCH` | An `[ANN]` label does not match the code. |
+| `TEST-GAP` | A required test is missing, skipped, or too weak. |
+| `SECURITY` | A security constraint is not enforced or the code has a security weakness. |
+| `LIBRARY-NONCONFORMANT` | The implementation breaks an adopted library contract. |
+| `ROOT-PLACEMENT` | A product artefact lies outside `implementation/`. |
 
 ---
 
@@ -159,7 +175,6 @@ Each CDF covers exactly one transformation dimension. Multiple CDFs may be appli
 | Identifier | Format | Meaning |
 |---|---|---|
 | `(DEPENDS-ON)` | Comma-separated `ANN-<8-hex>` IDs | Units this unit directly calls or structurally requires. |
-| `(TEST-MODE)` | `TDD` | Set by TestGenerator in TDD mode; absent in standard test annotations. |
 
 ### Traceability Labels
 
@@ -171,25 +186,21 @@ Each CDF covers exactly one transformation dimension. Multiple CDFs may be appli
 | `(ROUND)` | Integer (0, 1, 2, …) | Review round in which the block was last written or updated. |
 | `(CONFIDENCE)` | `Inferred-High/Medium/Low` on ANN blocks; `High/Medium/Low` on TRS items | Set by Analyzer on ANN blocks (SDAIS-T); set by TransformationEngineer on TRS items. |
 
-### Review Finding Labels
+### Refinement Labels
 
 | Identifier | Format | Meaning |
 |---|---|---|
-| `(FINDING:n)` | Text | Describes one specific violation; `n` is a 1-based index. |
-| `(SEVERITY:n)` | `Critical`, `High`, `Medium`, or `Low` | Severity of the paired `(FINDING:n)`. |
-| `(HINT:n)` | Actionable instruction | Instruction for the Refiner to resolve the paired `(FINDING:n)`. |
-| `(FINDING:n:STATUS)` | `Resolved — <rationale>` or `Waived — requires RSF amendment` | Resolution status appended by the Refiner after fixing. |
-| `(FIELD-CHANGE:n)` | Text | Documents which descriptive field was changed and why. |
+| `(FIELD-CHANGE)` | `IMP-<R>-<X> F<n> — <why>` | Placed by the Refiner directly after a descriptive label it changed. |
+
+Review findings are not written into `[ANN]` blocks. `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)`, `(FINDING:n:STATUS)`, `(FIELD-CHANGE:n)`, and `(TEST-MODE)` survive only as legacy history from the earlier per-finding review scheme.
 
 ### Agent Role Values for `(AGENT)`
 
 | Value | Role |
 |---|---|
-| `Generator` | Initial synthesis from RSF. |
-| `Reviewer` | Validation pass; sets `(VERIFIED)` and writes finding labels. |
-| `Refiner` | Corrects violations directed by `(HINT:n)`; writes `(FINDING:n:STATUS)`. |
-| `SecurityAuditor` | Specialised pass for `(CONSTRAINT:SEC)` compliance. |
-| `TestGenerator` | Derives tests from `(PRE)`, `(POST)`, and acceptance criteria. |
+| `Generator` | Initial synthesis of implementation and tests from RSF. |
+| `Reviewer` | Review round: build, tests, specification, contracts, security; sets `(VERIFIED)`. |
+| `Refiner` | Applies the accepted implementation Solution Proposal. |
 | `SemanticAuditor` | RSF-level semantic validation before generation. |
 | `TransformationEngineer` | Clarification and TRS/CDF derivation from free-form prose in `sdais/tspec/`. |
 | `Analyzer` | Transformation: annotates existing codebase and derives RSF items; references TRS item IDs in `(ORIGIN)`. |

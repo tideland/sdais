@@ -47,7 +47,7 @@ done < <(find "$REPO_ROOT" -type f -name '*.md' \
 echo "==> Managed prompt inventory"
 prompt_count=$(find "$REPO_ROOT/scaffold/sdais/prompts" -maxdepth 1 \
     -type f -name '*.md' | wc -l | tr -d ' ')
-[ "$prompt_count" -eq 12 ] || fail "expected 12 managed prompts, found $prompt_count"
+[ "$prompt_count" -eq 10 ] || fail "expected 10 managed prompts, found $prompt_count"
 
 echo "==> Git whitespace"
 if git -C "$REPO_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then

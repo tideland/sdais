@@ -39,13 +39,11 @@ Role — prompt file — when to invoke:
 - SemanticAuditor — `sdais/prompts/semantic-auditor.md` — before each generation pass; resolves libraries and managed-root conflicts; writes RSF Solution Proposals per round and applies the one the human accepted
 - Grounder — `sdais/prompts/grounder.md` — after audit Cleared; when E- items exist; writes environment Solution Proposals for unconfirmed elements
 - Architect — `sdais/prompts/architect.md` — optional; after Grounder, before Generator; traces libraries and implementation locations
-- Generator — `sdais/prompts/generator.md` — after RSF is Cleared; implements the composed contract under the active implementation root
-- Reviewer — `sdais/prompts/reviewer.md` — after each Generate or Refine pass; verifies contract and root conformance
-- Refiner — `sdais/prompts/refiner.md` — after each Review pass with violations; repairs only the active implementation workspace
+- Generator — `sdais/prompts/generator.md` — after RSF is Cleared; implements the composed contract and its complete test suite under the active implementation root
+- Reviewer — `sdais/prompts/reviewer.md` — after Generator and after each Refiner pass; builds, runs all tests, checks specs, contracts, and security; writes implementation Solution Proposals per round
+- Refiner — `sdais/prompts/refiner.md` — after the human accepted one implementation proposal; applies it to code and tests in the active implementation workspace
 - Analyzer — `sdais/prompts/analyzer.md` — T: annotate existing code in place and carry relevant TRS/CDF library references into RSF
 - Transformation — `sdais/prompts/transformation.md` — T: transform annotated code into the managed target
-- SecurityAuditor — `sdais/prompts/security-auditor.md` — on demand or after generation; audits the active implementation workspace
-- TestGenerator — `sdais/prompts/test-generator.md` — after all blocks Verified, or before Generator in TDD mode; writes tests under the active implementation root
 
 ## SpecificationEngineer Archetype
 
@@ -57,13 +55,18 @@ produces TRS items and CDF files (transformation).
 
 ## Solution Proposals
 
-RequirementsEngineer, TransformationEngineer, SemanticAuditor, Grounder, and
-Architect work in rounds under `sdais/props/<domain>/v<R>/`. Each round holds
-a `report.md` and, when there are open items, at least two agent-written
+RequirementsEngineer, TransformationEngineer, SemanticAuditor, Grounder,
+Architect, and Reviewer work in rounds under `sdais/props/<domain>/v<R>/`.
+Each round holds a `report.md` and, when there are open items, at least two
+agent-written
 proposals (Recommended, Alternative) plus an Own template, all Status=Draft.
 Each proposal resolves everything in the round coherently and documents its
 compromises. The human accepts exactly one; the next run of the same agent
 applies it, or reports an error when zero or several are accepted.
+Implementation rounds (`props/impl/`) are the exception: the Reviewer
+proposes one Recommended and two Alternatives, and the Refiner applies the
+accepted proposal; the human then re-runs the Reviewer until it reports
+`Cleared`.
 Spec files (gspec, tspec) stay pure prose.
 
 ## Directory Layout
@@ -90,7 +93,8 @@ Spec files (gspec, tspec) stay pure prose.
     │   ├── tspec/v<R>/   ← TransformationEngineer
     │   ├── rsf/v<R>/     ← SemanticAuditor
     │   ├── env/v<R>/     ← Grounder
-    │   └── adf/v<R>/     ← Architect
+    │   ├── adf/v<R>/     ← Architect
+    │   └── impl/v<R>/    ← Reviewer (proposes), Refiner (applies)
     ├── adf/              ← architecture definition files; one v<R>/ per accepted ADP
     │   ├── v1/           ← round 1 ADF set (all Approved+Accepted)
     │   └── v2/ …        ← round 2+ (previous rounds preserved as history)

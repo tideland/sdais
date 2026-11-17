@@ -16,12 +16,12 @@ Usage: ./sdais.sh                          interactive menu (loops until quit)
 Interactive menu (no arguments):
   Lists all roles in workflow order with the recommended model per tool and
   prompts for a menu code to launch the next step:
-    C01–C12  Claude    X01–X12  Codex    G01–G12  Gemini    O01–O12  Ollama
+    C01–C10  Claude    X01–X10  Codex    G01–G10  Gemini    O01–O10  Ollama
   e.g. C01 = Claude RequirementsEngineer, G07 = Gemini Generator; q quits.
   Override default models with SDAIS_<TOOL>_REASONING / SDAIS_<TOOL>_CODING,
   e.g. SDAIS_OLLAMA_CODING=devstral:24b ./sdais.sh
 
-Examples per role (use high-reasoning models for spec/audit, high-coding for synthesis):
+Examples per role (use high-reasoning models for spec/audit/review, high-coding for synthesis):
   ./sdais.sh claude  claude-opus-5-5    RequirementsEngineer
   ./sdais.sh claude  claude-opus-5-5    TransformationEngineer
   ./sdais.sh claude  claude-opus-5-5    SemanticAuditor
@@ -32,8 +32,6 @@ Examples per role (use high-reasoning models for spec/audit, high-coding for syn
   ./sdais.sh claude  claude-opus-5-5    Reviewer
   ./sdais.sh claude  claude-sonnet-5-5  Refiner
   ./sdais.sh claude  claude-sonnet-5-5  Transformation
-  ./sdais.sh claude  claude-opus-5-5    SecurityAuditor
-  ./sdais.sh claude  claude-sonnet-5-5  TestGenerator
 
 Alternative tools:
   ./sdais.sh ollama  qwen3-coder:30b    Generator
@@ -47,12 +45,11 @@ EOF
 # --- Interactive menu --------------------------------------------------------
 #
 # Roles in workflow order with their model tier:
-#   R = high reasoning (spec, architecture, audit, review)
-#   C = high coding    (grounding, synthesis, refinement, tests)
+#   R = high reasoning (spec, architecture, audit, review incl. tests + security)
+#   C = high coding    (grounding, synthesis incl. tests, refinement)
 MENU_ROLES=(RequirementsEngineer TransformationEngineer SemanticAuditor Architect
-            Grounder Analyzer Generator Reviewer Refiner Transformation
-            SecurityAuditor TestGenerator)
-MENU_TIERS=(R R R R C C C R C C R C)
+            Grounder Analyzer Generator Reviewer Refiner Transformation)
+MENU_TIERS=(R R R R C C C R C C)
 
 MENU_TOOLS=(claude codex gemini ollama)
 MENU_PREFIXES=(C X G O)
@@ -109,7 +106,7 @@ print_menu() {
 
 # select_from_menu — sets TOOL, MODEL and ROLE from the user's menu code.
 select_from_menu() {
-    local input code prefix num t r
+    local input code prefix num t r last
 
     print_menu
     while true; do
@@ -136,7 +133,8 @@ select_from_menu() {
                 fi
             done
         fi
-        echo "Invalid code '$input'. Use C01–C12, X01–X12, G01–G12 or O01–O12."
+        last="$(printf '%02d' "${#MENU_ROLES[@]}")"
+        echo "Invalid code '$input'. Use C01–C$last, X01–X$last, G01–G$last or O01–O$last."
     done
 }
 
@@ -167,7 +165,9 @@ toml_string() {
 # resolve_prompt <role> — prints the prompt file path or exits with an error.
 resolve_prompt() {
     local role="$1"
-    local prompt_file="$PROMPTS_DIR/$(camel_to_kebab "$role").md"
+    local prompt_file kebab
+    kebab="$(camel_to_kebab "$role")"
+    prompt_file="$PROMPTS_DIR/$kebab.md"
     if [[ ! -f "$prompt_file" ]]; then
         prompt_file="$PROMPTS_DIR/$role.md"
     fi

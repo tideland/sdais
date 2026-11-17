@@ -32,17 +32,18 @@ flowchart TD
     J --> H
     I -- No --> K
     G -- No --> K[Step 4\nArchitect\noptional]
-    K --> L[Step 5\nGenerator\nwrite implementation/]
-    L --> M[Step 6\nReviewer]
-    M --> N{Violations?}
-    N -- Yes --> O[Step 7\nRefiner]
+    K --> L[Step 5\nGenerator\nwrite implementation/\ncode + tests]
+    L --> M[Step 6\nReviewer\nround sdais/props/impl/vR/]
+    M --> N{Findings?}
+    N -- Yes --> N2[Accept exactly one\nimplementation Solution Proposal]
+    N2 --> O[Step 7\nRefiner\napplies it]
     O --> M
     LIB -. same resolved files .-> D
     LIB -. trace .-> K
     LIB -. implement .-> L
     LIB -. verify/refine .-> M
     LIB -. verify/refine .-> O
-    N -- No: all Verified --> P[Step 8\nHuman Approval Gate]
+    N -- No: Cleared --> P[Step 8\nHuman Approval Gate]
     P --> Q{Decision}
     Q -- Approve --> R([Done])
     Q -- Amend RSF --> C
@@ -102,8 +103,6 @@ This creates `AGENTS.md`, the managed implementation workspace, and the
     │   ├── generator.md
     │   ├── reviewer.md
     │   ├── refiner.md
-    │   ├── security-auditor.md
-    │   ├── test-generator.md
     │   ├── analyzer.md
     │   ├── transformation.md
     │   └── transformation-engineer.md
@@ -116,14 +115,14 @@ This creates `AGENTS.md`, the managed implementation workspace, and the
     │       ├── e-0000-template.md
     │       └── ac-0000-template.md
     └── props/                # Solution Proposals, created by the agents per round:
-                              #   gspec/, tspec/, rsf/, env/
+                              #   gspec/, tspec/, rsf/, env/, adf/, impl/
 ```
 
 Do not edit `AGENTS.md` or any file in `sdais/prompts/` by hand — run `update.sh` to refresh them when upgrading SDAIS.
 The installer creates `sdais/library/` empty. Its contents are project-owned;
 SDAIS updates never replace or delete them.
 
-The marker activates managed-root mode. Generator and TestGenerator place the
+The marker activates managed-root mode. Generator and Refiner place the
 entire language-native product tree below `implementation/`, including source,
 tests, package manifests, lockfiles, fixtures, assets, migrations, and
 build/deployment files. For Go this means `implementation/go.mod`,
@@ -139,8 +138,8 @@ To launch any agent, use `./sdais.sh` from the project root:
 ```
 
 Without arguments, the launcher lists every role with the recommended model per
-tool and asks for a menu code: `C01`–`C12` for Claude, `X01`–`X12` for Codex,
-`G01`–`G12` for Gemini, and `O01`–`O12` for Ollama. `C01` is the Claude
+tool and asks for a menu code: `C01`–`C10` for Claude, `X01`–`X10` for Codex,
+`G01`–`G10` for Gemini, and `O01`–`O10` for Ollama. `C01` is the Claude
 RequirementsEngineer, the usual first step of SDAIS-G. See the README section
 *Running Agents* for the model table and override variables.
 
@@ -195,7 +194,7 @@ Sequence numbers start at `0001` and are never reused. Items retired during an a
 
 **Non-Functional Requirements (NFR):** Always include a numeric bound. "Low latency" is not a requirement. "95th-percentile latency must not exceed 200 ms under 1 000 concurrent requests" is.
 
-**Constraints (C):** Hard rules that narrow the solution space without describing a feature. "The implementation must use Go 1.22 or later." To activate TDD mode, add a constraint item with `Generation mode: TDD`.
+**Constraints (C):** Hard rules that narrow the solution space without describing a feature. "The implementation must use Go 1.22 or later."
 
 **Environment (E):** Runtime or deployment facts the AI must know. Set `**Verified:** Pending` on every E- item at authoring; the Grounder sets it to `true` after confirming the element exists.
 
@@ -329,10 +328,9 @@ Review the complete ADF set and either approve it—set every core document to `
 **Prompt:** `sdais/prompts/generator.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
 The Generator reads the cleared RSF and synthesises a complete implementation
-under `implementation/`. It selects the language-native structure, idioms, and
-implementation strategy within the constraints you specified.
-
-### Standard mode
+and its test suite under `implementation/` in one pass. It selects the
+language-native structure, idioms, and implementation strategy within the
+constraints you specified.
 
 The Generator:
 
@@ -340,18 +338,10 @@ The Generator:
 - Reads only the resolved libraries adopted by each active item.
 - Reads the complete `sdais/adf/v<N>/` set as structural context if all core documents are Approved and all ADRs are Accepted.
 - Synthesises a complete implementation under `implementation/`.
-- Writes one `[ANN]` block per callable unit and type. Every block starts with `(VERIFIED) false` and `(ROUND) 0`.
+- Writes the tests with the language's standard test framework: at least one test per active AC, a negative test per `(PRE)`, a positive test per `(POST)`, benchmarks for measurable NFR bounds where the build machine can check them, and boundary and conformance tests for adopted libraries.
+- Writes one `[ANN]` block per callable unit, type, and test function. Every block starts with `(VERIFIED) false` and `(ROUND) 0`. Test blocks name the ACs, FRs, or NFRs they verify in `(ORIGIN)`.
 
 Do not edit generated code by hand. Any manual change will be overwritten or will conflict with annotation state in the next round. Generator never writes product artefacts beside `AGENTS.md` or inside `sdais/`.
-
-### TDD mode
-
-If the RSF contains a Constraint item with `Generation mode: TDD`:
-
-1. Run **TestGenerator** first (`sdais/prompts/test-generator.md`), specifying TDD mode. It writes test stubs and fixtures under `implementation/` with failing assertions derived from `(PRE)`, `(POST)`, and AC items. Every test block carries `(TEST-MODE) TDD`.
-2. Run the **Generator** targeting 100% pass rate on those tests.
-
-TDD mode inverts the order — tests define the target, Generator satisfies them — and gives you an objective completion signal.
 
 ### What annotations the Generator writes
 
@@ -360,8 +350,8 @@ Every `[ANN]` block produced by the Generator contains:
 | Label | Value at generation |
 |---|---|
 | `(ANN-ID)` | Freshly generated `ANN-<8-hex>`; stable for the lifetime of the unit |
-| `(ORIGIN)` | RSF item IDs this unit implements |
-| `(TASK)` | Declarative statement of what the unit does |
+| `(ORIGIN)` | RSF item IDs this unit implements, or that a test verifies |
+| `(TASK)` | Declarative statement of what the unit does, or what a test verifies |
 | `(CONTEXT)` | Where and why the unit is used |
 | `(CONSTRAINT)` | Hard rules or invariants applying to this unit |
 | `(PRE)` / `(POST)` | Preconditions and postconditions for functions and methods |
@@ -377,79 +367,66 @@ These labels are the shared language that all subsequent agents read. They are w
 
 ## Step 6 — Review
 
-**Prompt:** `sdais/prompts/reviewer.md` | **Recommended model:** High-reasoning or high-coding (e.g. Claude Opus or Sonnet)
+**Prompt:** `sdais/prompts/reviewer.md` | **Recommended model:** High-reasoning (e.g. Claude Opus), run with a tool that can execute shell commands
 
-Run the Reviewer after every Generate or Refine pass. Pass the current round number (1 after the first Generate pass).
+Run the Reviewer after the Generator and after every Refiner pass. Each run is
+one round in `sdais/props/impl/v<R>/` and reviews the whole implementation, so
+a fix that breaks an earlier one shows up again.
 
-The Reviewer checks every `[ANN]` block:
+The Reviewer:
 
-- Is `(ORIGIN)` pointing to a real, active RSF item?
-- Does the code actually implement what `(TASK)` declares?
-- Are `(PRE)` and `(POST)` enforced in the implementation?
-- Are all `(CONSTRAINT)` labels respected?
-- Is every FR covered, and does at least one AC pass?
-- Does the implementation conform to every library adopted by the relevant RSF item?
+- Builds the implementation, runs the standard static check (for Go `go vet`), and runs the complete test suite.
+- Checks every `[ANN]` block: `(ORIGIN)` points to active RSF items, the code does what `(TASK)` declares, `(PRE)`, `(POST)`, and `(CONSTRAINT)` hold, `(DEPENDS-ON)` is accurate, adopted libraries are honoured, and everything lies under `implementation/`.
+- Checks that every active FR and AC is implemented and every AC is tested, and that no test is skipped, tautological, or weaker than its AC.
+- Performs the security audit on every block: each `(CONSTRAINT:SEC)`, injection, broken authentication or access control, insecure defaults, sensitive data exposure, unsafe cryptography, hard-coded secrets, and unvalidated input to sensitive operations.
+- Applies the checks of any review extension in your `AGENTS.md`.
+- Sets `(VERIFIED)` on every block and never changes code or tests.
 
-Library failures are findings on the relevant `[ANN]` block. `(ORIGIN)` remains
-RSF/TRS IDs; filesystem paths never go there.
+`report.md` lists the commands it ran and their results, all findings
+(`BUILD-FAILURE`, `TEST-FAILURE`, `SPEC-VIOLATION`, `CONTRACT-MISMATCH`,
+`TEST-GAP`, `SECURITY`, `LIBRARY-NONCONFORMANT`, `ROOT-PLACEMENT`), and the open
+escalations. When there are findings, it writes **implementation Solution
+Proposals (IMP)** that each resolve all findings with one strategy:
+`prop-a-*` **Recommended** (the simplest coherent fix), `prop-b-*` and
+`prop-c-*` two **Alternatives** that differ in strategy (for example a local fix
+against a restructuring), and `prop-own.md` for **your own** solution. Each
+proposal lists its changes per unit or file (`Fix`, `Rewrite`, `Add`, `Remove`,
+`Move`, `Test`, `Escalate`), the dependent units and tests it affects, and its
+compromises (`Trade-off`, `Deferred`, `Escalated`).
 
-It also runs a **dependency cascade check**: when a block is set `(VERIFIED) false`, every block whose `(DEPENDS-ON)` references that block's `(ANN-ID)` receives an automatic Medium cascade finding. This prevents silent propagation of errors through the call graph.
+Proposals never weaken a requirement. A finding that can only be resolved by
+changing the RSF or an architecture decision is **escalated** to you.
 
-After the pass the Reviewer outputs a summary:
-
-```
-Round 1 review complete.
-Violations: 3 blocks, 5 total findings.
-Cascade findings added: 2 blocks.
-Clean: 12 blocks.
-Unaddressed RSF items (if any): AC-0003
-```
-
-Clean blocks are set `(VERIFIED) true` and are not touched again unless their dependencies change.
+Results: `Cleared` (all builds and tests pass, no findings), `Findings`, or
+`Blocked` (the build or tests could not be executed — use a tool that can run
+them).
 
 ---
 
-## Step 7 — Refine
+## Step 7 — Accept and Refine
 
 **Prompt:** `sdais/prompts/refiner.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
 
-Run the Refiner after every Review pass that contains violations. Pass the same round number used by the Reviewer.
+1. Read `sdais/props/impl/v<R>/`. Set `**Status:** Accepted` in exactly one proposal, optionally after editing it, or complete and accept `prop-own.md`. Write feedback under `## Notes` if you like.
+2. Run the **Refiner**. It implements every change of the accepted proposal exactly as written — code and tests — and nothing else. It touches tests only through `Test` changes, so tests are never weakened to make them pass. On every touched block it sets `(AGENT) Refiner`, `(VERIFIED) false`, and the round number, and documents changed descriptive labels with `(FIELD-CHANGE)`. It marks the proposal `Applied` and the round `Applied`.
+3. Return to Step 6.
 
-The Refiner works block by block through every `(VERIFIED) false` block:
+If you do not like any proposal, accept none and re-run the Reviewer: it
+rejects the round and writes new proposals that differ in substance and follow
+your Notes. The Refiner refuses to run with zero or several accepted proposals,
+or when the accepted proposal cannot be applied as written.
 
-- Corrects the code as directed by each `(HINT:n)`.
-- Appends `(FINDING:n:STATUS) Resolved — <rationale>` for each fix.
-- If a code fix makes a descriptive label inaccurate (e.g. `(TASK)` no longer matches), updates the label and appends `(FIELD-CHANGE:n)` documenting what changed and why.
-- Sets `(VERIFIED) true` when all findings in a block are resolved.
-- Marks unresolvable findings `Waived — requires RSF amendment` rather than silently papering over them.
-- Reads the same pinned libraries as the Reviewer and never edits them.
-
-Return to Step 6 at round N+1. Repeat until the Reviewer reports zero violations.
-
-If remaining violations are all `Waived`, the RSF needs amendment: increment the RSF version, re-audit from Step 2, and restart generation. Waived findings are not ignored — they are evidence that the specification and implementation cannot be reconciled without changing the requirements.
+Escalated findings stay listed in every following round until you amend the RSF
+(increment the RSF version and re-audit from Step 2) or revise the architecture.
+They are evidence that the specification and implementation cannot be
+reconciled without changing the requirements.
 
 ---
 
 ## Step 8 — Human Approval Gate
 
-When the Reviewer reports zero violations and all ACs pass, you make the final call:
+When the Reviewer reports `Cleared` — the build and all tests pass and no finding remains — you make the final call. Settle open escalations first.
 
-- **Approve** — synthesis is complete. Archive RSF files and annotated codebase together in git. Record the approval: `Approved: RSF v{{rsf_version}}, Round {{review_round}}`.
+- **Approve** — synthesis is complete. Archive RSF files and annotated codebase together in git. Record the approval: `Approved: RSF v{{rsf_version}}, Review v{{review_round}}`.
 - **Amend RSF** — requirements have changed or the result reveals a gap. Increment the RSF version, restart from Step 2 with the existing annotated codebase as context.
 - **Reject** — the implementation is correct but you want a different approach. Provide written rationale and restart from Step 5.
-
----
-
-## Optional Passes
-
-### Security Audit
-
-**Prompt:** `sdais/prompts/security-auditor.md` | **Recommended model:** High-reasoning (e.g. Claude Opus)
-
-Run the SecurityAuditor on demand or after generation. It checks all `(CONSTRAINT:SEC)` labels and scans for hard-coded credentials, unvalidated inputs passed to sensitive operations, missing authorisation checks, and unsafe cryptography. When a security claim depends on an adopted protocol, schema, or interface definition, it reads that pinned contract. It uses the same `(FINDING:n)` / `(HINT:n)` mechanism as the Reviewer so findings flow directly to the Refiner. Security findings are prefixed `SEC:`.
-
-### Test Generation (Standard Mode)
-
-**Prompt:** `sdais/prompts/test-generator.md` | **Recommended model:** High-coding (e.g. Claude Sonnet)
-
-After all `[ANN]` blocks are `(VERIFIED) true`, run TestGenerator in Standard mode. It derives test functions from `(PRE)`, `(POST)`, AC items, and relevant adopted-library boundaries, grammars, compatibility rules, and conformance clauses. It reads annotation blocks in implementation files but does not modify them.

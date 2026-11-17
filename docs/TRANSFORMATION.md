@@ -46,16 +46,17 @@ flowchart TD
     J --> K{Uncovered\nRSF items?}
     K -- Yes --> L[Step 7\nGenerator\nfill implementation/ gaps]
     L --> M
-    K -- No --> M[Step 8\nReviewer]
-    M --> N{Violations?}
-    N -- Yes --> O[Step 9\nRefiner]
+    K -- No --> M[Step 8\nReviewer\nround sdais/props/impl/vR/]
+    M --> N{Findings?}
+    N -- Yes --> N2[Accept exactly one\nimplementation Solution Proposal]
+    N2 --> O[Step 9\nRefiner\napplies it]
     O --> M
     LIB -. carry into RSF .-> D
     LIB -. resolve/audit .-> E
     LIB -. implement .-> J
     LIB -. verify/refine .-> M
     LIB -. verify/refine .-> O
-    N -- No: all Verified --> P[Step 10\nHuman Approval Gate]
+    N -- No: Cleared --> P[Step 10\nHuman Approval Gate]
     P --> Q{Decision}
     Q -- Approve --> R([Done])
     Q -- Amend RSF --> E
@@ -345,8 +346,8 @@ Transformation agent.
 
 From this point, follow the greenfield workflow:
 
-- **Step 8 (Review):** The Reviewer checks only the managed target's `[ANN]` blocks against active RSF and every adopted pinned file. Library or root-placement failures attach to relevant blocks; `(ORIGIN)` remains specification IDs.
-- **Step 9 (Refine):** Resolve violations using the same pinned files; implementation and permitted annotation fields may change, but RSF and library content may not.
+- **Step 8 (Review):** The Reviewer builds and tests only the managed target, checks its `[ANN]` blocks against active RSF and every adopted pinned file, checks test coverage, and audits security. Findings — including library or root-placement failures and ACs that the transformed tests do not cover — go to a round in `sdais/props/impl/v<R>/` with implementation Solution Proposals; `(ORIGIN)` remains specification IDs.
+- **Step 9 (Refine):** Accept exactly one proposal and run the Refiner; it applies the proposal to code and tests using the same pinned files. RSF and library content never change; findings that need such a change are escalated.
 - **Step 10 (Approval Gate):** Approve, amend RSF and re-audit, or reject and re-run the Transformation agent.
 
 The `(ANN-ID)` values established by the Analyzer and preserved by the Transformation agent provide a stable audit trail linking every unit in the transformed codebase back to the original annotated unit — even across a complete language change.

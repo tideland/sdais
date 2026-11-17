@@ -13,7 +13,7 @@
 The name reflects the three load-bearing elements:
 
 - **Specification-Driven** — a structured, versioned requirements document is the single upstream artefact and the authoritative source of truth. All AI activity is derived from and traceable to it.
-- **AI** — one or more AI agents execute the full development lifecycle: generation, annotation, review, refinement, and test authoring.
+- **AI** — one or more AI agents execute the full development lifecycle: generation and test authoring, annotation, review including test execution and security audit, and refinement.
 - **Synthesis** — the output is not a translation of human code, but a synthesis from requirements. The AI selects structure, idioms, and implementation strategy within the constraints given.
 
 ---
@@ -50,6 +50,8 @@ An agent is suitable for any SDAIS role if it:
 - Maintains sufficient context to process all active RSF items and annotated source files for the current version without truncation.
 - Produces structurally stable outputs — the same inputs on successive runs must not produce different artefact shapes unless the RSF changed.
 
+The Reviewer additionally needs shell execution: it builds the implementation and runs the complete test suite every round. A Reviewer that cannot execute them reports `Result: Blocked` and never `Cleared`. Generator and Refiner run the build and tests when they can, but only to report the result.
+
 ### Recommended Model Tiers
 
 Pin the model version used for each agent in your project's `AGENTS.md` or equivalent configuration. Version drift between rounds — using a different model for round N+1 than for round N — can produce inconsistent finding interpretations.
@@ -58,11 +60,10 @@ Pin the model version used for each agent in your project's `AGENTS.md` or equiv
 |---|---|---|
 | RequirementsEngineer | High reasoning (e.g. Claude Opus) | Ambiguity detection in free-form prose and requirement derivation benefit from deeper inference |
 | TransformationEngineer | High reasoning (e.g. Claude Opus) | Ambiguity and Confidence elicitation in legacy-system prose require deeper inference |
-| SemanticAuditor, SecurityAuditor | High reasoning (e.g. Claude Opus) | Ambiguity detection and security analysis benefit from deeper inference |
-| Generator, Refiner, Analyzer, Transformation | High coding ability (e.g. Claude Sonnet) | Code synthesis and annotation precision are primary demands |
-| Reviewer | High reasoning or high coding (e.g. Claude Opus or Sonnet) | Finding quality directly determines loop convergence speed |
+| SemanticAuditor | High reasoning (e.g. Claude Opus) | Ambiguity detection benefits from deeper inference |
+| Generator, Refiner, Analyzer, Transformation | High coding ability (e.g. Claude Sonnet) | Code and test synthesis and annotation precision are primary demands |
+| Reviewer | High reasoning (e.g. Claude Opus) | Specification, test, and security review plus coherent Solution Proposals determine loop convergence speed |
 | Architect, Grounder | High reasoning (e.g. Claude Opus or Sonnet) | Architecture decisions and infrastructure validation require sound judgment |
-| TestGenerator | High coding ability (e.g. Claude Sonnet) | Test correctness and coverage require deep code understanding |
 
 ### Agent Output Storage
 
@@ -102,9 +103,7 @@ workspace under `implementation/`.
     │   ├── reviewer.md
     │   ├── refiner.md
     │   ├── analyzer.md
-    │   ├── transformation.md
-    │   ├── security-auditor.md
-    │   └── test-generator.md
+    │   └── transformation.md
     ├── library/              ← project-owned, versioned reference contracts
     │   └── <library-id>/
     │       └── v<N>/         ← immutable version; one or more UTF-8 text files
@@ -138,10 +137,12 @@ workspace under `implementation/`.
     │   ├── tspec/v<R>/           ← TransformationEngineer rounds (TSP)
     │   ├── rsf/v<R>/             ← SemanticAuditor rounds (RSP)
     │   ├── env/v<R>/             ← Grounder rounds (ESP)
-    │   └── adf/v<R>/             ← Architect rounds (ADP)
-    │       ├── report.md                 ← context; Result: Proposed | Applied
+    │   ├── adf/v<R>/             ← Architect rounds (ADP)
+    │   └── impl/v<R>/            ← Reviewer rounds (IMP), applied by the Refiner
+    │       ├── report.md                 ← findings or context; Result field
     │       ├── prop-a-<short-slug>.md    ← Recommended proposal
     │       ├── prop-b-<short-slug>.md    ← Alternative proposal
+    │       ├── prop-c-<short-slug>.md    ← second Alternative (required for impl)
     │       └── prop-own.md               ← template for the human's own proposal
     ├── adf/                    ← Architecture Definition Files; produced by Architect
     │   ├── v1/                 ← ADF set for round 1 (all Approved+Accepted)
@@ -180,6 +181,7 @@ workspace under `implementation/`.
 - Each `trs/v<N>/` directory contains TRS items introduced or amended in version N. Version semantics match those of `rsf/`.
 - Each `cdf/v<N>/` directory contains CDF files for that transformation pass. CDFs are not versioned like RSF items; a new version directory is used when a new transformation pass is initiated.
 - Each `props/adf/v<R>/` directory is one Architect round: `report.md` with the architectural context and Result (`Proposed` when proposals are written; `Applied` after the accepted proposal has been applied), plus ADP proposal files following the same conventions as other agent proposals.
+- Each `props/impl/v<R>/` directory is one Reviewer round: `report.md` with the build and test results, all findings, open escalations, and Result (`Cleared`, `Findings`, `Blocked`, or `Applied` after the Refiner applied the accepted proposal), plus IMP proposals. See Implementation Review Loop.
 - Each `adf/v<R>/` directory is the applied ADF set for round R: five core documents (all Status=Approved) and ADRs (all Status=Accepted) under `decisions/`. R matches the `props/adf/v<R>/` round whose accepted proposal was applied; previous rounds are preserved as history. The five core filenames carry `adf-01-` through `adf-05-` prefixes so lexical order matches reading order. The directory is absent if the Architect step was skipped. Every file is UTF-8 Markdown.
 - Each `library/<library-id>/v<N>/` directory is a published version of a project-owned reference library. Published version directories are immutable; amendments create `v<N+1>/`. The entire `library/` directory may be absent or empty when no requirement uses it.
 - The distribution is `sdais-vX.Y.Z.tgz`. It contains `SDAIS.md`, `README.md`, `CHANGELOG.md`, `LICENSE`, `install.sh`, `update.sh`, `sdais.sh`, `docs/`, and `scaffold/`, and expands directly into the current directory. Create a project root, copy or download the archive into it, run `tar xzf sdais-vX.Y.Z.tgz`, then run `./install.sh <project-name>` once to scaffold the project. To upgrade, unpack the new archive in the existing project root and run `./update.sh --from <old-version>`. Run `./sdais.sh <tool> <model> <role>` to launch any agent.
@@ -193,7 +195,7 @@ Managed-root mode is active only when the zero-byte marker
 not configurable.
 
 In managed-root mode every product artefact written by Generator,
-Transformation, Refiner, or TestGenerator stays under `implementation/`.
+Transformation, or Refiner stays under `implementation/`.
 This includes source code, tests, module and package manifests, dependency lock
 files, fixtures, static assets, database migrations, build and deployment
 configuration, and product documentation. Language-native layout begins
@@ -218,8 +220,8 @@ For SDAIS-T in managed-root mode, existing legacy source may remain outside
 place. Transformation writes the complete transformed target under
 `implementation/` and never deletes the legacy source. If the source already
 lives under `implementation/`, Analyzer and Transformation operate there.
-After a transformed target exists, Generator gap-filling, Reviewer, Refiner,
-SecurityAuditor, and TestGenerator read or write only the managed target.
+After a transformed target exists, Generator gap-filling, Reviewer, and
+Refiner read or write only the managed target.
 
 The implementation-root rule controls repository placement, not runtime file
 paths used by the product. An RSF, adopted library, or ADF decision that
@@ -279,12 +281,14 @@ flowchart TD
     AFIN --> GEN
     AFIN -- "ADF needs revision<br/>re-run → propose v<R+1>" --> A
     AR -- no --> GEN
-    GEN["AI: Generator<br/>writes implementation/ with ANN blocks<br/>TDD mode: TestGenerator first"] --> REV["AI: Reviewer, round N<br/>validates annotations vs. code<br/>checks RSF acceptance criteria"]
-    REV --> V{"Violations?"}
-    V -- yes --> REF["AI: Refiner, round N"]
-    REF -- "findings resolved" --> REV
-    REF -- "waived: needs RSF change" --> AM
-    V -- no --> APV{"Human approval gate"}
+    GEN["AI: Generator<br/>writes implementation/ code + tests<br/>with ANN blocks"] --> REV["AI: Reviewer<br/>round sdais/props/impl/vR/<br/>build, tests, specs, contracts, security"]
+    REV --> V{"Findings?"}
+    V -- yes --> IMP["AI: at least three implementation proposals (IMP)<br/>Recommended · 2 Alternatives · Own<br/>Status: Draft"]
+    IMP --> IACC["Human accepts exactly one IMP"]
+    IACC --> REF["AI: Refiner<br/>applies accepted IMP to code + tests"]
+    REF -- "re-run" --> REV
+    IACC -- "Escalated: needs RSF change" --> AM
+    V -- "no (Cleared)" --> APV{"Human approval gate"}
     APV -- approve --> DONE(["Approved implementation"])
     APV -- "reject and regenerate" --> GEN
     APV -- "amend RSF" --> AM["Human amends RSF<br/>new RSF version"]
@@ -295,7 +299,7 @@ RSF amendments increment the version and restart the loop from the semantic
 audit. The prior annotated implementation workspace is not discarded — it
 becomes input context for the next generation pass.
 
-Human prose or directly authored RSF may explicitly adopt a pinned file under `sdais/library/`. The RequirementsEngineer preserves the smallest applicable reference set on generated items; the SemanticAuditor resolves each reference and audits the composed contract. Architect, Generator, Reviewer, Refiner, TestGenerator, and—when security claims depend on interface definitions—SecurityAuditor then read those same pinned files. Library existence alone adds no context and produces no requirement.
+Human prose or directly authored RSF may explicitly adopt a pinned file under `sdais/library/`. The RequirementsEngineer preserves the smallest applicable reference set on generated items; the SemanticAuditor resolves each reference and audits the composed contract. Architect, Generator, Reviewer, and Refiner then read those same pinned files. Library existence alone adds no context and produces no requirement.
 
 For SDAIS-T (transformation of existing systems), the lifecycle starts at the
 SDAIS-T section (see below) and joins the standard SDAIS-G lifecycle at the
@@ -329,7 +333,7 @@ To launch an agent from the project root, use `./sdais.sh`:
 ./sdais.sh <tool> <model> <role>
 ```
 
-Without arguments the launcher prints an interactive menu listing every role with the recommended reasoning or coding model per tool. Each entry has a menu code — `C01`–`C12` (Claude), `X01`–`X12` (Codex), `G01`–`G12` (Gemini), `O01`–`O12` (Ollama), numbered in workflow order starting with RequirementsEngineer — and the user selects the next step by entering that code. Default models can be overridden with `SDAIS_<TOOL>_REASONING` and `SDAIS_<TOOL>_CODING`.
+Without arguments the launcher prints an interactive menu listing every role with the recommended reasoning or coding model per tool. Each entry has a menu code — `C01`–`C10` (Claude), `X01`–`X10` (Codex), `G01`–`G10` (Gemini), `O01`–`O10` (Ollama), numbered in workflow order starting with RequirementsEngineer — and the user selects the next step by entering that code. Default models can be overridden with `SDAIS_<TOOL>_REASONING` and `SDAIS_<TOOL>_CODING`.
 
 For a direct launch, for example: `./sdais.sh claude claude-opus-5-5 SemanticAuditor`. The launcher accepts the role as CamelCase (`SemanticAuditor`) or kebab-case (`semantic-auditor`). Supported tools: `claude`, `codex`, `gemini`, `ollama`. Run from the project root.
 
@@ -702,60 +706,77 @@ The full prompt is in `sdais/prompts/generator.md`. Summary of agent behaviour:
 reads all active RSF items and only their adopted library closures; reads the
 complete `sdais/adf/v<N>/` set as structural context if all core documents are
 Approved and all ADRs are Accepted; synthesises a complete implementation of
-the composed contract under the active implementation root; writes one `[ANN]`
-block per callable unit and type with `(ANN-ID)` as the first label; sets
-`(AGENT)` to `Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every
-block; outputs a summary of files created and RSF items addressed. It stops and
-reports affected IDs rather than guessing if a reference cannot resolve, a
-contract conflict remains, or managed-root placement cannot be honoured.
+the composed contract **and its complete test suite in the same pass** under
+the active implementation root; writes one `[ANN]` block per callable unit,
+type, and test function with `(ANN-ID)` as the first label; sets `(AGENT)` to
+`Generator`, `(VERIFIED)` to `false`, and `(ROUND)` to `0` on every block;
+outputs a summary of files created, RSF items addressed, and ACs without a
+test. It stops and reports affected IDs rather than guessing if a reference
+cannot resolve, a contract conflict remains, or managed-root placement cannot
+be honoured.
 
-#### Step 5 — TDD Mode (optional)
-
-TDD mode inverts the normal generation order. The TestGenerator runs before the Generator and produces test files with failing assertions. The Generator then synthesises implementation targeting those tests.
-
-**Activating TDD mode:** the human adds a `C-` item to the RSF: `C-NNNN: Generation mode: TDD`.
-
-**TDD mode steps:**
-
-1. Run the **TestGenerator** in TDD mode: reads all FR, AC, and NFR items plus their adopted libraries; writes test files under the active implementation root with test functions that assert expected behaviour—including relevant boundary, grammar, compatibility, and conformance rules—but have no passing implementation. Each test function receives an `[ANN]` block with `(AGENT) TestGenerator`, `(VERIFIED) false`, `(ROUND) 0`, and `(TEST-MODE) TDD`.
-2. Run the **Generator**: reads all active RSF items, the ADF set (if present and fully approved), and the test files from step 1. Synthesises implementation targeting a 100% pass rate on those tests. Writes `[ANN]` blocks as normal. Does not set `(TEST-MODE)` — that label is exclusive to TestGenerator.
-3. Continue with the standard Review → Refine loop. The Reviewer additionally verifies that all `(TEST-MODE) TDD` blocks pass against the generated implementation.
+Tests follow the rules of the Implementation Review Loop: every active AC has
+at least one test whose `(ORIGIN)` names it, every `(PRE)` a negative and every
+`(POST)` a positive test, measurable NFR bounds a benchmark where the build
+machine can check them, and adopted libraries their boundary, grammar,
+compatibility, and conformance tests. Test blocks carry the AC, FR, or NFR IDs
+they verify in `(ORIGIN)`.
 
 ---
 
-### Step 6 — Run the Review Agent
+### Step 6 — Run the Reviewer
 
-Provide the generated, annotated code, all active RSF item files, and their resolved library closures to the Reviewer. Use the prompt from `sdais/prompts/reviewer.md`. Pass the current round number (starts at 1 after the first Generate pass).
+Provide the annotated implementation and tests, all active RSF item files, and
+their resolved library closures to the Reviewer. Use the prompt from
+`sdais/prompts/reviewer.md`. The Reviewer needs shell execution.
 
-The full prompt is in `sdais/prompts/reviewer.md`. Summary of agent behaviour:
-in managed mode reads annotated files only under `implementation/`; checks
-every `[ANN]` block against the composed requirement and implementation;
-records library conformance and managed-root placement failures on the
-relevant `[ANN]` block; keeps `(ORIGIN)` limited to RSF/TRS IDs rather than
-filesystem paths; sets `(VERIFIED)` and updates `(AGENT)` and `(ROUND)` on every
-block; runs a dependency cascade check; outputs a structured summary.
+Each run is one round under `sdais/props/impl/v<R>/`. The Reviewer builds the
+implementation, runs the standard static check and the complete test suite,
+checks every `[ANN]` block and every active RSF item, checks test coverage and
+test fidelity, and performs the security audit. It writes `report.md` with the
+verification results, all findings, and open escalations, and — when there are
+findings — the implementation Solution Proposals (IMP): one Recommended, two
+Alternatives, and one Own template. Each proposal resolves all findings of the
+round with one coherent strategy. The Reviewer sets `(VERIFIED)` on every block
+and never changes code or tests. Details are in Implementation Review Loop.
 
-**Review-loop tracking:**
-
-Each review pass increments the round number. The `(ROUND)` label in every `[ANN]` block records which pass last touched it. New findings appended in round N get the next available local index in the block — they are never renumbered to avoid collision with prior `(FINDING:n:STATUS)` entries.
+When the Reviewer reports `Result: Cleared`, proceed to Step 8. When it
+reports `Result: Blocked`, the build or tests could not be executed; fix the
+toolchain or run the Reviewer with a tool that can execute them.
 
 ---
 
-### Step 7 — Run the Refiner Agent (if violations exist)
+### Step 7 — Accept one proposal and run the Refiner
 
-Provide the reviewed, annotated code, its active RSF origins, and the same pinned library files to the Refiner. Use the prompt from `sdais/prompts/refiner.md`. Pass the same round number used in the Review pass.
+Read `sdais/props/impl/v<R>/`. Set `**Status:** Accepted` in exactly one
+proposal, optionally after editing it, or complete and accept `prop-own.md`.
+Write feedback under `## Notes` if needed. Then run the Refiner with the prompt
+from `sdais/prompts/refiner.md`.
 
-The full prompt is in `sdais/prompts/refiner.md`. Summary of agent behaviour: reads the same pinned contracts used by the Reviewer; corrects implementation as directed by `(HINT:n)`; appends `(FINDING:n:STATUS)`; updates only permitted annotation fields when a fix makes them factually incorrect; never edits RSF or library content; sets `(VERIFIED)` and `(AGENT)` to reflect resolution outcome; outputs a structured summary.
+The Refiner implements every change of the accepted proposal exactly as
+written — code and tests — and nothing else, marks the proposal `Applied` and
+every other proposal of the round `Rejected`, and sets the report's Result to
+`Applied`. It never verifies its own work. If no proposal or several proposals
+are accepted, or the accepted proposal cannot be applied as written, it writes
+nothing and says why.
 
-After each Refiner pass:
-- If any blocks remain `(VERIFIED) false` due to Resolved findings (not Waived): run the Reviewer again at round N+1.
-- If all remaining `(VERIFIED) false` blocks have only Waived findings: the human amends the RSF (new version), then returns to Step 2.
+To get new alternatives instead, accept none and re-run the Reviewer: it
+rejects the open round and writes a new one whose proposals differ in
+substance and honour your Notes.
+
+After the Refiner, return to Step 6. Repeat until a round reports
+`Result: Cleared`.
+
+Findings that cannot be resolved without changing an RSF item or an approved
+ADF decision are resolved by an `Escalate` change. Escalations are binding
+compromises: the Reviewer lists them as open escalations until the human
+amends the RSF (Step 2) or re-runs the Architect (Step 4).
 
 ---
 
 ### Step 8 — Human Approval Gate
 
-When the Reviewer reports zero violations and all acceptance criteria pass, the human reviews the output. Three outcomes:
+When a Reviewer round reports `Result: Cleared` — the build and every test pass, every active FR and AC is addressed and tested, and no finding remains — the human reviews the output. Open escalations listed in that round must be settled by amending the RSF before approving. Three outcomes:
 
 - **Approve** — synthesis complete; RSF files and the annotated implementation workspace are archived together.
 - **Amend RSF** — increment RSF version, restart loop with existing codebase as context.
@@ -763,9 +784,9 @@ When the Reviewer reports zero violations and all acceptance criteria pass, the 
 
 **Rollback procedure:** If the human determines that the current annotated codebase is irrecoverably diverged from RSF intent, they may roll back to a prior committed state using git. Rolling back does not require discarding the RSF — it requires re-running from the Generator step with the rolled-back codebase as input context. The rolled-back commit and the RSF version that triggered the restart must both be referenced in the next commit message.
 
-**Escalation:** When a waived finding requires an RSF amendment that itself produces new semantic-audit findings, and this cycle repeats more than twice without convergence, the human must halt the loop, record the impasse under `## Notes` in the current SemanticAuditor round's proposals, and decide whether to simplify scope or seek architectural intervention before resuming.
+**Escalation:** When an escalated implementation finding requires an RSF amendment that itself produces new semantic-audit findings, and this cycle repeats more than twice without convergence, the human must halt the loop, record the impasse under `## Notes` in the current SemanticAuditor round's proposals, and decide whether to simplify scope or seek architectural intervention before resuming.
 
-**Approval record:** When approving, the human records the approval in the commit message with the format `Approved: RSF v{{rsf_version}}, Round {{review_round}}`. This is the minimum traceability record. Teams may supplement it with an approval field in the ADF.
+**Approval record:** When approving, the human records the approval in the commit message with the format `Approved: RSF v{{rsf_version}}, Review v{{review_round}}`. This is the minimum traceability record. Teams may supplement it with an approval field in the ADF.
 
 ---
 
@@ -818,8 +839,7 @@ Loop. The human then activates CDF files defining the desired transformations.
 In managed-root mode Transformation reads the annotated source without moving
 or deleting it, writes the complete target under `implementation/`, preserves
 all `(ANN-ID)` values, and hands that target to Generator for uncovered RSF
-items. Reviewer, Refiner, SecurityAuditor, and TestGenerator then scope their
-work to `implementation/`. Legacy mode retains the prior in-place flow.
+items. Reviewer and Refiner then scope their work to `implementation/`. Legacy mode retains the prior in-place flow.
 
 ### SDAIS-T Step 0 — Transformation Engineering (optional)
 
@@ -1072,24 +1092,24 @@ Any tool, prompt, or human that regenerates `AGENTS.md` must preserve the entire
 #### DomainAuditor
 
 - **Role:** Validates domain-specific business rules beyond functional correctness.
-- **Triggers:** Runs after Reviewer in each review round.
+- **Triggers:** Review extension — applied by the Reviewer in every review round.
 - **Reads:** Annotated source files; active RSF items; domain rule catalogue.
-- **Writes:** `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)` labels on affected `[ANN]` blocks. Prefixes all finding descriptions with `DOMAIN-`.
-- **Annotation Permissions:** Same as Reviewer — appends finding labels; updates `(AGENT)`, `(VERIFIED)`, `(ROUND)`.
+- **Writes:** Findings in the Reviewer round `sdais/props/impl/v<R>/report.md` with category `DOMAIN-RULE` and titles prefixed `DOMAIN-`; resolved by the round's IMP proposals.
+- **Annotation Permissions:** None of its own — the Reviewer sets `(VERIFIED)` on affected blocks.
 - **Prompt:** `sdais/prompts/domain-auditor.md`
 
 #### ComplianceAuditor-GDPR
 
 - **Role:** GDPR-specific data-flow audit; verifies that all personal data handling complies with GDPR requirements.
-- **Triggers:** Runs mandatorily before any approval gate when at least one active `[ANN]` block carries `(CONSTRAINT:SEC) PII`.
+- **Triggers:** Review extension — applied by the Reviewer in every review round while at least one active `[ANN]` block carries `(CONSTRAINT:SEC) PII`.
 - **Reads:** Annotated source files; active RSF items; GDPR compliance checklist.
-- **Writes:** `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)` labels on affected `[ANN]` blocks. Prefixes all finding descriptions with `GDPR-`.
-- **Annotation Permissions:** Same as SecurityAuditor — appends finding labels for `(CONSTRAINT:SEC)` violations; updates `(AGENT)`, `(VERIFIED)`, `(ROUND)`.
+- **Writes:** Findings in the Reviewer round `sdais/props/impl/v<R>/report.md` with category `GDPR` and titles prefixed `GDPR-`; resolved by the round's IMP proposals.
+- **Annotation Permissions:** None of its own — the Reviewer sets `(VERIFIED)` on affected blocks.
 - **Prompt:** `sdais/prompts/compliance-auditor-gdpr.md`
 
 ### Rules
 
-Custom agents may use any subset of the standard annotation mutation permissions defined in the Annotation Mutation Rules table. A custom agent may define its own finding prefix (e.g. `DOMAIN-`, `GDPR-`) to distinguish its findings from standard agent findings in `(FINDING:n)` descriptions.
+Custom agents may use any subset of the standard annotation mutation permissions defined in the Annotation Mutation Rules table. A custom agent whose **Triggers** name the review round is a **review extension**: the Reviewer reads its prompt and applies its checks in the same round, so all implementation findings share one report and one set of Solution Proposals. A review extension defines its own finding category and title prefix (e.g. `DOMAIN-`, `GDPR-`) to distinguish its findings from standard findings. Custom agents never write finding labels into `[ANN]` blocks.
 
 Custom agent prompts live in `sdais/prompts/` alongside the standard prompts, and are versioned through git.
 
@@ -1121,7 +1141,7 @@ An annotation block is a contiguous comment block opened by the sentinel `[ANN]`
 func parseAddress(raw string) (host string, port int, err error) {
 ```
 
-**Go — after Reviewer pass, Round 1 (violations found):**
+**Go — after Reviewer round v1 (finding F2 references this block):**
 ```go
 // [ANN]
 // (ANN-ID)      ANN-7f3a9c2e
@@ -1134,46 +1154,18 @@ func parseAddress(raw string) (host string, port int, err error) {
 // (OUTPUT)      host string — validated hostname or IP
 // (OUTPUT)      port int    — validated port number
 // (POST)        host is non-empty; 1 <= port <= 65535.
+// (DEPENDS-ON)  ANN-4d1b82fa, ANN-c9e05a31
 // (AGENT)       Reviewer
 // (VERIFIED)    false
 // (ROUND)       1
-// (FINDING:1)   PRE declares raw is non-empty but no guard exists; empty string reaches net.SplitHostPort.
-// (SEVERITY:1)  High
-// (HINT:1)      Add guard: if len(raw) == 0 { return "", 0, ErrEmptyAddress }.
-// (FINDING:2)   ORIGIN omits NFR-0001; function also enforces input-validation policy defined there.
-// (SEVERITY:2)  Low
-// (HINT:2)      Append NFR-0001 to (ORIGIN).
 func parseAddress(raw string) (host string, port int, err error) {
 ```
 
-**Go — after Refiner pass, Round 1 (all findings resolved):**
-```go
-// [ANN]
-// (ANN-ID)      ANN-7f3a9c2e
-// (ORIGIN)      FR-0003, NFR-0001
-// (TASK)        Parse IMAP server address and validate format.
-// (CONTEXT)     Called once at startup before any connection is attempted.
-// (CONSTRAINT)  Address must include host and port; scheme is not validated.
-// (PRE)         raw is a non-empty string.
-// (INPUT)       raw string — address as provided by the caller
-// (OUTPUT)      host string — validated hostname or IP
-// (OUTPUT)      port int    — validated port number
-// (POST)        host is non-empty; 1 <= port <= 65535.
-// (AGENT)       Refiner
-// (VERIFIED)    true
-// (ROUND)       1
-// (FINDING:1)   PRE declares raw is non-empty but no guard exists; empty string reaches net.SplitHostPort.
-// (SEVERITY:1)  High
-// (HINT:1)      Add guard: if len(raw) == 0 { return "", 0, ErrEmptyAddress }.
-// (FINDING:1:STATUS)  Resolved — empty-string guard added before net.SplitHostPort call
-// (FINDING:2)   ORIGIN omits NFR-0001; function also enforces input-validation policy defined there.
-// (SEVERITY:2)  Low
-// (HINT:2)      Append NFR-0001 to (ORIGIN).
-// (FINDING:2:STATUS)  Resolved — NFR-0001 appended to (ORIGIN)
-func parseAddress(raw string) (host string, port int, err error) {
-```
+The finding itself lives only in `sdais/props/impl/v1/report.md`, for example
+`### F2: Empty Address Reaches net.SplitHostPort` with
+`- **References:** [ANN-7f3a9c2e] implementation/internal/imap/address.go, [FR-0003]`.
 
-**Go — Refiner amended a descriptive field (FIELD-CHANGE example):**
+**Go — after the Refiner applied IMP-1-A (a change amended a descriptive field):**
 ```go
 // [ANN]
 // (ANN-ID)      ANN-7f3a9c2e
@@ -1182,9 +1174,31 @@ func parseAddress(raw string) (host string, port int, err error) {
 // (CONTEXT)     Called once at startup before any connection is attempted.
 // (CONSTRAINT)  Address must include host and port; scheme is not validated.
 // (PRE)         raw is a non-empty string and contains exactly one colon.
-// (FIELD-CHANGE:1)  (PRE) amended — added "and contains exactly one colon" to match guard added for FINDING:1
+// (FIELD-CHANGE) IMP-1-A F2 — guard for empty and colon-free input added; PRE states it
 // (INPUT)       raw string — address as provided by the caller
-// ...
+// (OUTPUT)      host string — validated hostname or IP
+// (OUTPUT)      port int    — validated port number
+// (POST)        host is non-empty; 1 <= port <= 65535.
+// (DEPENDS-ON)  ANN-4d1b82fa, ANN-c9e05a31
+// (AGENT)       Refiner
+// (VERIFIED)    false
+// (ROUND)       1
+func parseAddress(raw string) (host string, port int, err error) {
+```
+
+Only the next Reviewer round sets `(VERIFIED)` back to `true`.
+
+**Go — test function written by the Generator:**
+```go
+// [ANN]
+// (ANN-ID)      ANN-1b9e44d0
+// (ORIGIN)      AC-0004, FR-0003
+// (TASK)        Verify that an empty address is rejected with ErrEmptyAddress.
+// (DEPENDS-ON)  ANN-7f3a9c2e
+// (AGENT)       Generator
+// (VERIFIED)    false
+// (ROUND)       0
+func TestParseAddressRejectsEmpty(t *testing.T) {
 ```
 
 **Python:**
@@ -1230,17 +1244,17 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 
 | Agent | Permitted actions |
 |---|---|
-| Generator | Write the entire block (initial creation only); generate `(ANN-ID)`; write `(DEPENDS-ON)` |
-| Reviewer | Update `(AGENT)`, `(VERIFIED)`, `(ROUND)`; append `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)` |
-| Refiner | Update `(AGENT)`, `(VERIFIED)`, `(ROUND)`; append `(FINDING:n:STATUS)`, `(FIELD-CHANGE:n)`; update descriptive fields only when they become factually incorrect after a code fix |
-| SecurityAuditor | Same as Reviewer for `(CONSTRAINT:SEC)` violations |
-| TestGenerator | Write entire block on test functions (TDD mode only); set `(TEST-MODE) TDD`; otherwise read-only |
+| Generator | Write the entire block on implementation units and test functions (initial creation only); generate `(ANN-ID)`; write `(DEPENDS-ON)` |
+| Reviewer | Update `(AGENT)`, `(VERIFIED)`, `(ROUND)` on every block, including test blocks; the only agent that sets `(VERIFIED) true` |
+| Refiner | On units touched by the accepted IMP proposal: update `(AGENT)`, `(ROUND)`, `(DEPENDS-ON)`; set `(VERIFIED) false`; write descriptive fields as the proposal states or when a change makes them factually incorrect, appending `(FIELD-CHANGE)`; write the entire block on units it adds (fresh `(ANN-ID)`); remove the block of a unit it removes |
 | Analyzer | Write the entire block (initial creation on existing code); generate `(ANN-ID)`; write `(CONFIDENCE)` |
 | Transformation | Write the entire block on transformed code; preserve `(ANN-ID)` per split/merge rules; may not modify `(ANN-ID)` beyond those rules; write `(DEPENDS-ON)` |
 | Architect | Does not write `[ANN]` blocks; writes only UTF-8 Markdown under `sdais/adf/v<N>/` |
 | Grounder | Does not write `[ANN]` blocks; writes only `**Verified:**` fields in `E-` item files and appends findings to those files |
 
-`(ANN-ID)` is written only by Generator and Analyzer at block creation time. No other agent may modify `(ANN-ID)` under any circumstance, except Transformation applying the split/merge rules. Finding labels are never removed or renumbered. `(FINDING:n:STATUS)` is appended directly after the `(HINT:n)` for the same index.
+`(ANN-ID)` is written only at block creation time — by Generator, Analyzer, or the Refiner for a unit an accepted proposal adds. No agent may modify an existing `(ANN-ID)` under any circumstance, except Transformation applying the split/merge rules.
+
+Implementation review findings are not written into `[ANN]` blocks; they live in the Reviewer round reports under `sdais/props/impl/`. Blocks written under the earlier per-finding review scheme may still carry `(FINDING:n)`, `(SEVERITY:n)`, `(HINT:n)`, `(FINDING:n:STATUS)`, `(FIELD-CHANGE:n)`, or `(TEST-MODE)` labels and the `(AGENT)` values `SecurityAuditor` or `TestGenerator`. They are legacy history: agents ignore them as input, never add new ones, and leave them in place.
 
 ---
 
@@ -1269,7 +1283,6 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 | Label           | Cardinality | Scope                     | Written by                   | Description |
 |-----------------|-------------|---------------------------|------------------------------|-------------|
 | `(DEPENDS-ON)`  | 0–n         | function / method, type   | Generator, Transformation    | Comma-separated `ANN-<8-hex>` IDs of units this unit directly calls or structurally requires. Omitted when there are no dependencies. Format: `ANN-4d1b82fa, ANN-c9e05a31` |
-| `(TEST-MODE)`   | 0–1         | function / method         | TestGenerator                | Value: `TDD`. Set on every test function block produced in TDD mode. Absent on all standard test annotations and on all implementation annotations. |
 
 ### SDAIS Traceability Labels
 
@@ -1281,17 +1294,13 @@ Agents must not modify `[ANN]` blocks beyond these permitted actions:
 | `(ROUND)`      | exactly 1   | all   | Integer; the review round in which this block was last written or updated|
 | `(CONFIDENCE)` | 0–1         | all   | Written by Analyzer (on `[ANN]` blocks) and TransformationEngineer (on TRS items). Values: `Inferred-High`, `Inferred-Medium`, or `Inferred-Low` on ANN blocks; `High`, `Medium`, or `Low` on TRS items. Absent on greenfield-generated annotations. |
 
-### Review Finding Labels
+### Refinement Labels
 
-Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any unit where `(VERIFIED)` is `false`. Labels are co-indexed: `(FINDING:n)`, `(SEVERITY:n)`, and `(HINT:n)` with the same `n` describe one finding. `n` is a 1-based integer local to the block and is never reused across rounds. After the Refiner acts, `(FINDING:n:STATUS)` is appended immediately after `(HINT:n)`.
+Implementation findings are recorded in `sdais/props/impl/v<R>/report.md` and resolved through Solution Proposals, not in `[ANN]` blocks. The Refiner documents each descriptive field it changes with one label.
 
-| Label                  | Cardinality | Written by        | Description                                                                    |
-|------------------------|-------------|-------------------|--------------------------------------------------------------------------------|
-| `(FINDING:n)`          | 0–n         | Reviewer          | Describes one specific violation in this block                                 |
-| `(SEVERITY:n)`         | paired      | Reviewer          | `Critical / High / Medium / Low` — paired with the same-indexed FINDING        |
-| `(HINT:n)`             | paired      | Reviewer          | Actionable instruction for the Refiner to resolve the paired FINDING           |
-| `(FINDING:n:STATUS)`   | 0–n         | Refiner / Human   | `Resolved — <rationale>` or `Waived — requires RSF amendment`                  |
-| `(FIELD-CHANGE:n)`     | 0–n         | Refiner           | Documents which descriptive field was changed and why; n matches the FINDING   |
+| Label              | Cardinality | Written by | Description |
+|--------------------|-------------|------------|-------------|
+| `(FIELD-CHANGE)`   | 0–n         | Refiner    | Placed directly after the descriptive label it documents: `IMP-<R>-<X> F<n> — <why>`. Replaces any earlier `(FIELD-CHANGE)` for the same label. |
 
 ### Agent Role Values (for `(AGENT)`)
 
@@ -1299,11 +1308,9 @@ Written by the `Reviewer` (or `SecurityAuditor`) into the `[ANN]` block of any u
 |--------------------------|--------------------------------------------------------------------------------|
 | `RequirementsEngineer`   | Clarification and RSF derivation from free-form prose in `sdais/gspec/`        |
 | `TransformationEngineer` | Clarification and TRS/CDF derivation from free-form prose in `sdais/tspec/`   |
-| `Generator`              | Initial synthesis from RSF                                                     |
-| `Reviewer`        | Validation pass; sets `(VERIFIED)` and writes finding labels                   |
-| `Refiner`         | Corrects violations directed by `(HINT:n)`; writes `(FINDING:n:STATUS)`        |
-| `SecurityAuditor` | Specialised pass for `(CONSTRAINT:SEC)` compliance; may write finding labels   |
-| `TestGenerator`   | Derives tests from `(PRE)`, `(POST)`, and acceptance criteria; in TDD mode, produces pre-implementation test stubs |
+| `Generator`              | Initial synthesis of implementation and tests from RSF                         |
+| `Reviewer`        | Review round: build, tests, specification, contracts, security; sets `(VERIFIED)`; writes rounds with Solution Proposals to `props/impl/` |
+| `Refiner`         | Applies the accepted implementation Solution Proposal to code and tests        |
 | `SemanticAuditor` | RSF-level semantic validation before generation; writes rounds with Solution Proposals to `props/rsf/` and applies the accepted one |
 | `Analyzer`        | Transformation: annotates existing codebase; derives RSF items; appends findings to RSF files |
 | `Transformation`  | Transformation: applies CDF transformations; preserves `(ANN-ID)` values       |
@@ -1337,6 +1344,25 @@ SemanticAuditor and Grounder findings are recorded per round in `sdais/props/rsf
 | `TRS-CONTRADICTS-CODE` | Analyzer (SDAIS-T) | A hypothesis from the TRS is contradicted by what the code actually does |
 | `CODE-INTENT-UNCLEAR` | Analyzer (SDAIS-T) | Code behaviour cannot be unambiguously mapped to a specific requirement |
 | `ENV-UNRESOLVABLE` | Grounder | An `E-` item names an infrastructure element that cannot be confirmed to exist or match its description |
+
+Implementation findings of the Reviewer use their own categories; see Review Finding Categories.
+
+## Review Finding Categories
+
+Reviewer findings are recorded per round in `sdais/props/impl/v<R>/report.md` and resolved through implementation Solution Proposals. Each finding has exactly one category and a severity of `Critical`, `High`, `Medium`, or `Low`.
+
+| Category | Description |
+|---|---|
+| `BUILD-FAILURE` | The build or the language's standard static check fails |
+| `TEST-FAILURE` | A test fails |
+| `SPEC-VIOLATION` | Behaviour contradicts an active RSF item, or an active FR or AC is not addressed |
+| `CONTRACT-MISMATCH` | An `[ANN]` label (`TASK`, `PRE`, `POST`, `CONSTRAINT`, `ORIGIN`, `DEPENDS-ON`) does not match the code |
+| `TEST-GAP` | A required test is missing, skipped, or too weak to verify its AC, `(PRE)`, `(POST)`, or measurable NFR bound |
+| `SECURITY` | A `(CONSTRAINT:SEC)` is not enforced, or the code has a security weakness (injection, broken authentication or access control, insecure defaults, sensitive data exposure, unsafe cryptography, hard-coded secrets, unvalidated input to sensitive operations) |
+| `LIBRARY-NONCONFORMANT` | The implementation breaks a library contract adopted by a relevant RSF item |
+| `ROOT-PLACEMENT` | In managed-root mode a product artefact lies outside `implementation/` |
+
+Review extensions (see Custom Agents Extension) add their own categories.
 
 ---
 
@@ -1391,7 +1417,7 @@ without the field remain valid.
 
 ## Solution Proposals
 
-Five agents resolve what they find through **Solution Proposals** instead of isolated per-item answers: each proposal resolves *all* questions or findings of a round with one coherent strategy, so the result stays homogeneous and the loop converges. All proposals live under `sdais/props/`, one directory per round.
+Six agents resolve what they find through **Solution Proposals** instead of isolated per-item answers: each proposal resolves *all* questions or findings of a round with one coherent strategy, so the result stays homogeneous and the loop converges. All proposals live under `sdais/props/`, one directory per round.
 
 | Domain | Agent | Round directory | Proposal ID | Resolves | Applied to |
 |---|---|---|---|---|---|
@@ -1400,8 +1426,9 @@ Five agents resolve what they find through **Solution Proposals** instead of iso
 | rsf | SemanticAuditor | `props/rsf/v<R>/` | `RSP-<R>-<X>` | Findings `F<n>` | `rsf/v<N+1>/` (changed items only) |
 | env | Grounder | `props/env/v<R>/` | `ESP-<R>-<X>` | `ENV-UNRESOLVABLE` findings `F<n>` | `rsf/v<N+1>/` (changed items only) |
 | adf | Architect | `props/adf/v<R>/` | `ADP-<R>-<X>` | Architecture concept (all active RSF items) | `adf/v<R>/` (full ADF set, all Approved+Accepted) |
+| impl | Reviewer (proposes), Refiner (applies) | `props/impl/v<R>/` | `IMP-<R>-<X>` | Review findings `F<n>` | implementation code and tests |
 
-Rounds are numbered from 1 per domain and increase with every run of the owning agent. Each run first settles the previous round, then analyses, then writes the next round.
+Rounds are numbered from 1 per domain and increase with every run of the owning agent. Each run first settles the previous round, then analyses, then writes the next round. In the impl domain the work is split: the Reviewer proposes and the Refiner applies; see Implementation Review Loop.
 
 ### Round report — `report.md`
 
@@ -1433,7 +1460,7 @@ what is timed, so AC-0010 cannot be checked reproducibly.
 |---|---|---|
 | `prop-a-<slug>.md` | Recommended | `A` |
 | `prop-b-<slug>.md` | Alternative | `B` |
-| `prop-c-<slug>.md` | Alternative (optional, only for a substantially different third strategy) | `C` |
+| `prop-c-<slug>.md` | Alternative (optional, only for a substantially different third strategy; required in impl rounds unless the findings admit none) | `C` |
 | `prop-own.md` | Own: template for the human's solution | `OWN` |
 
 Every proposal has the header fields Kind, Status, Round, Input, and Covers, followed by the sections `## Strategy`, `## Changes`, `## Impact`, `## Compromises`, and `## Notes` (free for human feedback). Spec proposals add `## Answers` with one line per question before `## Changes`.
@@ -1501,23 +1528,74 @@ most 10 s on a 4-core laptop-class CPU; larger files are rejected with an error
 message before processing starts.
 ```
 
-Compromises in spec proposals are `Narrowed`, `Deferred`, `Dropped`, or `Assumed`; in RSF and environment proposals they are `Weakened`, `Dropped`, `Waived`, `Deferred`, or `Provisioned`.
+Compromises in spec proposals are `Narrowed`, `Deferred`, `Dropped`, or `Assumed`; in RSF and environment proposals they are `Weakened`, `Dropped`, `Waived`, `Deferred`, or `Provisioned`; in implementation proposals they are `Trade-off`, `Deferred`, or `Escalated`.
 
 **Status values:** `Draft` (written by the agent), `Accepted` (set by the human on exactly one proposal), `Applied` (set by the agent after writing the changes), and `Rejected` (set by the agent on every other proposal of the round, or on all of them when the acceptance was missing, ambiguous, or incomplete).
 
 **Rules:**
 
-- **Complete coverage.** `Covers` lists every question or finding of the round. Every agent-written proposal resolves all of them; `Waive` and `Provision` count.
+- **Complete coverage.** `Covers` lists every question or finding of the round. Every agent-written proposal resolves all of them; `Waive`, `Provision`, and `Escalate` count.
 - **Homogeneous.** All changes within one proposal are mutually consistent; applied together they leave no contradiction with each other, with unchanged items or passages, or with adopted libraries.
 - **Impact.** Every unchanged item or passage whose meaning, verification, or references are affected is listed under `## Impact`.
 - **Compromises.** Everything a proposal gives up or assumes — weakened bounds or acceptance criteria (for example speed or resources), dropped requirements, waived findings, narrowed scope — is listed with its reason; a proposal that gives nothing up states `None.`.
 - **Complete text.** Agent-written proposals contain no `{{placeholder}}`. The agent chooses concrete values from the apparent intent and states values that were not implied as assumptions. The human may edit any value before accepting.
 - **Recommended** is the simplest coherent resolution: fewest changes, no scope beyond what the round requires. **Alternatives** differ in strategy, not wording.
 - **Own.** `prop-own.md` carries the same sections with `{{snake_case}}` placeholders and one change stub per question or finding. It is valid for acceptance only when no placeholder remains.
-- **Exactly one acceptance.** Zero or multiple `Accepted` proposals reject the whole round; the next round's proposals must differ in substance from every proposal rejected since the last applied one and honour the human `## Notes`.
+- **Exactly one acceptance.** Zero or multiple `Accepted` proposals reject the whole round when the proposing agent runs again; the next round's proposals must differ in substance from every proposal rejected since the last applied one and honour the human `## Notes`. Agents that only apply — the Refiner, and the Architect in its apply step — write nothing in that case and report the problem instead, so the human can correct the acceptance or re-run the proposing agent.
 - **Binding decisions.** Answers, compromises, waivers, and provisions of an applied proposal are not raised again unless a later change contradicts them.
 - **Re-audit.** An environment proposal that changes non-`E-` items requires a SemanticAuditor run on the new RSF version before grounding continues.
 - Placeholders use double braces, never angle brackets: Markdown previewers treat `<value>` as an unknown HTML tag and render nothing.
+
+### Implementation Review Loop
+
+The implementation loop uses the same mechanism with two agents: the **Reviewer** writes the rounds and proposals, the **Refiner** applies the accepted proposal. The Generator writes the implementation and its complete test suite before the first round.
+
+**Reviewer round.** Each Reviewer run:
+
+1. **Settles the previous round.** If the latest round is `Findings` and exactly one complete proposal is `Accepted`, the Reviewer writes nothing and asks for the Refiner. If none or several are accepted, or the accepted own proposal still has placeholders, it rejects every open proposal and records the reason.
+2. **Reviews everything.** It builds the implementation, runs the language's standard static check and the complete test suite, and then checks:
+   - every `[ANN]` block against the code: `(ORIGIN)`, `(TASK)`, `(PRE)`, `(POST)`, `(CONSTRAINT)`, `(DEPENDS-ON)`, adopted library contracts, and managed-root placement;
+   - every active FR and AC for an implementing block;
+   - test coverage and fidelity: every active AC has at least one test naming it in `(ORIGIN)`, every `(PRE)` a negative and every `(POST)` a positive test, every measurable NFR bound a benchmark where the build machine can check it, and no test is skipped, tautological, or weaker than its AC;
+   - security on every block: each `(CONSTRAINT:SEC)` and the common weaknesses listed under `SECURITY`;
+   - the checks of every review extension.
+
+   The whole implementation is reviewed every round, so a change that breaks an earlier fix shows up as a new finding. Then the Reviewer sets `(VERIFIED)` on every block: `true` when no finding references it, otherwise `false`.
+3. **Writes round `v<R+1>`.** `report.md` holds the header (Date, Reviewed RSF, ADF, Previous round, Result), a `## Verification` section with each command run and its outcome, test counts, ACs without a test, and block counts, the `## Findings`, and `## Escalations` — every escalated finding of an applied proposal whose RSF or ADF change is still missing.
+
+| Result | Meaning | Proposals |
+|---|---|---|
+| `Cleared` | Build, static check, and every test pass; no finding | none |
+| `Findings` | At least one finding | Recommended, two Alternatives, Own |
+| `Blocked` | The build or tests could not be executed (no shell, missing toolchain, unreachable infrastructure) | none |
+| `Applied` | Set by the Refiner after applying the accepted proposal | — |
+
+A Reviewer that cannot execute the build and tests never reports `Cleared`.
+
+**Implementation proposals.** Each IMP proposal has the standard header fields (with `Reviewed RSF` as its input) and the sections `## Strategy`, `## Changes`, `## Impact`, `## Compromises`, and `## Notes`. Each change is `### <ANN-ID | path> — <action>` with `- **Resolves:**` and `- **Files:**`:
+
+| Action | Meaning |
+|---|---|
+| `Fix` | Correct a unit; state what it does afterwards and every `[ANN]` label as it must read |
+| `Rewrite` | Replace a unit's implementation strategy, possibly splitting it |
+| `Add` | Add a unit; the Refiner gives it a fresh `(ANN-ID)` |
+| `Remove` | Remove a unit and its block; name who no longer depends on it |
+| `Move` | Relocate a complete product file (e.g. into `implementation/`) |
+| `Test` | Add, rewrite, or remove tests, each with its `(ORIGIN)` and what it asserts |
+| `Escalate` | No code change; names the RSF item or ADF decision and the change the human must decide |
+
+Proposals describe changes; they do not contain full implementations. Signatures and snippets of at most ten lines are allowed. Additional rules for impl rounds:
+
+- **Requirements are fixed.** An implementation proposal never weakens an RSF item, an AC, or a library rule. A finding that needs one changed is resolved by `Escalate` — to the SemanticAuditor loop for RSF, to the Architect for ADF. A security fix that needs behaviour the RSF does not state is escalated too.
+- **Tests are protected.** Tests change only through `Test` changes. An assertion is weakened only to match the RSF exactly, and the Strategy says so.
+- **Impact covers dependencies.** `## Impact` names every unchanged unit whose `(DEPENDS-ON)` includes a changed unit and every test that exercises one.
+- **Homogeneous across rounds.** Applied together, the changes reintroduce no finding of an earlier round.
+- **Deferred** is allowed for `Low` findings only. Trade-offs, deferrals, and escalations of an applied proposal are binding and are not raised again unless a later change creates a new problem with them.
+- **Two alternatives.** `prop-c` is required unless the findings admit no substantially different third strategy; the report then records `- **Alternatives:** 1 — <reason>`.
+
+**Refiner.** The Refiner reads the latest round. Without an accepted proposal, with several, or when the accepted proposal cannot be applied exactly as written, it writes nothing and reports why. Otherwise it implements every change in proposal order and nothing else, changes tests only through `Test` changes, marks every touched block `(AGENT) Refiner`, `(VERIFIED) false`, `(ROUND) <R>`, documents changed descriptive labels with `(FIELD-CHANGE)`, sets the accepted proposal to `Applied`, all others to `Rejected`, and the report's Result to `Applied` with an `- **Applied:**` header field. It never sets `(VERIFIED) true`; the next Reviewer round verifies.
+
+The loop ends when a round reports `Cleared`; the human approval gate follows.
 
 ---
 

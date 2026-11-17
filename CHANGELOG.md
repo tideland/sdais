@@ -13,9 +13,9 @@ version will advance to v1.0.0 on first stable release.
 ### Added
 
 - **Interactive launcher menu.** Running `./sdais.sh` without arguments prints
-  all twelve roles in workflow order with the recommended model for Claude,
-  Codex, Gemini, and Ollama. Each entry carries a menu code (`C01`–`C12`,
-  `X01`–`X12`, `G01`–`G12`, `O01`–`O12`); entering a code at the prompt
+  all ten roles in workflow order with the recommended model for Claude,
+  Codex, Gemini, and Ollama. Each entry carries a menu code (`C01`–`C10`,
+  `X01`–`X10`, `G01`–`G10`, `O01`–`O10`); entering a code at the prompt
   launches that role, tool, and model. `q` quits; invalid codes re-prompt.
 - **Model tiers per tool.** Reasoning-heavy roles use `claude-opus-5-5`,
   `gpt-6.1-sol`, `gemini-4-argon`, or `gpt-oss:20b`; synthesis roles use
@@ -52,6 +52,40 @@ version will advance to v1.0.0 on first stable release.
   `Provision` records an element that this project creates; it is not verified
   again. A proposal that changes non-`E-` items requires a SemanticAuditor
   re-run before grounding continues.
+- **Implementation loop uses Solution Proposals.** The Reviewer works in
+  rounds under `sdais/props/impl/v<R>/`. Each round's `report.md` records the
+  build, static-check, and test results, all findings, and open escalations.
+  When there are findings, it adds implementation proposals (`IMP-<R>-<X>`):
+  one Recommended, two Alternatives (`prop-c-*` is required unless the
+  findings admit no third strategy), and Own. Each proposal resolves all
+  findings with one strategy and documents its changes per unit or file
+  (`Fix`, `Rewrite`, `Add`, `Remove`, `Move`, `Test`, `Escalate`), the
+  dependent units and tests it affects, and its compromises (`Trade-off`,
+  `Deferred`, `Escalated`). Results: `Cleared`, `Findings`, `Blocked`, and
+  `Applied`.
+- **Reviewer builds, tests, and audits security.** It runs the build, the
+  standard static check, and the complete test suite every round, checks test
+  coverage and fidelity, and performs the security audit formerly done by the
+  SecurityAuditor. New review finding categories: `BUILD-FAILURE`,
+  `TEST-FAILURE`, `SPEC-VIOLATION`, `CONTRACT-MISMATCH`, `TEST-GAP`,
+  `SECURITY`, `LIBRARY-NONCONFORMANT`, `ROOT-PLACEMENT`. The Reviewer needs
+  shell execution; without it a round reports `Blocked` and never `Cleared`.
+- **Refiner applies the accepted proposal.** It implements exactly the
+  accepted IMP proposal in code and tests, touches tests only through `Test`
+  changes, and never sets `(VERIFIED) true`. With zero or several accepted
+  proposals, or a proposal that cannot be applied as written, it writes
+  nothing. To get new alternatives, re-run the Reviewer without accepting.
+- **Generator writes the tests.** Implementation and complete test suite are
+  produced in one pass; test functions carry `[ANN]` blocks whose `(ORIGIN)`
+  names the ACs, FRs, or NFRs they verify.
+- **Findings left the `[ANN]` blocks.** `(FINDING:n)`, `(SEVERITY:n)`,
+  `(HINT:n)`, `(FINDING:n:STATUS)`, and `(FIELD-CHANGE:n)` are no longer
+  written; the Refiner documents changed descriptive labels with
+  `(FIELD-CHANGE) IMP-<R>-<X> F<n> — <why>`. Existing labels remain as legacy
+  history.
+- **Custom auditors are review extensions.** Custom agents whose Triggers name
+  the review round are applied by the Reviewer in the same round, so their
+  findings share its report and proposals.
 
 ### Changed
 
@@ -91,6 +125,15 @@ version will advance to v1.0.0 on first stable release.
 - `install.sh` mentions the interactive menu in its next-step output.
 - Version bumped from v0.13.0 to v0.14.0 in the specification, guides,
   installer, and updater.
+
+### Removed
+
+- **SecurityAuditor** and **TestGenerator** roles and their prompts;
+  `update.sh` deletes `security-auditor.md` and `test-generator.md` from
+  upgraded projects.
+- **TDD mode**, the `C-NNNN: Generation mode: TDD` trigger, and the
+  `(TEST-MODE)` label. An existing TDD constraint has no effect and can be
+  dropped.
 
 ## [v0.13.0] — 2026-10-08
 

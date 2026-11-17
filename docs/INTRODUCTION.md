@@ -64,11 +64,9 @@ The paradigm defines a set of specialist agent roles, each with a focused respon
 | `semantic-auditor.md` | SemanticAuditor | Validates RSF items, adopted libraries, and managed-root compatibility before generation | High-reasoning (e.g. Claude Opus) |
 | `grounder.md` | Grounder | Verifies that every Environment item describes something that actually exists in your infrastructure | High-reasoning (e.g. Claude Opus or Sonnet) |
 | `architect.md` | Architect | Produces the traceable ADF set and maps pinned libraries to components, interfaces, integrations, and decisions | High-reasoning (e.g. Claude Opus or Sonnet) |
-| `generator.md` | Generator | Synthesises a complete, annotated implementation under the active implementation root | High-coding (e.g. Claude Sonnet) |
-| `reviewer.md` | Reviewer | Checks every annotation block against RSF plus adopted libraries; sets blocks verified or raises findings | High-reasoning or high-coding (e.g. Claude Opus or Sonnet) |
-| `refiner.md` | Refiner | Fixes every violation directed by the Reviewer's hints; marks resolved blocks verified | High-coding (e.g. Claude Sonnet) |
-| `security-auditor.md` | SecurityAuditor | Specialised pass for security constraints, credential handling, input validation, and authorisation | High-reasoning (e.g. Claude Opus) |
-| `test-generator.md` | TestGenerator | Derives tests from preconditions, postconditions, acceptance criteria, and relevant library conformance rules; supports standard and TDD modes | High-coding (e.g. Claude Sonnet) |
+| `generator.md` | Generator | Synthesises a complete, annotated implementation and its test suite under the active implementation root | High-coding (e.g. Claude Sonnet) |
+| `reviewer.md` | Reviewer | Builds and runs all tests, checks every annotation block against RSF plus adopted libraries, checks test coverage, performs the security audit, and writes implementation Solution Proposals | High-reasoning (e.g. Claude Opus) |
+| `refiner.md` | Refiner | Applies the implementation Solution Proposal you accepted to code and tests | High-coding (e.g. Claude Sonnet) |
 | `transformation-engineer.md` | TransformationEngineer | Transformation: refines loose prose into TRS/CDF, preserving explicit pinned library adoption; assigns Confidence levels during output generation | High-reasoning (e.g. Claude Opus) |
 | `analyzer.md` | Analyzer | Transformation: annotates an existing codebase and derives RSF items from observed behaviour; references confirmed TRS item IDs in `(ORIGIN)` | High-coding (e.g. Claude Sonnet) |
 | `transformation.md` | Transformation | Transformation: applies CDFs and writes the managed target without deleting legacy source | High-coding (e.g. Claude Sonnet) |
@@ -83,7 +81,7 @@ Pin the model version for each role in your `AGENTS.md`. Version drift between r
 
 LLMs are stateless between invocations. A Reviewer running in round 3 has no memory of what the Generator intended in round 1 — unless that intent is written into the code itself.
 
-SDAIS solves this with `[ANN]` blocks: structured comment blocks embedded in every generated function, method, and type. They carry the declared task, the RSF items being implemented, preconditions, postconditions, dependencies on other units, and the current verification state. When the Reviewer writes a finding, it goes into the same block. When the Refiner fixes it, the resolution goes into the same block.
+SDAIS solves this with `[ANN]` blocks: structured comment blocks embedded in every generated function, method, and type. They carry the declared task, the RSF items being implemented, preconditions, postconditions, dependencies on other units, and the current verification state. The Reviewer records whether each block is verified; its findings and the proposals that resolve them live in round reports under `sdais/props/impl/`, and the Refiner documents every descriptive field it changes in the block itself.
 
 The annotation block is the inter-agent protocol. It is what allows a Reviewer to understand a Generator's intent without re-reading the RSF from scratch, and what allows a Refiner to target the exact block that needs correction. It is also the audit trail: every block carries the round number and the agent role that last touched it.
 
@@ -100,12 +98,12 @@ A full SDAIS project moves through a predictable lifecycle, regardless of the sc
 2. **Audit** — the SemanticAuditor resolves adopted libraries, validates the composed contract, and writes complete RSF Solution Proposals; you accept exactly one per round.
 3. **Ground** — the Grounder confirms infrastructure assumptions and proposes solutions for unresolvable items; you accept one.
 4. **Architect** (optional) — the Architect produces a human-reviewed architecture document set before any code is written.
-5. **Generate** — the Generator synthesises the implementation under `implementation/` from RSF plus adopted libraries with full annotation coverage.
-6. **Review** — the Reviewer checks every block against the same pinned contracts; findings are precise and actionable.
-7. **Refine** — the Refiner fixes violations using those same contracts; verified blocks accumulate.
+5. **Generate** — the Generator synthesises the implementation and its tests under `implementation/` from RSF plus adopted libraries with full annotation coverage.
+6. **Review** — the Reviewer builds, runs all tests, checks every block against the same pinned contracts, audits security, and writes complete implementation Solution Proposals; you accept exactly one.
+7. **Refine** — the Refiner applies the accepted proposal to code and tests.
 8. **Approve** — you review the result. Approve, amend the RSF and restart, or reject and regenerate.
 
-Steps 6–7 repeat until the Reviewer reports zero violations. Steps 1–5 repeat whenever requirements change. The RSF version increments; the previous version is never modified.
+Steps 6–7 repeat until the Reviewer reports `Cleared`. Steps 1–5 repeat whenever requirements change. The RSF version increments; the previous version is never modified.
 
 When requirements change — and they always do — you amend the specification, the SemanticAuditor validates the new version, and generation resumes with the existing annotated codebase as context. The annotations carry forward. The chain from intent to implementation remains unbroken.
 
